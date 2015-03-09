@@ -146,6 +146,7 @@ int proc_aik_request(void * sub_proc,void * message,void * pointer)
 	int blobsize=0;
 	int fd;
 	// create a signkey and write its key in localsignkey.key, write its pubkey in localsignkey.pem
+	result=TESI_Local_ReloadWithAuth("ooo","sss");
 	result=TESI_Local_CreateSignKey(&hSignKey,(TSS_HKEY)NULL,"sss","kkk");
 	if(result == TSS_SUCCESS)
 		printf("Create SignKey SUCCEED!\n");
