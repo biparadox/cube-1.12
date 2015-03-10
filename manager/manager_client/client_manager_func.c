@@ -89,13 +89,13 @@ int public_key_memdb_init()
 		printf("reload tpm error %d!\n",result);
 		return -ENFILE;
 	}
-	result=TESI_Local_GetPubEK("pubek","ooo");
+	result=TESI_Local_GetPubEK("pubkey/pubek","ooo");
 	if(result!=TSS_SUCCESS)
 	{
 		printf("get tpm pubek error %d!\n",result);
 		return -ENFILE;
 	}
-	ret=load_policy_pubek("pubek");
+	ret=load_policy_pubek("pubkey/pubek");
 	return 0;
 }
 
