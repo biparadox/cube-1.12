@@ -7,5 +7,9 @@ ln -s ../include .
 ln -s ../lib .
 ln -s ../cloud_config.h .
 cd -
+cd controller
+ln -s ../include .
+ln -s ../lib .
+ln -s ../cloud_config.h .
 return 0
 
