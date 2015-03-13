@@ -110,7 +110,7 @@ int proc_router_start(void * sub_proc,void * para)
 				continue;	
 			}
 			printf("router get proc %s's message!\n",sec_subject_getname(sub_proc)); 
-			ret=router_find_match_policy(message,&msg_policy);
+			ret=router_find_match_policy(message,&msg_policy,sec_subject_getname(sub_proc));
 			if(ret<0)
 			{
 				message_free(message);
