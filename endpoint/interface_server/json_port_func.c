@@ -93,7 +93,7 @@ int json_port_init(void * sub_proc,void * para)
     sec_object_setpointer(context,sub_context);
 
     // parameter deal with
-    char * server_name=proc_name;
+    char * server_name="json_server";
     char * server_uuid=local_uuid;
     char * service=sec_subject_getname(sub_proc);
     char * server_addr=local_jsonserver_addr;
