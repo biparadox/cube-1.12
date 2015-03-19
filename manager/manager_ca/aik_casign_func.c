@@ -98,7 +98,6 @@ int aik_casign_start(void * sub_proc,void * para)
 	void * send_msg;
 	void * context;
 	int i;
-	struct tcloud_connector * temp_conn;
 
 	char local_uuid[DIGEST_SIZE*2+1];
 	char proc_name[DIGEST_SIZE*2+1];

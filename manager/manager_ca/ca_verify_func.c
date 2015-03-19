@@ -94,8 +94,8 @@ int ca_verify_start(void * sub_proc,void * para)
 {
 	int ret;
 	int retval;
-	void * message_box;
-	void * context;
+	void * recv_msg;
+	void * send_msg;
 	int i;
 	struct tcloud_connector * temp_conn;
 
@@ -109,30 +109,47 @@ int ca_verify_start(void * sub_proc,void * para)
 	for(i=0;i<300*1000;i++)
 	{
 		usleep(time_val.tv_usec);
-		ret=sec_subject_recvmsg(sub_proc,&message_box);
+		ret=sec_subject_recvmsg(sub_proc,&recv_msg);
 		if(ret<0)
 			continue;
-		if(message_box==NULL)
+		if(recv_msg==NULL)
 			continue;
 		MESSAGE_HEAD * msg_head;
-		msg_head=get_message_head(message_box);
+		msg_head=get_message_head(recv_msg);
 		if(msg_head==NULL)
 			continue;
 		else if(strncmp(msg_head->record_type,"LOGC",4)==0)
 		{
-			proc_ca_verify(sub_proc,message_box,&test_login);
+			proc_ca_verify(sub_proc,recv_msg,&send_msg);
 		}
+		if(msg_head->flow & MSG_FLOW_RESPONSE)
+		{
+			void * flow_expand;
+			ret=message_remove_expand(recv_msg,"FTRE",&flow_expand);
+			if(flow_expand!=NULL) 
+			{
+				message_add_expand(send_msg,flow_expand);
+			}
+			else
+			{
+				set_message_head(send_msg,"receiver_uuid",msg_head->sender_uuid);
+			}
+
+		}
+		sec_subject_sendmsg(sub_proc,send_msg);
+		printf("send message succeed!\n");
 	}
 
 	return 0;
 };
 
-int proc_ca_verify(void * sub_proc,void * message,void * pointer)
+int proc_ca_verify(void * sub_proc,void * message,void ** send_msg)
 {
 	printf("begin ca verify!\n");
 	struct message_box * msg_box=message;
 	MESSAGE_HEAD * message_head;
 	struct connect_login * login_info;
+	void * pointer=*test_login;
 	int retval;
 	void *(*fn)(char * username,char * passwd)=pointer;
 	char local_uuid[DIGEST_SIZE*2+1];
@@ -158,14 +175,12 @@ int proc_ca_verify(void * sub_proc,void * message,void * pointer)
 	if((return_data==NULL) || IS_ERR(return_data))
 		return -EINVAL;
 
-	struct message_box * send_msg;
-	send_msg=message_create("RETC");
+	struct message_box * new_msg;
+	new_msg=message_create("RETC");
 //  	if(IS_ERR(new_msg_box))
   //  		     return -EINVAL;
-	set_message_head(send_msg,"receiver_uuid",message_head->sender_uuid);
-	message_add_record(send_msg,return_data);
-	sec_subject_sendmsg(sub_proc,send_msg);
-	printf("send RETC message succeed");
+	message_add_record(new_msg,return_data);
+	*send_msg=new_msg;
 
 	return retval;
 

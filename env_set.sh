@@ -16,5 +16,11 @@ cd endpoint
 ln -s ../include .
 ln -s ../lib .
 ln -s ../cloud_config.h .
+cd -
+cd compute
+ln -s ../include .
+ln -s ../lib .
+ln -s ../cloud_config.h .
+cd -
 return 0
 

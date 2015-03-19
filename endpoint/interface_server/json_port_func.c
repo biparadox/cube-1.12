@@ -30,7 +30,6 @@ struct json_server_context
 {
        void * json_port_hub;  //interface's hub
        void * syn_template;
-//     char * server_addr = local_jsonserver_addr;
        void * connect_syn;
        char * json_message;
        int message_len;
@@ -105,32 +104,12 @@ int json_port_init(void * sub_proc,void * para)
         return -ENOMEM;
     memset(syn_info,0,sizeof(struct connect_syn));
 
-//  register_record_type("SYNC",connect_syn_desc,get_entity_lib_ops("SYNC"));
-
-//  sub_context->syn_template=load_record_template("SYNC");
-
-//  ret=proc_share_data_getvalue("uuid",syn_info);
-  //  syn_info->uuid=memcpy(server_uuid,DIGEST_SIZE*2);
-  //  syn_info->server_name=dup_str(server_name,0);
-  //  syn_info->service=dup_str(service,0);
-  //  syn_info->server_addr=dup_str(server_addr,0);
-  //  memcpy(syn_info->nonce,nonce,64);
-
     char buffer[1024];
     memset(buffer,0,1024);
 
     int stroffset=0;
-  //  struct_2_json(syn_info,buffer,sub_context->syn_template,&stroffset);
-  //  msg_box=message_create("SYNC");
-  //  if(msg_box==NULL)
-  //      return -EINVAL;
-   // int flag=MSG_FLAG_REMOTE;
-   // set_message_head(message,"flag",&flag);
-  //  message_add_record(msg_box,syn_info);
 
     msg_box=build_server_syn_message(service,local_uuid,proc_name);  
-//    printf("json string size is %d\n",stroffset);
-//    printf("json string:%s\n",buffer);
     stroffset=message_2_json(msg_box,buffer);
     printf("json message size is %d\n",stroffset);
     printf("json message:%s\n",buffer);
@@ -170,26 +149,32 @@ int json_port_init(void * sub_proc,void * para)
 
 int json_port_start(void * sub_proc,void * para)
 {
-	int ret;
-	int retval;
-	void * message_box;
-	void * context;
+    int ret;
+    int retval;
+    void * message_box;
+    void * context;
     struct tcloud_connector_hub * port_hub;
     struct tcloud_connector * port_conn;
     struct tcloud_connector * recv_conn;
-	int i;
+    struct tcloud_connector * channel_conn;
+    int i;
+    struct timeval conn_val;
+    conn_val.tv_usec=time_val.tv_usec;
 
-	char local_uuid[DIGEST_SIZE*2+1];
-	char proc_name[DIGEST_SIZE*2+1];
+    char local_uuid[DIGEST_SIZE*2+1];
+    char proc_name[DIGEST_SIZE*2+1];
+    char buffer[4096];
+    memset(buffer,0,4096);
+    int stroffset;
 	
     printf("begin json server process!\n");
-	ret=proc_share_data_getvalue("uuid",local_uuid);
-	if(ret<0)
-		return ret;
-	ret=proc_share_data_getvalue("proc_name",proc_name);
+    ret=proc_share_data_getvalue("uuid",local_uuid);
+    if(ret<0)
+        return ret;
+    ret=proc_share_data_getvalue("proc_name",proc_name);
 
-	if(ret<0)
-		return ret;
+    if(ret<0)
+	return ret;
     struct json_server_context * server_context;
 
     ret=sec_subject_getcontext(sub_proc,&context);
@@ -201,62 +186,70 @@ int json_port_start(void * sub_proc,void * para)
     if(port_conn==NULL)
         return -EINVAL;
 
-    for(i=0;i<300*1000;i++)
-	{
-        usleep(time_val.tv_usec);
-        ret=port_hub->hub_ops->select(port_hub,&time_val);
-        time_val.tv_usec=10*1000;
-        if(ret<=0)
+    channel_conn=NULL;
+    for(i=0;i<500*1000;i++)
+    {
+        ret=port_hub->hub_ops->select(port_hub,&conn_val);
+        usleep(conn_val.tv_usec);
+	conn_val.tv_usec=time_val.tv_usec;
+        if(ret>0)
         {
-            usleep(time_val.tv_usec);
-            continue;
 
-        }
-//		printf("connector select %d times!\n",i);
-        do{
+        	do{
 
-            recv_conn=port_hub->hub_ops->getactiveread(port_hub);
-            if(recv_conn==NULL)
-                break;
-            if(connector_get_type(recv_conn)==CONN_SERVER)
-            {
+           	 	recv_conn=port_hub->hub_ops->getactiveread(port_hub);
+        		if(recv_conn==NULL)
+                		break;
+          		if(connector_get_type(recv_conn)==CONN_SERVER)
+            		{
 
-                struct tcloud_connector * channel_conn;
+           		     channel_conn=recv_conn->conn_ops->accept(recv_conn);
+         		     if(channel_conn==NULL)
+                	     {
+              			      printf("error: json_server connector accept error %x!\n",channel_conn);
+               			      continue;
+               		     }
+              		     printf("create a new channel %x!\n",channel_conn);
 
-                channel_conn=recv_conn->conn_ops->accept(recv_conn);
-                if(channel_conn==NULL)
-                {
-                    printf("error: json_server connector accept error %x!\n",channel_conn);
-                    continue;
-                }
-                printf("create a new channel %x!\n",channel_conn);
+           		     // build a server syn message with service name,uuid and proc_name
+           		     channel_conn->conn_ops->write(channel_conn,
+                             	  server_context->json_message,
+                              	  server_context->message_len);
 
-                // build a server syn message with service name,uuid and proc_name
-                channel_conn->conn_ops->write(channel_conn,
-                               server_context->json_message,
-                               server_context->message_len);
+               		    port_hub->hub_ops->add_connector(port_hub,channel_conn,NULL);
+            		}
+	  		else if(connector_get_type(recv_conn)==CONN_CHANNEL)
+	    		{
+				char * buffer=malloc(65535);
+		 		int offset=0;
+		  		do {
+		 			ret=recv_conn->conn_ops->read(recv_conn,buffer+offset,4096);
+		   	 		if(ret<0)
+				 		break;
+			  		offset+=ret;
+		    		}while(ret==4096);
+	    	 		void * message;
+	    	  		ret=json_2_message(buffer,&message);
+		   		if(ret>=0)
+		    		{
+	    	    			sec_subject_sendmsg(sub_proc,message);	
+		    		}
+	    		}
+		}while(1);
+	}
+	// send message to the remote
+	while(sec_subject_recvmsg(sub_proc,&message_box)>=0)
+	{
+		if(message_box==NULL)
+			break;
+    		stroffset=message_2_json(message_box,buffer);
+		if(channel_conn!=NULL)
+		{
+                	channel_conn->conn_ops->write(channel_conn,
+                               buffer,stroffset);
+		}	
+	}
 
-                port_hub->hub_ops->add_connector(port_hub,channel_conn,NULL);
-            }
-	    else if(connector_get_type(recv_conn)==CONN_CHANNEL)
-	    {
-		    char * buffer=malloc(65535);
-		    int offset=0;
-		    do {
-		 	   ret=recv_conn->conn_ops->read(recv_conn,buffer+offset,4096);
-		   	   if(ret<0)
-				  break;
-			   offset+=ret;
-		    }while(ret==4096);
-	    	    void * message;
-	    	    ret=json_2_message(buffer,&message);
-		    if(ret>=0)
-		    {
-	    	    	 sec_subject_sendmsg(sub_proc,message);	
-		    }
-	    }
-
-        }while(1);
     }
-	return 0;
+    return 0;
 }
