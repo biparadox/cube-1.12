@@ -162,6 +162,11 @@ int proc_router_start(void * sub_proc,void * para)
 	ret=proc_share_data_getvalue("uuid",local_uuid);
 	ret=proc_share_data_getvalue("proc_name",proc_name);
 
+	char audit_text[4096];
+        const char * audit_filename= "./message.log";
+    	int fd =open(audit_filename,O_CREAT|O_RDWR|O_TRUNC);
+        close(fd);
+
 
 //	struct timeval time_val={0,10*1000};
 	struct timeval router_val;
@@ -214,6 +219,14 @@ int proc_router_start(void * sub_proc,void * para)
 				continue;
 			}
 		
+			ret=message_2_json(message,audit_text);	
+			audit_text[ret]='\n';			
+    			fd=open(audit_filename,O_WRONLY|O_CREAT|O_APPEND);
+    			if(fd<0)
+	  			return -ENOENT;
+			write(fd,audit_text,ret+1);
+			close(fd);
+
 			ret=proc_router_send_msg(message,local_uuid);
 			if(ret<0)
 			{
@@ -228,7 +241,14 @@ int proc_router_start(void * sub_proc,void * para)
 					break;
 				if(dup_msg!=NULL)
 				{
-					proc_router_send_msg(message,local_uuid);
+					ret=message_2_json(message,audit_text);	
+					audit_text[ret]='\n';			
+    					fd=open(audit_filename,O_WRONLY|O_CREAT|O_APPEND);
+    					if(fd<0)
+	  					return -ENOENT;
+					write(fd,audit_text,ret+1);
+					close(fd);
+					proc_router_send_msg(dup_msg,local_uuid);
 				}
 				router_rule=router_get_next_duprule(msg_policy);
 

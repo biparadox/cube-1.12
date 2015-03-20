@@ -762,7 +762,7 @@ int proc_conn_start(void * sub_proc,void * para)
 			if(message_box==NULL)
 				break;
 			message_head=get_message_head(message_box);
-			if(message_head->flag & MSG_FLAG_LOCAL)
+			if(message_head->flow & MSG_FLOW_LOCAL)
 			{
 				printf("error local message in conn proc!\n");
 				message_free(message_box);

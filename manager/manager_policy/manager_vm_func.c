@@ -142,9 +142,6 @@ int proc_store_vm(void * sub_proc,void * message,void * pointer)
 		// send a message to manager_trust
 	retval=ExportPolicyToFile("./lib/VM_I.lib","VM_I");
 		// send a message to manager_trust
-	set_message_head(message,"sender_uuid",proc_name);
-	set_message_head(message,"receiver_uuid","compute_monitor");
-	sec_subject_sendmsg(sub_proc,message);
 	return count;
 }
 
