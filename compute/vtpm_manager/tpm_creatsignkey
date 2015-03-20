@@ -1,0 +1,12 @@
+#!/bin/sh
+SWTPMPATH=/opt/tcg/swTPM
+export TPM_SERVER_PORT=$1
+export TPM_SERVER_NAME=127.0.0.1
+export TPM_PORT=$1
+export TPM_PATH=$SWTPMPATH/tpmdata/$1
+
+#$SWTPMPATH/libtpm/utils/tpmbios
+$SWTPMPATH/libtpm/utils/createek
+$SWTPMPATH/libtpm/utils/takeown -pwdo ooo -pwds sss
+$SWTPMPATH/libtpm/utils/getpubek -pwdo ooo
+$SWTPMPATH/libtpm/utils/createkey -kt s -pwdp sss -pwdk kkk -ok $1 -hp 40000000
