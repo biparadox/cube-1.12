@@ -26,6 +26,89 @@
 #include "../cloud_config.h"
 #include "router_process_func.h"
 
+int proc_router_send_msg(void * message,char * local_uuid)
+{
+	void * sec_sub;
+	int ret;
+	MESSAGE_HEAD * msg_head;
+
+	if(message_get_state(message) & MSG_FLOW_LOCAL)
+	{
+		msg_head=get_message_head(message);
+		if(msg_head==NULL)
+		{
+				return  -EINVAL;
+		}
+		ret=find_sec_subject(msg_head->receiver_uuid,&sec_sub);	
+		if(sec_sub!=NULL)
+		{
+			if(sec_subject_getprocstate(sec_sub)<SEC_PROC_START)
+			{	
+				printf("start process %s!\n",sec_subject_getname(sec_sub));
+    				ret=sec_subject_start(sec_sub,NULL);
+			}
+			send_sec_subject_msg(sec_sub,message);
+			printf("send message to local process %s!\n",msg_head->receiver_uuid);
+		}
+	}
+	else if(message_get_state(message) & MSG_FLOW_DELIVER)
+	{
+		if(message_get_flow(message) & MSG_FLOW_RESPONSE)
+		router_push_site(message,local_uuid);
+
+		ret=find_sec_subject("connector_proc",&sec_sub);	
+		if(sec_sub==NULL)
+		{
+			printf("can't find conn process!\n");
+			return -EINVAL;
+		}
+		send_sec_subject_msg(sec_sub,message);
+		printf("send message to conn process!\n");
+				
+	}
+	else if(message_get_state(message) & MSG_FLOW_RESPONSE)
+	{
+		MESSAGE_HEAD * msg_head=get_message_head(message);
+		if(strncmp(msg_head->receiver_uuid,local_uuid,DIGEST_SIZE*2)==0)
+		{
+			printf("no one accept the %s message from %s!\n",msg_head->record_type,msg_head->sender_uuid); 
+			return -EINVAL;
+		}
+
+		ret=router_pop_site(message,msg_head->receiver_uuid);
+		if(ret<0)
+		{
+			printf("response %s message routing can't find the end!\n",msg_head->record_type); 
+			return -EINVAL;
+
+		}
+
+		ret=find_sec_subject("connector_proc",&sec_sub);	
+		if(sec_sub==NULL)
+		{
+			printf("can't find conn process!\n");
+			return -EINVAL;
+		}
+		send_sec_subject_msg(sec_sub,message);
+		printf("send message to conn process!\n");
+	}
+	else if(message_get_state(message) & MSG_FLOW_ASPECT)
+	{
+		ret=find_sec_subject("connector_proc",&sec_sub);	
+		if(sec_sub==NULL)
+		{
+			printf("can't find conn process!\n");
+			return -EINVAL;
+		}
+		send_sec_subject_msg(sec_sub,message);
+		printf("send message to conn process!\n");
+	}
+	else
+	{
+		return -EINVAL;
+	}
+	return 0;
+}
 int proc_router_init(void * sub_proc,void * para)
 {
     int ret;
@@ -97,6 +180,7 @@ int proc_router_start(void * sub_proc,void * para)
 		while(sub_proc!=NULL)
 		{
 			void * message;
+			void * router_rule;
 			// receiver message
 			ret=recv_sec_subject_msg(sub_proc,&message);
 			if(ret<0)
@@ -126,93 +210,29 @@ int proc_router_start(void * sub_proc,void * para)
 			if(ret<0)
 			{
 				message_free(message);
-				return -EINVAL;
+				printf("set main flow failed!\n");
+				continue;
 			}
-
-			if(message_get_state(message) & MSG_FLOW_LOCAL)
+		
+			ret=proc_router_send_msg(message,local_uuid);
+			if(ret<0)
 			{
-				void * sec_sub;
-				MESSAGE_HEAD * msg_head=get_message_head(message);
-				if(msg_head==NULL)
-				{
-					message_free(message);
-					return  -EINVAL;
-				}
-				ret=find_sec_subject(msg_head->receiver_uuid,&sec_sub);	
-				if(sec_sub!=NULL)
-				{
-					if(sec_subject_getprocstate(sec_sub)<SEC_PROC_START)
-					{	
-						printf("start process %s!\n",sec_subject_getname(sec_sub));
-    						ret=sec_subject_start(sec_sub,NULL);
-					}
-					send_sec_subject_msg(sec_sub,message);
-					printf("send message to local process %s!\n",msg_head->receiver_uuid);
-				}
+				printf("router send message to main flow failed!\n");
 			}
-			else if(message_get_state(message) & MSG_FLOW_DELIVER)
+			router_rule=router_get_first_duprule(msg_policy);
+			while(router_rule!=NULL)
 			{
-				void * sec_sub;
-				if(message_get_flow(message) & MSG_FLOW_RESPONSE)
-					router_push_site(message,local_uuid);
-
-				ret=find_sec_subject("connector_proc",&sec_sub);	
-				if(sec_sub==NULL)
-				{
-					printf("can't find conn process!\n");
-					return -EINVAL;
-				}
-				send_sec_subject_msg(sec_sub,message);
-				printf("send message to conn process!\n");
-				
-			}
-			else if(message_get_state(message) & MSG_FLOW_RESPONSE)
-			{
-				void * sec_sub;
-				MESSAGE_HEAD * msg_head=get_message_head(message);
-				if(strncmp(msg_head->receiver_uuid,local_uuid,DIGEST_SIZE*2)==0)
-				{
-					printf("no one accept the %s message from %s!\n",msg_head->record_type,msg_head->sender_uuid); 
-					message_free(message);
-					continue;
-				}
-
-				ret=router_pop_site(message,msg_head->receiver_uuid);
+				void * dup_msg;
+				ret=router_set_dup_flow(message,router_rule,&dup_msg);
 				if(ret<0)
+					break;
+				if(dup_msg!=NULL)
 				{
-					printf("response %s message routing can't find the end!\n",msg_head->record_type); 
-					message_free(message);
-					continue;
-
+					proc_router_send_msg(message,local_uuid);
 				}
+				router_rule=router_get_next_duprule(msg_policy);
 
-				ret=find_sec_subject("connector_proc",&sec_sub);	
-				if(sec_sub==NULL)
-				{
-					printf("can't find conn process!\n");
-					return -EINVAL;
-				}
-				send_sec_subject_msg(sec_sub,message);
-				printf("send message to conn process!\n");
 			}
-			else if(message_get_state(message) & MSG_FLOW_ASPECT)
-			{
-				void * sec_sub;
-
-				ret=find_sec_subject("connector_proc",&sec_sub);	
-				if(sec_sub==NULL)
-				{
-					printf("can't find conn process!\n");
-					return -EINVAL;
-				}
-				send_sec_subject_msg(sec_sub,message);
-				printf("send message to conn process!\n");
-			}
-			else
-			{
-				message_free(message);
-			}
-
 			break;
 		}
 		if(sub_proc==NULL)
