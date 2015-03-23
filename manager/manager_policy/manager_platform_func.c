@@ -82,7 +82,7 @@ int manager_platform_start(void * sub_proc,void * para)
 		if(strncmp(msg_head->record_type,"REQC",4)==0)
 		{
 			struct request_cmd * req;
-			ret=message_get_record(message_box,&req,0);
+			ret=message_get_record(recv_msg,&req,0);
 			if(ret<0)
 			{
 				printf("error request command!\n");
@@ -90,7 +90,7 @@ int manager_platform_start(void * sub_proc,void * para)
 			}
 			if(strncmp(req->tag,"PLAI",4)==0)
 			{
-				proc_send_platform_info(sub_proc,message_box,&send_msg);
+				proc_send_platform_info(sub_proc,recv_msg,&send_msg);
 				if((msg_head->flow & MSG_FLOW_RESPONSE) &&(send_msg!=NULL) )
 				{
 					void * flow_expand;
@@ -201,7 +201,7 @@ int proc_store_platform_policy(void * sub_proc,void * message,void * pointer)
 	return count;
 }
 
-int proc_send_platform_info(void * sub_proc,void * message,void * pointer)
+int proc_send_platform_info(void * sub_proc,void * message,void ** new_msg)
 {
 	MESSAGE_HEAD * message_head;
 	struct platform_info * platform;
@@ -240,7 +240,7 @@ int proc_send_platform_info(void * sub_proc,void * message,void * pointer)
 		message_add_record(send_msg,platform);
     		platform=GetNextPolicy("PLAI");
 	}
-	sec_subject_sendmsg(sub_proc,send_msg);
+	*new_msg=send_msg;
 	
 	return;
 }
