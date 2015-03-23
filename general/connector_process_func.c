@@ -122,20 +122,26 @@ static struct struct_elem_attr connect_ack_desc[]=
 
 static void * default_conn=NULL;
 
+
 void * hub_get_connector_bypeeruuid(void * hub,char * uuid)
 {
 	int ret;
+	int i;
 	TCLOUD_CONN * conn;
+	BYTE conn_uuid[DIGEST_SIZE*2];
+
 	conn=hub_get_first_connector(hub);
 	
 	while(conn!=NULL)
-	{
+	{	
+
 		if(connector_get_type(conn)==CONN_CLIENT)
 		{
 			struct connect_syn * syn_info=(struct connect_syn *)(conn->conn_extern_info);
 			if(syn_info!=NULL)
 			{
-				if(strncmp(syn_info->uuid,uuid,DIGEST_SIZE*2)==0)
+				comp_proc_uuid(syn_info->uuid,syn_info->server_name,conn_uuid);
+				if(strncmp(conn_uuid,uuid,DIGEST_SIZE*2)==0)
 					break;
 			}
 
@@ -145,7 +151,8 @@ void * hub_get_connector_bypeeruuid(void * hub,char * uuid)
 			struct connect_ack * ack_info=(struct connect_ack *)(conn->conn_extern_info);
 			if(ack_info!=NULL)
 			{
-				if(strncmp(ack_info->uuid,uuid,DIGEST_SIZE*2)==0)
+				comp_proc_uuid(ack_info->uuid,ack_info->client_name,conn_uuid);
+				if(strncmp(conn_uuid,uuid,DIGEST_SIZE*2)==0)
 					break;
 			}
 

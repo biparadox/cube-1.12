@@ -62,6 +62,7 @@ int monitor_process_start(void * sub_proc,void * para)
 	printf("begin compute monitor process!\n");
 //	proc_send_compute_localinfo(sub_proc,"manager_policy");
 //	printf("send compute %s 's local information to manager_policy !\n",hostname);
+	proc_send_computepolicy(sub_proc,message_box,NULL);
 
 	for(i=0;i<3000*1000;i++)
 	{
@@ -187,7 +188,7 @@ int proc_send_vmpolicy(void * sub_proc,void * message,void * pointer)
 	sec_subject_sendmsg(sub_proc,send_msg);
 	return 0;
 }
-int proc_send_computepolicy(void * sub_proc,void * message,void * pointer)
+int proc_send_computepolicy(void * sub_proc,void * message,void ** new_msg)
 {
 	MESSAGE_HEAD * message_head;
 	struct request_cmd * cmd;
@@ -212,12 +213,6 @@ int proc_send_computepolicy(void * sub_proc,void * message,void * pointer)
 	if(ret<0)
 		return ret;
 
-	message_head=get_message_head(message);
-
-	// get  vm info from message
-	retval=message_get_record(message,&cmd,0);
-	if(retval<0)
-		return -EINVAL;
 	struct vm_policy * compute_policy;
 	struct tcm_pcr_set * compute_boot_pcrs;
 	struct tcm_pcr_set * compute_running_pcrs;

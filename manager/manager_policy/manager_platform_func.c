@@ -263,7 +263,7 @@ int proc_send_platformpolicy_req(void * sub_proc,void * message,void * pointer)
 	ret=proc_share_data_getvalue("proc_name",proc_name);
 	if(ret<0)
 		return ret;
-	printf("begin to send vmpolicy request!\n");
+	printf("begin to send platform policy request!\n");
 
 	void * send_msg;
 	

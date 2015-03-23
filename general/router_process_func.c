@@ -26,11 +26,12 @@
 #include "../cloud_config.h"
 #include "router_process_func.h"
 
-int proc_router_send_msg(void * message,char * local_uuid)
+int proc_router_send_msg(void * message,char * local_uuid,char * proc_name)
 {
 	void * sec_sub;
 	int ret;
 	MESSAGE_HEAD * msg_head;
+	BYTE conn_uuid[DIGEST_SIZE*2];
 
 	if(message_get_state(message) & MSG_FLOW_LOCAL)
 	{
@@ -54,7 +55,10 @@ int proc_router_send_msg(void * message,char * local_uuid)
 	else if(message_get_state(message) & MSG_FLOW_DELIVER)
 	{
 		if(message_get_flow(message) & MSG_FLOW_RESPONSE)
-			router_push_site(message,local_uuid);
+		{
+			comp_proc_uuid(local_uuid,proc_name,conn_uuid);
+			router_push_site(message,conn_uuid);
+		}
 
 		ret=find_sec_subject("connector_proc",&sec_sub);	
 		if(sec_sub==NULL)
@@ -219,7 +223,7 @@ int proc_router_start(void * sub_proc,void * para)
 				continue;
 			}
 
-			ret=proc_router_send_msg(message,local_uuid);
+			ret=proc_router_send_msg(message,local_uuid,proc_name);
 			if(ret<0)
 			{
 				printf("router send message to main flow failed!\n");
@@ -249,7 +253,7 @@ int proc_router_start(void * sub_proc,void * para)
 	  					return -ENOENT;
 					write(fd,audit_text,ret+1);
 					close(fd);
-					proc_router_send_msg(dup_msg,local_uuid);
+					proc_router_send_msg(dup_msg,local_uuid,proc_name);
 				}
 				router_rule=router_get_next_duprule(msg_policy);
 
