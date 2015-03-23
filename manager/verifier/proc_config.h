@@ -18,14 +18,6 @@ static PROCDB_INIT procdb_init_list[]=
 	{NULL,NULL,0}
 };
 
-static CONN_INIT conn_init_list[]=
-{
-//	{CONN_SERVER,"policy_server",AF_INET,policy_server_listen_addr,NULL,0,0},
-	{"verifier_server",CONN_SERVER,AF_INET,verifier_addr,0,0,0},
-//    	{"trust_client",CONN_CLIENT,AF_INET,center_trust_addr,0,0,0},
-	{NULL,0,0,NULL,0,0,0}
-};
-
 static PROC_INIT main_proc_initdata=
 	{PROC_NAME,PROC_TYPE_MAIN,&verifier_init,NULL,main_state_name,main_func_name};
 

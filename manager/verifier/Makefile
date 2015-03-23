@@ -5,11 +5,11 @@ CCP=g++
 MAIN_PROC=verifier
 MAINPROC_OBJ=verifier_func.o
 MAINPROC_SRC=verifier_func.c
-SUBPROC_OBJ=verifier_image_func.o	verifier_vm_func.o 	verifier_platform_func.o  cloud_policy.o
+SUBPROC_OBJ=verifier_image_func.o	verifier_vm_func.o 	verifier_platform_func.o  cloud_policy.o  readconfig.o
 
 main: policy_gen $(MAIN_PROC) 
-$(MAIN_PROC):  main_proc.c connector_process_func.o $(MAIN_PROC).o $(SUBPROC_OBJ) local_func.o
-	$(CC) $(FLAGS) $(MAIN_PROC) main_proc.c connector_process_func.o $(MAIN_PROC).o $(SUBPROC_OBJ) local_func.o -L../lib -lopenstacktrust -lrouter -ltesi -ltspi -lpolicy_ui -lmemdb -lconnector -lmessage -llogicdb -lstruct -lsysfunc -lcrypto_func -lpthread
+$(MAIN_PROC):  main_proc.c connector_process_func.o router_process_func.o $(MAIN_PROC).o $(SUBPROC_OBJ) local_func.o
+	$(CC) $(FLAGS) $(MAIN_PROC) main_proc.c connector_process_func.o router_process_func.o $(MAIN_PROC).o $(SUBPROC_OBJ) local_func.o -L../lib -lopenstacktrust -lentity -lrouter -ltesi -ltspi -lpolicy_ui -lmemdb -lconnector -lmessage -llogicdb -lstruct -lsysfunc -lcrypto_func -lpthread
 $(MAIN_PROC).o: $(MAIN_PROC).c main_proc_func.h
 	$(CC) $(CFLAGS) $(MAIN_PROC).c
 policy_gen:	policy_gen.c readconfig.o  cloud_policy.o local_func.o ../lib/libmessage.a ../lib/liblogicdb.a ../lib/libstruct.a

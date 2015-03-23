@@ -108,7 +108,21 @@ int manager_platform_start(void * sub_proc,void * para)
 			}
 			else if(strncmp(req->tag,"PLAP",4)==0)
 			{
-				proc_send_platformpolicy_req(sub_proc,message_box,req->uuid);
+				proc_send_platform_policy(sub_proc,recv_msg,&send_msg);
+				if((msg_head->flow & MSG_FLOW_RESPONSE) &&(send_msg!=NULL) )
+				{
+					void * flow_expand;
+					ret=message_remove_expand(recv_msg,"FTRE",&flow_expand);
+					if(flow_expand!=NULL) 
+					{
+						message_add_expand(send_msg,flow_expand);
+					}
+					else
+					{
+						set_message_head(send_msg,"receiver_uuid",msg_head->sender_uuid);
+					}
+				}
+        			sec_subject_sendmsg(sub_proc,send_msg);
 			}
 		}
 	}
@@ -134,13 +148,26 @@ int proc_store_platform(void * sub_proc,void * message,void * pointer)
 			break;
 		if(platform==NULL)
 			break;
-		void * oldplatform;
+		struct platform_info * oldplatform;
 		printf("policy server receive platform  %s's info from monitor!\n",platform->uuid);
-		oldplatform=FindPolicy(platform->uuid,"PLAI");
-		if(oldplatform!=NULL)
+		if(platform->uuid[0]!=0)
 		{
-			printf("this platform already in the PLAI lib!\n");
-			continue;
+			oldplatform=FindPolicy(platform->uuid,"PLAI");
+			if(oldplatform!=NULL)
+			{
+				printf("this platform already in the PLAI lib!\n");
+				continue;
+			}
+			oldplatform=GetFirstPolicy("PLAI");
+			while(oldplatform!=NULL)
+			{
+				if(!strncmp(oldplatform->name,platform->name,DIGEST_SIZE*2))
+				{
+					strncpy(oldplatform->uuid,platform->uuid,DIGEST_SIZE*2);
+					break;
+				}
+				oldplatform=GetNextPolicy("PLAI");
+			}			
 		}
 		AddPolicy(platform,"PLAI");
 	}
@@ -192,12 +219,8 @@ int proc_store_platform_policy(void * sub_proc,void * message,void * pointer)
 	}
 		// send a message to manager_trust
 	retval=ExportPolicyToFile("./lib/PLAP.lib","PLAP");
-		// forward  message to verifier
-/*
-	set_message_head(message,"sender_uuid",proc_name);
-	set_message_head(message,"receiver_uuid","verifier");
-	sec_subject_sendmsg(sub_proc,message);
-	*/
+		// add the p
+
 	return count;
 }
 
@@ -241,7 +264,60 @@ int proc_send_platform_info(void * sub_proc,void * message,void ** new_msg)
     		platform=GetNextPolicy("PLAI");
 	}
 	*new_msg=send_msg;
+
 	
+	return;
+}
+
+int proc_send_platform_policy(void * sub_proc,void * message,void ** new_msg)
+{
+	MESSAGE_HEAD * message_head;
+	struct vm_policy * platform;
+	struct request_cmd * cmd;
+	int retval;
+	int ret;
+	int count=0;
+	int i;
+	char local_uuid[DIGEST_SIZE*2+1];
+	char proc_name[DIGEST_SIZE*2+1];
+	
+	ret=proc_share_data_getvalue("uuid",local_uuid);
+	if(ret<0)
+		return ret;
+	ret=proc_share_data_getvalue("proc_name",proc_name);
+
+	if(ret<0)
+		return ret;
+	printf("begin send platform policy process!\n");
+
+	void * send_msg;
+	
+
+	ret=message_get_record(message,&cmd,0);
+	if(ret<0)
+		return -EINVAL;
+
+	
+
+		// monitor send a new vm message
+//	memset(vm,0,sizeof(struct vm_policy));
+  	platform = NULL;
+	send_msg=message_create("PLAP");
+	if(send_msg==NULL)
+		return -EINVAL;
+	platform=FindPolicy(cmd->uuid,"PLAP");
+	message_add_record(send_msg,platform);
+	*new_msg=send_msg;
+	
+	send_msg=message_create("PCRP");
+	struct tcm_pcr_set * pcrpolicy;
+	pcrpolicy=FindPolicy(platform->runtime_pcr_uuid,"PCRP");
+	if(pcrpolicy!=NULL)
+	{
+		message_add_record(send_msg,pcrpolicy);
+       		sec_subject_sendmsg(sub_proc,send_msg);
+	}
+
 	return;
 }
 

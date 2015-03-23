@@ -114,7 +114,7 @@ int proc_verify_image(void * sub_proc,void * message,void * pointer)
 
 	for(i=0;i<MAX_RECORD_NUM;i++)
 	{
-		retval=get_message_record(message,&policy,i);
+		retval=message_get_record(message,&policy,i);
 		if(retval<0)
 			break;
 		if(policy==NULL)
@@ -151,14 +151,14 @@ int proc_verify_image(void * sub_proc,void * message,void * pointer)
 			retval=verify_pcrs_set(running_pcrs,verify_list);
 
 		void * send_msg;
-		send_msg=create_empty_message("VERI",proc_name,message_head->sender_uuid,MSG_FLAG_REMOTE);
+		send_msg=message_create("VERI");
 
 		int curr_verify=0;
 		while(verify_list[curr_verify]!=NULL)
 		{
 			if(verify_list[curr_verify]->verify_data_uuid[0]==0)
 				break;
-			add_record_to_message(send_msg,verify_list[curr_verify]);
+			message_add_record(send_msg,verify_list[curr_verify]);
 			curr_verify++;
 		}
 		sec_subject_sendmsg(sub_proc,send_msg);
