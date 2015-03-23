@@ -125,9 +125,9 @@ int get_user_from_dbres(void * user_info, void * res)
 		return -EINVAL;
 	strncpy(user->uuid,sqlrow[0],DIGEST_SIZE*2);
 
-	user->name=malloc(strlen(sqlrow[1])+1);
-	if(user->name==NULL)
-		return -ENOMEM;
+//	user->name=malloc(strlen(sqlrow[1])+1);
+//	if(user->name==NULL)
+//		return -ENOMEM;
 	strcpy(user->name,sqlrow[1]);
 	return 0;
 }
