@@ -232,6 +232,7 @@ int json_port_start(void * sub_proc,void * para)
 	    	  		ret=json_2_message(buffer,&message);
 		   		if(ret>=0)
 		    		{
+					set_message_head(message,"sender_uuid",local_uuid);
 	    	    			sec_subject_sendmsg(sub_proc,message);	
 		    		}
 	    		}

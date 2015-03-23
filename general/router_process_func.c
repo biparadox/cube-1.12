@@ -54,7 +54,7 @@ int proc_router_send_msg(void * message,char * local_uuid)
 	else if(message_get_state(message) & MSG_FLOW_DELIVER)
 	{
 		if(message_get_flow(message) & MSG_FLOW_RESPONSE)
-		router_push_site(message,local_uuid);
+			router_push_site(message,local_uuid);
 
 		ret=find_sec_subject("connector_proc",&sec_sub);	
 		if(sec_sub==NULL)
@@ -218,6 +218,12 @@ int proc_router_start(void * sub_proc,void * para)
 				printf("set main flow failed!\n");
 				continue;
 			}
+
+			ret=proc_router_send_msg(message,local_uuid);
+			if(ret<0)
+			{
+				printf("router send message to main flow failed!\n");
+			}
 		
 			ret=message_2_json(message,audit_text);	
 			audit_text[ret]='\n';			
@@ -227,11 +233,6 @@ int proc_router_start(void * sub_proc,void * para)
 			write(fd,audit_text,ret+1);
 			close(fd);
 
-			ret=proc_router_send_msg(message,local_uuid);
-			if(ret<0)
-			{
-				printf("router send message to main flow failed!\n");
-			}
 			router_rule=router_get_first_duprule(msg_policy);
 			while(router_rule!=NULL)
 			{

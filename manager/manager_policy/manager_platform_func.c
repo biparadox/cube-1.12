@@ -44,6 +44,8 @@ int manager_platform_start(void * sub_proc,void * para)
 	void * message_box;
 	void * context;
 	int i;
+	void * recv_msg;
+	void * send_msg;
 
 	char local_uuid[DIGEST_SIZE*2+1];
 	char proc_name[DIGEST_SIZE*2+1];
@@ -57,25 +59,25 @@ int manager_platform_start(void * sub_proc,void * para)
 		return ret;
 	printf("begin platform manager process!\n");
 
-	for(i=0;i<300*1000;i++)
+	for(i=0;i<500*1000;i++)
 	{
 		usleep(time_val.tv_usec);
-		ret=sec_subject_recvmsg(sub_proc,&message_box);
+		ret=sec_subject_recvmsg(sub_proc,&recv_msg);
 		if(ret<0)
 			continue;
-		if(message_box==NULL)
+		if(recv_msg==NULL)
 			continue;
 		MESSAGE_HEAD * msg_head;
-		msg_head=get_message_head(message_box);
+		msg_head=get_message_head(recv_msg);
 		if(msg_head==NULL)
 			continue;
 		if(strncmp(msg_head->record_type,"PLAI",4)==0)
 		{
-			proc_store_platform(sub_proc,message_box,NULL);
+			proc_store_platform(sub_proc,recv_msg,NULL);
 		}
 		if(strncmp(msg_head->record_type,"PLAP",4)==0)
 		{
-			proc_store_platform_policy(sub_proc,message_box,NULL);
+			proc_store_platform_policy(sub_proc,recv_msg,NULL);
 		}
 		if(strncmp(msg_head->record_type,"REQC",4)==0)
 		{
@@ -88,7 +90,21 @@ int manager_platform_start(void * sub_proc,void * para)
 			}
 			if(strncmp(req->tag,"PLAI",4)==0)
 			{
-				proc_send_platform_info(sub_proc,message_box,NULL);
+				proc_send_platform_info(sub_proc,message_box,&send_msg);
+				if((msg_head->flow & MSG_FLOW_RESPONSE) &&(send_msg!=NULL) )
+				{
+					void * flow_expand;
+					ret=message_remove_expand(recv_msg,"FTRE",&flow_expand);
+					if(flow_expand!=NULL) 
+					{
+						message_add_expand(send_msg,flow_expand);
+					}
+					else
+					{
+						set_message_head(send_msg,"receiver_uuid",msg_head->sender_uuid);
+					}
+				}
+				sec_subject_sendmsg(sub_proc,send_msg);
 			}
 			else if(strncmp(req->tag,"PLAP",4)==0)
 			{

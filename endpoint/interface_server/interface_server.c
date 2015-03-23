@@ -47,7 +47,7 @@ int interface_server_init(void * proc,void * para)
 		return -ENOMEM;
         ret=get_local_uuid(local_uuid);
         printf("this machine's local uuid is %s\n",local_uuid);
-	proc_share_data_setvalue("local_uuid",local_uuid);
+	proc_share_data_setvalue("uuid",local_uuid);
 	proc_share_data_setvalue("proc_name",para);
 	proc_share_data_setpointer(main_pointer);
     sec_subject_register_statelist(proc,interface_server_list);
