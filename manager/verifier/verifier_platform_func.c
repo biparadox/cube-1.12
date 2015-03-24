@@ -139,7 +139,7 @@ int proc_verify_platform(void * sub_proc,void * message,void * pointer)
 
 	policy=NULL;
 
-	for(i=0;i<MAX_RECORD_NUM;i++)
+	for(i=0;i<message_head->record_num;i++)
 	{
 		retval=message_get_record(message,&policy,i);
 		if(retval<0)
