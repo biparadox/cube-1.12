@@ -26,6 +26,33 @@
 #include "../cloud_config.h"
 #include "router_process_func.h"
 
+int proc_router_recv_msg(void * message,char * local_uuid,char * proc_name)
+{
+	void * sec_sub;
+	int ret;
+	MESSAGE_HEAD * msg_head;
+	BYTE conn_uuid[DIGEST_SIZE*2];
+
+	if(message_get_state(message) & MSG_FLOW_LOCAL)
+		return 0;
+
+	if(message_get_state(message) & MSG_FLOW_DELIVER)
+	{
+		return 0;
+	}
+
+	if(message_get_state(message) & MSG_FLOW_RESPONSE)
+	{
+		
+		ret=router_check_sitestack(message);
+		if(ret<0)
+			return ret;
+		if(ret==0)
+			message_set_state(message, MSG_FLOW_FINISH);
+	}
+	return 0;
+}
+
 int proc_router_send_msg(void * message,char * local_uuid,char * proc_name)
 {
 	void * sec_sub;
@@ -73,12 +100,6 @@ int proc_router_send_msg(void * message,char * local_uuid,char * proc_name)
 	else if(message_get_state(message) & MSG_FLOW_RESPONSE)
 	{
 		MESSAGE_HEAD * msg_head=get_message_head(message);
-		if(strncmp(msg_head->receiver_uuid,local_uuid,DIGEST_SIZE*2)==0)
-		{
-			printf("no one accept the %s message from %s!\n",msg_head->record_type,msg_head->sender_uuid); 
-			return -EINVAL;
-		}
-
 		ret=router_pop_site(message,msg_head->receiver_uuid);
 		if(ret<0)
 		{
@@ -86,6 +107,13 @@ int proc_router_send_msg(void * message,char * local_uuid,char * proc_name)
 			return -EINVAL;
 
 		}
+	        comp_proc_uuid(local_uuid,proc_name,conn_uuid);
+		if(strncmp(msg_head->receiver_uuid,conn_uuid,DIGEST_SIZE*2)==0)
+		{
+			printf("response circle to %s 's proc %s! \n",local_uuid,proc_name); 
+			return -EINVAL;
+		}
+
 
 		ret=find_sec_subject("connector_proc",&sec_sub);	
 		if(sec_sub==NULL)
@@ -113,6 +141,7 @@ int proc_router_send_msg(void * message,char * local_uuid,char * proc_name)
 	}
 	return 0;
 }
+
 int proc_router_init(void * sub_proc,void * para)
 {
     int ret;
@@ -214,6 +243,8 @@ int proc_router_start(void * sub_proc,void * para)
 				message_free(message);
 				continue;
 			}
+
+			proc_router_recv_msg(message,local_uuid,proc_name);
 
 			ret=router_set_main_flow(message,msg_policy);
 			if(ret<0)

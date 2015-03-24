@@ -800,8 +800,8 @@ int proc_conn_start(void * sub_proc,void * para)
 
 			if(send_conn!=NULL)
 			{
-				message_send(message_box,send_conn);
-				printf("send %4s message to conn %s!\n",message_head->record_type,connector_getname(send_conn));
+				ret=message_send(message_box,send_conn);
+				printf("send %4s message %d to conn %s!\n",message_head->record_type,ret,connector_getname(send_conn));
 			}
 			else
 				printf("send %4s message failed: no conn!\n",message_head->record_type);

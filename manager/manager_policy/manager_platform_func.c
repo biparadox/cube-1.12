@@ -311,7 +311,7 @@ int proc_send_platform_policy(void * sub_proc,void * message,void ** new_msg)
 	
 	send_msg=message_create("PCRP");
 	struct tcm_pcr_set * pcrpolicy;
-	pcrpolicy=FindPolicy(platform->runtime_pcr_uuid,"PCRP");
+	pcrpolicy=FindPolicy(platform->boot_pcr_uuid,"PCRP");
 	if(pcrpolicy!=NULL)
 	{
 		message_add_record(send_msg,pcrpolicy);

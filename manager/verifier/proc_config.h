@@ -23,9 +23,9 @@ static PROC_INIT main_proc_initdata=
 
 static PROC_INIT proc_init_list[]=
 {
-	{"verifier_image",PROC_TYPE_CONTROL,&verifier_image_init,&verifier_image_start,verifier_image_state_name,verifier_image_func_name},
-	{"verifier_vm",PROC_TYPE_CONTROL,&verifier_vm_init,&verifier_vm_start,verifier_vm_state_name,verifier_vm_func_name},
-	{"verifier_platform",PROC_TYPE_CONTROL,&verifier_platform_init,&verifier_platform_start,verifier_platform_state_name,verifier_platform_func_name},
+	{"verifier_image",PROC_TYPE_MONITOR,&verifier_image_init,&verifier_image_start,verifier_image_state_name,verifier_image_func_name},
+	{"verifier_vm",PROC_TYPE_MONITOR,&verifier_vm_init,&verifier_vm_start,verifier_vm_state_name,verifier_vm_func_name},
+	{"verifier_platform",PROC_TYPE_MONITOR,&verifier_platform_init,&verifier_platform_start,verifier_platform_state_name,verifier_platform_func_name},
 	{NULL,0,NULL,NULL}
 };
 
