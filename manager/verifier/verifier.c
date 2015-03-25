@@ -78,6 +78,10 @@ int pcr_policy_memdb_init()
 {
 	return 0;
 }
+int pcr_info_memdb_init()
+{
+	return 0;
+}
 int file_policy_memdb_init()
 {
 	return 0;

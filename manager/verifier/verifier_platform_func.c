@@ -96,13 +96,12 @@ int proc_keep_pcrpolicy(void * sub_proc,void * message,void * pointer)
 	{
 		retval=message_get_record(message,&pcrs,i);
 		if(retval<0)
-			return -EINVAL;
+			break;
 		if(pcrs==NULL)
 			break;
-		void * sec_obj=sec_object_init(pcrs->uuid,NULL);
-		sec_object_setpointer(sec_obj,pcrs);
-		add_sec_object(sec_obj);
+		AddPolicy(pcrs,"PCRI");
 	}
+	ExportPolicy("PCRI");
 	return 0;
 }
 
@@ -136,6 +135,7 @@ int proc_verify_platform(void * sub_proc,void * message,void * pointer)
 	if(message_head==NULL)
 		return -EINVAL;
 	int trust_level;
+	void * temp_pointer;
 
 	policy=NULL;
 
@@ -147,30 +147,33 @@ int proc_verify_platform(void * sub_proc,void * message,void * pointer)
 		if(policy==NULL)
 			break;
 		int waittime=10;
+		boot_pcrs=NULL;
+		running_pcrs=NULL;
 		for(j=0;j<waittime;j++)
 		{
-			sec_obj=find_sec_object(policy->boot_pcr_uuid);
-			if(sec_obj!=NULL)
+			if(policy->boot_pcr_uuid[0]!=0)
+			{
+				temp_pointer=FindPolicy(policy->boot_pcr_uuid,"PCRI");
+				boot_pcrs=(struct tcm_pcr_sets *)temp_pointer;
+				printf("%lx %lx!\n",temp_pointer,boot_pcrs);
+			}
+			if(policy->runtime_pcr_uuid[0]!=0)
+				running_pcrs=(struct tcm_pcr_sets *)FindPolicy(policy->runtime_pcr_uuid,"PCRI");
+			if((boot_pcrs!=NULL) || (running_pcrs!=NULL))
 				break;
+			usleep(100);
 		}	
-		if(sec_obj==NULL)
-			return -EINVAL;
-		boot_pcrs=sec_object_getpointer(sec_obj);
-		if(boot_pcrs==NULL)
-			return -EINVAL;
-		for(j=0;j<2;j++)
-		{
-			sec_obj=find_sec_object(policy->runtime_pcr_uuid);
-			if(sec_obj!=NULL)
-				break;
-		}
-		if(sec_obj!=NULL)
-			running_pcrs=sec_object_getpointer(sec_obj);
 
 		verify_list=create_verify_list("PLAP",policy->uuid,10);
 	
-		retval=verify_pcrs_set(boot_pcrs,verify_list);
-		retval=verify_pcrs_set(running_pcrs,verify_list);
+		if(boot_pcrs!=NULL)
+		{
+			retval=verify_pcrs_set(boot_pcrs,verify_list);
+		}
+		if(running_pcrs!=NULL)
+		{
+			retval=verify_pcrs_set(running_pcrs,verify_list);
+		}
 
 
 		void * send_msg;

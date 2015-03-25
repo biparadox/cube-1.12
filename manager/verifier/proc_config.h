@@ -14,6 +14,7 @@ static PROCDB_INIT procdb_init_list[]=
 {
 	{"VM_P",&image_policy_memdb_init,0},
 	{"PCRP",&pcr_policy_memdb_init,0},
+	{"PCRI",&pcr_info_memdb_init,0},
 	{"FILP",&file_policy_memdb_init,0},
 	{NULL,NULL,0}
 };

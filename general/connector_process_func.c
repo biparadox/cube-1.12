@@ -736,10 +736,9 @@ int proc_conn_start(void * sub_proc,void * para)
 					char * receiver_name;
 					struct expand_data_forward * expand_forward;
 			 		struct connect_proc_info * channel_extern_info;
-	
+
 					while(message_read_from_conn(&message_box,recv_conn)>0)
 					{
-
 
 						message_head=get_message_head(message_box);
 
