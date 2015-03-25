@@ -31,5 +31,5 @@ int process_monitor_vm(void * proc,void *para );
 int process_monitor_image(void * proc,void * para);
 int process_monitor_platform(void * proc, void * para);
 */
-int proc_keep_pcrpolicy(void * sub_proc,void * message, void * pointer);
+int proc_keep_pcrpolicy(void * sub_proc,void * message, void ** pointer);
 #endif

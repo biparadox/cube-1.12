@@ -813,7 +813,7 @@ int verify_pcrs_set(void * v_pcrs,void * v_list)
 		if(verify_pcrs==NULL)
 			continue;
 		memcpy(	verify_list[i]->verify_data_uuid,verify_pcrs->uuid,DIGEST_SIZE*2);
-		comp_pcrs=FindPolicy(verify_pcrs,"PCRP");
+		FindPolicy(verify_pcrs,"PCRP",&comp_pcrs);
 		if(comp_pcrs==NULL)
 		{
 			verify_list[i]->trust_level=-1;

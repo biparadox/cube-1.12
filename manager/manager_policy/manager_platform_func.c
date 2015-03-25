@@ -152,7 +152,7 @@ int proc_store_platform(void * sub_proc,void * message,void * pointer)
 		printf("policy server receive platform  %s's info from monitor!\n",platform->uuid);
 		if(platform->uuid[0]!=0)
 		{
-			oldplatform=FindPolicy(platform->uuid,"PLAI");
+			FindPolicy(platform->uuid,"PLAI",&oldplatform);
 			if(oldplatform!=NULL)
 			{
 				printf("this platform already in the PLAI lib!\n");
@@ -209,7 +209,7 @@ int proc_store_platform_policy(void * sub_proc,void * message,void * pointer)
 			break;
 		void * oldpolicy;
 		printf("policy server receive vm  %s's info from monitor!\n",policy->uuid);
-		oldpolicy=FindPolicy(policy->uuid,"PLAP");
+		FindPolicy(policy->uuid,"PLAP",&oldpolicy);
 		if(oldpolicy!=NULL)
 		{
 			printf("this policy already in the PLAP lib!\n");
@@ -305,13 +305,13 @@ int proc_send_platform_policy(void * sub_proc,void * message,void ** new_msg)
 	send_msg=message_create("PLAP");
 	if(send_msg==NULL)
 		return -EINVAL;
-	platform=FindPolicy(cmd->uuid,"PLAP");
+	FindPolicy(cmd->uuid,"PLAP",&platform);
 	message_add_record(send_msg,platform);
 	*new_msg=send_msg;
 	
 	send_msg=message_create("PCRP");
 	struct tcm_pcr_set * pcrpolicy;
-	pcrpolicy=FindPolicy(platform->boot_pcr_uuid,"PCRP");
+	FindPolicy(platform->boot_pcr_uuid,"PCRP",&pcrpolicy);
 	if(pcrpolicy!=NULL)
 	{
 		message_add_record(send_msg,pcrpolicy);

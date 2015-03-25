@@ -209,7 +209,7 @@ int proc_aik_casign(void * sub_proc,void * recv_msg,void ** send_msg)
 	printf("create usercert succeed!\n");
 	
 	struct vTPM_publickey * pubek;
-	pubek=FindPolicy(usercert.reqinfo.pubek_uuid,"PUBK");
+	FindPolicy(usercert.reqinfo.pubek_uuid,"PUBK",&pubek);
 	if(pubek==NULL)
 	{
 		printf("can't find pubek!\n");

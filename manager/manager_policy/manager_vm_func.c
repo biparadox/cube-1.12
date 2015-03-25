@@ -131,7 +131,7 @@ int proc_store_vm(void * sub_proc,void * message,void * pointer)
 			break;
 		void * oldvm;
 		printf("policy server receive vm  %s's info from monitor!\n",vm->uuid);
-		oldvm=FindPolicy(vm->uuid,"VM_I");
+		FindPolicy(vm->uuid,"VM_I",&oldvm);
 		if(oldvm!=NULL)
 		{
 			printf("this vm already in the VM_I lib!\n");
@@ -177,7 +177,7 @@ int proc_store_vm_policy(void * sub_proc,void * message,void * pointer)
 			break;
 		void * oldvm;
 		printf("policy server receive vm  %s's info from monitor!\n",vm->uuid);
-		oldvm=FindPolicy(vm->uuid,"VM_P");
+		FindPolicy(vm->uuid,"VM_P",&oldvm);
 		if(oldvm!=NULL)
 		{
 			printf("this vm already in the VM_I lib!\n");

@@ -126,7 +126,7 @@ int proc_store_image(void * sub_proc,void * message,void * pointer)
 			break;
 		void * oldimage;
 		printf("policy server receive image %s's info from monitor!\n",image->uuid);
-		oldimage=FindPolicy(image->uuid,"IMGI");
+		FindPolicy(image->uuid,"IMGI",&oldimage);
 		if(oldimage!=NULL)
 		{
 			printf("this image already in the IMGI lib!\n");
@@ -172,30 +172,17 @@ int proc_store_image_policy(void * sub_proc,void * message,void * pointer)
 			break;
 		void * oldimage;
 		printf("policy server receive image  %s's info from monitor!\n",image->uuid);
-		oldimage=FindPolicy(image->uuid,"IMGP");
+		FindPolicy(image->uuid,"IMGP",&oldimage);
 		if(oldimage!=NULL)
 		{
 			printf("this image's policy  already in the IMGP lib!\n");
 			continue;
 		}
 		AddPolicy(image,"IMGP");
-/*
-		void * send_msg;
-		send_msg=create_empty_message("IMGP",proc_name,message_head->sender_uuid,MSG_FLAG_REMOTE);
-		if(send_msg==NULL)
-			return -EINVAL;
-		message_add_record(send_msg,image);
-		sec_subject_sendmsg(sub_proc,send_msg);
-		*/
 	}
 		// send a message to manager_trust
 	retval=ExportPolicyToFile("./lib/IMGP.lib","IMGP");
 		// forward  message to verifier
-/*
-	set_message_head(message,"sender_uuid",proc_name);
-	set_message_head(message,"receiver_uuid","verifier");
-	sec_subject_sendmsg(sub_proc,message);
-	*/
 	return count;
 }
 
@@ -231,7 +218,7 @@ int proc_store_pcr_policy(void * sub_proc,void * message,void * pointer)
 			break;
 		void * oldpcrs;
 		printf("policy server receive pcrs  %s's info from monitor!\n",pcrs->uuid);
-		oldpcrs=FindPolicy(pcrs->uuid,"PCRP");
+		FindPolicy(pcrs->uuid,"PCRP",&oldpcrs);
 		if(oldpcrs!=NULL)
 		{
 			printf("this pcrs policy  already in the PCRP lib!\n");
@@ -327,14 +314,14 @@ int proc_send_imagepolicy_info(void * sub_proc,void * message,void * pointer)
 	send_pcr_msg=message_create("PCRP");
 	if(send_pcr_msg==NULL)
 		return -EINVAL;
-	image_policy=FindPolicy(image_uuid,"IMGP");
+	FindPolicy(image_uuid,"IMGP",&image_policy);
 	if( image_policy != NULL)
 	{
 		message_add_record(send_msg,image_policy);
-		pcrs=FindPolicy(image_policy->boot_pcr_uuid,"PCRP");
+		FindPolicy(image_policy->boot_pcr_uuid,"PCRP",&pcrs);
 		if(pcrs!=NULL)
 			message_add_record(send_pcr_msg,pcrs);
-		pcrs=FindPolicy(image_policy->runtime_pcr_uuid,"PCRP");
+		FindPolicy(image_policy->runtime_pcr_uuid,"PCRP",&pcrs);
 		if(pcrs!=NULL)
 			message_add_record(send_pcr_msg,pcrs);
 
@@ -350,120 +337,3 @@ int proc_send_imagepolicy_info(void * sub_proc,void * message,void * pointer)
 	
 	return;
 }
-/*
-	for(i=0;i<MAX_RECORD_NUM;i++)
-	{
-		retval=message_get_record(message,&image,i);
-		if(retval<0)
-			break;
-		if(image==NULL)
-			break;
-		void * oldimage;
-		printf("policy server receive imagevm  %s's info from monitor!\n",vm->uuid);
-		oldvm=FindPolicy(vm->uuid,"VM_P");
-		if(oldvm!=NULL)
-		{
-			printf("this vm already in the VM_I lib!\n");
-			continue;
-		}
-		AddPolicy(vm,"VM_P");
-	}
-		// send a message to manager_trust
-	retval=ExportPolicyToFile("./lib/VM_I.lib","VM_P");
-*/
-/*
-int proc_store_vm_policy(void * sub_proc,void * message,void * pointer)
-{
-	MESSAGE_HEAD * message_head;
-	struct vm_policy * vm;
-	int retval;
-	int ret;
-	int count=0;
-	int i;
-	char local_uuid[DIGEST_SIZE*2+1];
-	char proc_name[DIGEST_SIZE*2+1];
-	
-	ret=proc_share_data_getvalue("uuid",local_uuid);
-	if(ret<0)
-		return ret;
-	ret=proc_share_data_getvalue("proc_name",proc_name);
-
-	if(ret<0)
-		return ret;
-	printf("begin vm policy process!\n");
-
-		// monitor send a new vm message
-//	memset(vm,0,sizeof(struct vm_policy));
-  	vm = NULL;
-	for(i=0;i<MAX_RECORD_NUM;i++)
-	{
-		retval=message_get_record(message,&vm,i);
-		if(retval<0)
-			break;
-		if(vm==NULL)
-			break;
-		void * oldvm;
-		printf("policy server receive vm  %s's info from monitor!\n",vm->uuid);
-		oldvm=FindPolicy(vm->uuid,"VM_P");
-		if(oldvm!=NULL)
-		{
-			printf("this vm already in the VM_I lib!\n");
-			continue;
-		}
-		AddPolicy(vm,"VM_P");
-	}
-		// send a message to manager_trust
-	retval=ExportPolicyToFile("./lib/VM_I.lib","VM_P");
-		// forward  message to verifier
-	set_message_head(message,"sender_uuid",proc_name);
-	set_message_head(message,"receiver_uuid","verifier");
-	sec_subject_sendmsg(sub_proc,message);
-	return count;
-}
-*/
-
-
-
-/*
-int process_monitor_vm(void * sub_proc,void * in, void * out)
-{
-	void * message;
-	MESSAGE_HEAD * message_head;
-	int record_size;
-	BYTE * blob;
-	int bloboffset;
-	int record_num;
-	int ret;
-	char local_uuid[DIGEST_SIZE*2];
-	struct tcloud_connector * policy_server_conn=(struct tcloud_connector *)server_conn;
-
-	// send init message to 
-	vm=GetFirstPolicy("VM_I");
-	while( vm != NULL)
-	{
-		message=create_single_message_box(vm,"VM_I",local_uuid,local_uuid);
-		if(message==NULL)
-			return -EINVAL;
-		if(IS_ERR(message))
-			return -EINVAL;
-		record_size=output_message_blob(message,&blob);
-		ret=policy_server_conn->conn_ops->write(policy_server_conn,blob,record_size);
-		if(ret<=0)
-		{
-			printf("send vm message error!");
-		}
-		else
-		{
-			printf("send vm %s 's message to policy server!\n",vm->uuid);
-		}
-		message_free(message);
-		free(message);
-    		vm=GetNextPolicy("VM_I");
-	
-	}
-	
-	monitor_vm_from_dbres(server_conn);
-	return 0;
-		
-}
-*/

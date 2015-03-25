@@ -44,6 +44,8 @@ int verifier_platform_start(void * sub_proc,void * para)
 	int retval;
 	void * message_box;
 	void * context;
+	void * recv_msg;
+	void * send_msg;
 	int i;
 
 	char local_uuid[DIGEST_SIZE*2+1];
@@ -61,29 +63,29 @@ int verifier_platform_start(void * sub_proc,void * para)
 	for(i=0;i<300*1000;i++)
 	{
 		usleep(time_val.tv_usec);
-		ret=sec_subject_recvmsg(sub_proc,&message_box);
+		ret=sec_subject_recvmsg(sub_proc,&recv_msg);
 		if(ret<0)
 			continue;
-		if(message_box==NULL)
+		if(recv_msg==NULL)
 			continue;
 		MESSAGE_HEAD * msg_head;
-		msg_head=get_message_head(message_box);
+		msg_head=get_message_head(recv_msg);
 		if(msg_head==NULL)
 			continue;
 		if(strncmp(msg_head->record_type,"PLAP",4)==0)
 		{
-			proc_verify_platform(sub_proc,message_box,NULL);
+			proc_verify_platform(sub_proc,recv_msg,&send_msg);
 		}
 		if(strncmp(msg_head->record_type,"PCRP",4)==0)
 		{
-			proc_keep_pcrpolicy(sub_proc,message_box,NULL);
+			proc_keep_pcrpolicy(sub_proc,recv_msg,&send_msg);
 		}
 	}
 
 	return 0;
 }
 #define MAX_RECORD_NUM 100
-int proc_keep_pcrpolicy(void * sub_proc,void * message,void * pointer)
+int proc_keep_pcrpolicy(void * sub_proc,void * message,void ** pointer)
 {
 	MESSAGE_HEAD * message_head;
 	int retval;
@@ -102,10 +104,11 @@ int proc_keep_pcrpolicy(void * sub_proc,void * message,void * pointer)
 		AddPolicy(pcrs,"PCRI");
 	}
 	ExportPolicy("PCRI");
+	*pointer=NULL;
 	return 0;
 }
 
-int proc_verify_platform(void * sub_proc,void * message,void * pointer)
+int proc_verify_platform(void * sub_proc,void * message,void ** pointer)
 {
 	MESSAGE_HEAD * message_head;
 	struct vm_policy * policy;
@@ -135,7 +138,6 @@ int proc_verify_platform(void * sub_proc,void * message,void * pointer)
 	if(message_head==NULL)
 		return -EINVAL;
 	int trust_level;
-	void * temp_pointer;
 
 	policy=NULL;
 
@@ -153,12 +155,14 @@ int proc_verify_platform(void * sub_proc,void * message,void * pointer)
 		{
 			if(policy->boot_pcr_uuid[0]!=0)
 			{
-				temp_pointer=FindPolicy(policy->boot_pcr_uuid,"PCRI");
-				boot_pcrs=(struct tcm_pcr_sets *)temp_pointer;
-				printf("%lx %lx!\n",temp_pointer,boot_pcrs);
+				
+				FindPolicy(policy->boot_pcr_uuid,"PCRI",&boot_pcrs);
+//				temp_pointer=FindPolicy(policy->boot_pcr_uuid,"PCRI");
+//				boot_pcrs=(struct tcm_pcr_sets *)temp_pointer;
 			}
 			if(policy->runtime_pcr_uuid[0]!=0)
-				running_pcrs=(struct tcm_pcr_sets *)FindPolicy(policy->runtime_pcr_uuid,"PCRI");
+				FindPolicy(policy->runtime_pcr_uuid,"PCRI",&running_pcrs);
+				//running_pcrs=(struct tcm_pcr_sets *)FindPolicy(policy->runtime_pcr_uuid,"PCRI");
 			if((boot_pcrs!=NULL) || (running_pcrs!=NULL))
 				break;
 			usleep(100);
@@ -187,7 +191,21 @@ int proc_verify_platform(void * sub_proc,void * message,void * pointer)
 			message_add_record(send_msg,verify_list[curr_verify]);
 			curr_verify++;
 		}
-		sec_subject_sendmsg(sub_proc,send_msg);
+		if((send_msg!=NULL) &&(message_head->flow & MSG_FLOW_RESPONSE))
+		{
+			void * flow_expand;
+			ret=message_remove_expand(message,"FTRE",&flow_expand);
+			if(flow_expand!=NULL) 
+			{
+				message_add_expand(send_msg,flow_expand);
+			}
+			else
+			{
+				set_message_head(send_msg,"receiver_uuid",message_head->sender_uuid);
+			}
+			sec_subject_sendmsg(sub_proc,send_msg);
+
+		}
 	}
 	return 0;
 }
