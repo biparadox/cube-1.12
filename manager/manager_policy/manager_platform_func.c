@@ -30,8 +30,6 @@ int manager_platform_init(void * sub_proc,void * para)
 	int ret;
 	char local_uuid[DIGEST_SIZE*2];
 	
-//	struct aik_proc_pointer * aik_pointer;
-//	main_pointer= kmalloc(sizeof(struct main_proc_pointer),GFP_KERNEL);
 	sec_subject_register_statelist(sub_proc,monitor_state_list);
 
 	return 0;
@@ -297,15 +295,17 @@ int proc_send_platform_policy(void * sub_proc,void * message,void ** new_msg)
 	if(ret<0)
 		return -EINVAL;
 
-	
+	*new_msg=NULL;
 
 		// monitor send a new vm message
 //	memset(vm,0,sizeof(struct vm_policy));
   	platform = NULL;
+	FindPolicy(cmd->uuid,"PLAP",&platform);
+	if(platform==NULL)
+		return 0;
 	send_msg=message_create("PLAP");
 	if(send_msg==NULL)
 		return -EINVAL;
-	FindPolicy(cmd->uuid,"PLAP",&platform);
 	message_add_record(send_msg,platform);
 	*new_msg=send_msg;
 	
@@ -317,7 +317,6 @@ int proc_send_platform_policy(void * sub_proc,void * message,void ** new_msg)
 		message_add_record(send_msg,pcrpolicy);
        		sec_subject_sendmsg(sub_proc,send_msg);
 	}
-
 	return;
 }
 

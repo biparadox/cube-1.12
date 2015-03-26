@@ -248,6 +248,7 @@ int json_port_start(void * sub_proc,void * para)
 		{
                 	channel_conn->conn_ops->write(channel_conn,
                                buffer,stroffset);
+			printf("json port send %d data !",stroffset);
 		}	
 	}
 

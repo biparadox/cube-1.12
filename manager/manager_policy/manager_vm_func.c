@@ -31,8 +31,6 @@ int manager_vm_init(void * sub_proc,void * para)
 	int ret;
 	char local_uuid[DIGEST_SIZE*2];
 	
-//	struct aik_proc_pointer * aik_pointer;
-//	main_pointer= kmalloc(sizeof(struct main_proc_pointer),GFP_KERNEL);
 	sec_subject_register_statelist(sub_proc,monitor_state_list);
 
 	return 0;
@@ -45,6 +43,8 @@ int manager_vm_start(void * sub_proc,void * para)
 	void * message_box;
 	void * context;
 	int i;
+	void * recv_msg;
+	void * send_msg;
 
 	char local_uuid[DIGEST_SIZE*2+1];
 	char proc_name[DIGEST_SIZE*2+1];
@@ -58,30 +58,30 @@ int manager_vm_start(void * sub_proc,void * para)
 		return ret;
 	printf("begin vm manager process!\n");
 
-	for(i=0;i<300*1000;i++)
+	for(i=0;i<500*1000;i++)
 	{
 		usleep(time_val.tv_usec);
-		ret=sec_subject_recvmsg(sub_proc,&message_box);
+		ret=sec_subject_recvmsg(sub_proc,&recv_msg);
 		if(ret<0)
 			continue;
-		if(message_box==NULL)
+		if(recv_msg==NULL)
 			continue;
 		MESSAGE_HEAD * msg_head;
-		msg_head=get_message_head(message_box);
+		msg_head=get_message_head(recv_msg);
 		if(msg_head==NULL)
 			continue;
 		if(strncmp(msg_head->record_type,"VM_I",4)==0)
 		{
-			proc_store_vm(sub_proc,message_box,NULL);
+			proc_store_vm(sub_proc,recv_msg,NULL);
 		}
 		if(strncmp(msg_head->record_type,"VM_P",4)==0)
 		{
-			proc_store_vm_policy(sub_proc,message_box,NULL);
+			proc_store_vm_policy(sub_proc,recv_msg,NULL);
 		}
 		if(strncmp(msg_head->record_type,"REQC",4)==0)
 		{
 			struct request_cmd * req;
-			ret=message_get_record(message_box,&req,0);
+			ret=message_get_record(recv_msg,&req,0);
 			if(ret<0)
 			{
 				printf("error request command!\n");
@@ -89,11 +89,39 @@ int manager_vm_start(void * sub_proc,void * para)
 			}
 			if(strncmp(req->tag,"VM_I",4)==0)
 			{
-				proc_send_vm_info(sub_proc,message_box,NULL);
+				proc_send_vm_info(sub_proc,recv_msg,&send_msg);
+				if((msg_head->flow & MSG_FLOW_RESPONSE) &&(send_msg!=NULL) )
+				{
+					void * flow_expand;
+					ret=message_remove_expand(recv_msg,"FTRE",&flow_expand);
+					if(flow_expand!=NULL) 
+					{
+						message_add_expand(send_msg,flow_expand);
+					}
+					else
+					{
+						set_message_head(send_msg,"receiver_uuid",msg_head->sender_uuid);
+					}
+					sec_subject_sendmsg(sub_proc,send_msg);
+				}
 			}
 			else if(strncmp(req->tag,"VM_P",4)==0)
 			{
-				proc_send_vmpolicy_req(sub_proc,message_box,req->uuid);
+				proc_send_vm_policy(sub_proc,recv_msg,&send_msg);
+				if((msg_head->flow & MSG_FLOW_RESPONSE) &&(send_msg!=NULL) )
+				{
+					void * flow_expand;
+					ret=message_remove_expand(recv_msg,"FTRE",&flow_expand);
+					if(flow_expand!=NULL) 
+					{
+						message_add_expand(send_msg,flow_expand);
+					}
+					else
+					{
+						set_message_head(send_msg,"receiver_uuid",msg_head->sender_uuid);
+					}
+					sec_subject_sendmsg(sub_proc,send_msg);
+				}
 			}
 		}
 	}
@@ -191,7 +219,7 @@ int proc_store_vm_policy(void * sub_proc,void * message,void * pointer)
 	return count;
 }
 
-int proc_send_vm_info(void * sub_proc,void * message,void * pointer)
+int proc_send_vm_info(void * sub_proc,void * message,void ** new_msg)
 {
 	MESSAGE_HEAD * message_head;
 	struct vm_info * vm;
@@ -230,16 +258,15 @@ int proc_send_vm_info(void * sub_proc,void * message,void * pointer)
 		message_add_record(send_msg,vm);
     		vm=GetNextPolicy("VM_I");
 	}
-	sec_subject_sendmsg(sub_proc,send_msg);
+	*new_msg=send_msg;
 	
 	return;
 }
-
-int proc_send_vmpolicy_req(void * sub_proc,void * message,void * pointer)
+int proc_send_vm_policy(void * sub_proc,void * message,void ** new_msg)
 {
 	MESSAGE_HEAD * message_head;
+	struct vm_policy * vm;
 	struct request_cmd * cmd;
-	char * vm_uuid=pointer;
 	int retval;
 	int ret;
 	int count=0;
@@ -251,71 +278,39 @@ int proc_send_vmpolicy_req(void * sub_proc,void * message,void * pointer)
 	if(ret<0)
 		return ret;
 	ret=proc_share_data_getvalue("proc_name",proc_name);
+
 	if(ret<0)
 		return ret;
-	printf("begin to send vmpolicy request!\n");
+	printf("begin send vm policy process!\n");
 
 	void * send_msg;
 	
+	*new_msg=NULL;
 
-	message_head=get_message_head(message);
-	if(message_head==NULL)
+	ret=message_get_record(message,&cmd,0);
+	if(ret<0)
 		return -EINVAL;
 
 		// monitor send a new vm message
 //	memset(vm,0,sizeof(struct vm_policy));
-	send_msg=message_create("REQC");
+  	vm = NULL;
+	FindPolicy(cmd->uuid,"VM_P",&vm);
+	if(vm==NULL)
+		return 0;
+	send_msg=message_create("VM_P");
 	if(send_msg==NULL)
 		return -EINVAL;
-    	cmd=(struct request_cmd *)malloc(sizeof(struct request_cmd));
-   	if(cmd==NULL)
-   	memset(cmd,0,sizeof(struct request_cmd));
-    	memcpy(cmd->tag,"VM_P",4);
-    	strncpy(cmd->uuid,vm_uuid,DIGEST_SIZE*2);
-        ret=message_add_record(send_msg,cmd);
-        sec_subject_sendmsg(sub_proc,send_msg);
-	return 0;
-}
-/*
-int process_monitor_vm(void * sub_proc,void * in, void * out)
-{
-	void * message;
-	MESSAGE_HEAD * message_head;
-	int record_size;
-	BYTE * blob;
-	int bloboffset;
-	int record_num;
-	int ret;
-	char local_uuid[DIGEST_SIZE*2];
-	struct tcloud_connector * policy_server_conn=(struct tcloud_connector *)server_conn;
-
-	// send init message to 
-	vm=GetFirstPolicy("VM_I");
-	while( vm != NULL)
+	message_add_record(send_msg,vm);
+	*new_msg=send_msg;
+	
+	send_msg=message_create("PCRP");
+	struct tcm_pcr_set * pcrpolicy;
+	FindPolicy(vm->boot_pcr_uuid,"PCRP",&pcrpolicy);
+	if(pcrpolicy!=NULL)
 	{
-		message=create_single_message_box(vm,"VM_I",local_uuid,local_uuid);
-		if(message==NULL)
-			return -EINVAL;
-		if(IS_ERR(message))
-			return -EINVAL;
-		record_size=output_message_blob(message,&blob);
-		ret=policy_server_conn->conn_ops->write(policy_server_conn,blob,record_size);
-		if(ret<=0)
-		{
-			printf("send vm message error!");
-		}
-		else
-		{
-			printf("send vm %s 's message to policy server!\n",vm->uuid);
-		}
-		message_free(message);
-		free(message);
-    		vm=GetNextPolicy("VM_I");
-	
+		message_add_record(send_msg,pcrpolicy);
+       		sec_subject_sendmsg(sub_proc,send_msg);
 	}
-	
-	monitor_vm_from_dbres(server_conn);
-	return 0;
-		
+	return;
 }
-*/
+

@@ -191,6 +191,7 @@ int proc_router_start(void * sub_proc,void * para)
 	char local_uuid[DIGEST_SIZE*2+1];
 	char proc_name[DIGEST_SIZE*2+1];
 	char receiver_uuid[DIGEST_SIZE*2+1];
+	char *isostr="\n************************************************************\n";
 	
 	ret=proc_share_data_getvalue("uuid",local_uuid);
 	ret=proc_share_data_getvalue("proc_name",proc_name);
@@ -266,6 +267,7 @@ int proc_router_start(void * sub_proc,void * para)
     			if(fd<0)
 	  			return -ENOENT;
 			write(fd,audit_text,ret+1);
+			write(fd,isostr,strlen(isostr));
 			close(fd);
 
 			router_rule=router_get_first_duprule(msg_policy);
