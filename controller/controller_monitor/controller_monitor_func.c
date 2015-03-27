@@ -54,8 +54,8 @@ int controller_monitor_init(void * proc,void * para)
 
 	MYSQL * mysql =&(main_pointer->my_connection);	
         mysql_init(mysql);
-//        if(!mysql_real_connect(mysql,"127.0.0.1","root","openstack",NULL,0,NULL,0))
-        if(!mysql_real_connect(mysql,"172.21.5.8","root","openstack",NULL,3306,NULL,0))
+         if(!mysql_real_connect(mysql,"127.0.0.1","root","openstack",NULL,0,NULL,0))
+//        if(!mysql_real_connect(mysql,"172.21.5.8","root","openstack",NULL,3306,NULL,0))
 //   if(!mysql_real_connect(&my_connection,"10.46.169.7","root","openstack",NULL,3306,NULL,0))
    	{
 		printf("CONNECTION FAILED\n");

@@ -122,6 +122,60 @@ static struct struct_elem_attr connect_ack_desc[]=
 
 static void * default_conn=NULL;
 
+struct tcloud_connector * hub_get_connector_byreceiver(void * hub, char * uuid, char * name, char * service)
+{
+	struct tcloud_connector * this_conn, *temp_conn;
+	
+	int new_fd;
+
+	temp_conn=hub_get_first_connector(hub);
+
+	while(temp_conn!=NULL)
+	{
+		this_conn=temp_conn;
+		temp_conn=hub_get_next_connector(hub);
+		
+		if(this_conn->conn_type==CONN_CHANNEL)
+		{
+			struct connect_proc_info * connect_extern_info;
+			connect_extern_info=(struct connect_proc_info *)(this_conn->conn_extern_info);
+			if(connect_extern_info==NULL)
+				continue;
+			if(uuid!=NULL)
+			{
+				if(strncmp(uuid,connect_extern_info->uuid,64)!=0)
+					continue;
+			}
+			if(name==NULL)
+				return this_conn;
+			if(strcmp(this_conn->conn_name,name)==0)
+				return this_conn;		
+		}
+		else if(this_conn->conn_type==CONN_CLIENT)
+		{
+			struct connect_syn * connect_extern_info;
+			connect_extern_info=(struct connect_syn *)(this_conn->conn_extern_info);
+			if(connect_extern_info==NULL)
+				continue;
+			if(uuid!=NULL)
+			{
+				if(strncmp(uuid,connect_extern_info->uuid,64)!=0)
+					continue;
+			}
+			if(name!=NULL)
+			{
+				if(strncmp(name,connect_extern_info->server_name,64)!=0)
+					continue;
+			}
+			if(service==NULL)
+				return this_conn;
+			if(strcmp(connect_extern_info->service,service)==0)
+				return this_conn;		
+
+		}
+	}
+	return NULL;
+}
 
 void * hub_get_connector_bypeeruuid(void * hub,char * uuid)
 {
@@ -148,10 +202,10 @@ void * hub_get_connector_bypeeruuid(void * hub,char * uuid)
 		}
 		else if(connector_get_type(conn)==CONN_CHANNEL)
 		{
-			struct connect_ack * ack_info=(struct connect_ack *)(conn->conn_extern_info);
-			if(ack_info!=NULL)
+			struct connect_proc_info * channel_info=(struct connect_ack *)(conn->conn_extern_info);
+			if(channel_info!=NULL)
 			{
-				comp_proc_uuid(ack_info->uuid,ack_info->client_name,conn_uuid);
+				comp_proc_uuid(channel_info->uuid,channel_info->proc_name,conn_uuid);
 				if(strncmp(conn_uuid,uuid,DIGEST_SIZE*2)==0)
 					break;
 			}
@@ -160,8 +214,6 @@ void * hub_get_connector_bypeeruuid(void * hub,char * uuid)
 		conn=hub_get_next_connector(hub);
 	}
 	return conn;
-
-	
 
 }
 
@@ -289,6 +341,7 @@ int connector_read_cfg(char * filename,void * hub)
     int ret;
     void * root;
     struct tcloud_connector_hub * conn_hub=(struct tcloud_connector_hub *)hub;
+    int i;
 
     FILE * fp = fopen(filename,"r");
     if(fp==NULL)
@@ -308,7 +361,7 @@ int connector_read_cfg(char * filename,void * hub)
                 fp=NULL;
             }
         }
-        printf("conn %d is %s\n",conn_num+1,buffer);
+        printf("conn %d is %.4s\n",conn_num+1,buffer);
 
         solve_offset=json_solve_str(&root,buffer);
         if(solve_offset<=0)
@@ -317,7 +370,7 @@ int connector_read_cfg(char * filename,void * hub)
 			return conn_num;
            	return -EINVAL;
 	}
-	
+
         ret=read_one_connector(&conn,root);
 
         if(ret<0)
@@ -327,7 +380,10 @@ int connector_read_cfg(char * filename,void * hub)
         buffer_left=read_offset-solve_offset;
         if(buffer_left>0)
 	{
-            memcpy(buffer,buffer+solve_offset,buffer_left);
+//	    printf( "3 left conn first char is %c\n",buffer[solve_offset]);
+//	    for(i=0;i<buffer_left;i++)
+//		buffer[i]=buffer[solve_offset+i];
+            Memcpy(buffer,buffer+solve_offset,buffer_left);
 	    buffer[buffer_left]=0;
 	}
         else
@@ -424,7 +480,7 @@ void * build_client_ack_message(void * message_box,char * local_uuid,char * proc
 	return message_box;
 }
 
-int receive_local_client_ack(void * message_box,void * conn)
+int receive_local_client_ack(void * message_box,void * conn,void * hub)
 {
 	MESSAGE_HEAD * message_head;
 	struct connect_ack  * client_ack;
@@ -456,6 +512,17 @@ int receive_local_client_ack(void * message_box,void * conn)
 		return -EINVAL;
 
 	channel_conn->conn_ops->setname(channel_conn,client_ack->client_name);
+
+	BYTE conn_uuid[DIGEST_SIZE*2];
+
+	comp_proc_uuid(client_ack->uuid,client_ack->client_process,conn_uuid);
+
+	TCLOUD_CONN * temp_conn=hub_get_connector_bypeeruuid(hub,conn_uuid);
+	if(temp_conn!=NULL)
+	{
+		((TCLOUD_CONN_HUB *)hub)->hub_ops->del_connector(hub,temp_conn);
+		temp_conn->conn_ops->disconnect(temp_conn);
+	}
 	
 	memcpy(channel_info->uuid,client_ack->uuid,DIGEST_SIZE*2);
 	channel_info->proc_name=dup_str(client_ack->client_process,0);
@@ -468,60 +535,6 @@ int receive_local_client_ack(void * message_box,void * conn)
 
 }
 
-struct tcloud_connector * hub_get_connector_byreceiver(void * hub, char * uuid, char * name, char * service)
-{
-	struct tcloud_connector * this_conn, *temp_conn;
-	
-	int new_fd;
-
-	temp_conn=hub_get_first_connector(hub);
-
-	while(temp_conn!=NULL)
-	{
-		this_conn=temp_conn;
-		temp_conn=hub_get_next_connector(hub);
-		
-		if(this_conn->conn_type==CONN_CHANNEL)
-		{
-			struct connect_proc_info * connect_extern_info;
-			connect_extern_info=(struct connect_proc_info *)(this_conn->conn_extern_info);
-			if(connect_extern_info==NULL)
-				continue;
-			if(uuid!=NULL)
-			{
-				if(strncmp(uuid,connect_extern_info->uuid,64)!=0)
-					continue;
-			}
-			if(name==NULL)
-				return this_conn;
-			if(strcmp(this_conn->conn_name,name)==0)
-				return this_conn;		
-		}
-		else if(this_conn->conn_type==CONN_CLIENT)
-		{
-			struct connect_syn * connect_extern_info;
-			connect_extern_info=(struct connect_syn *)(this_conn->conn_extern_info);
-			if(connect_extern_info==NULL)
-				continue;
-			if(uuid!=NULL)
-			{
-				if(strncmp(uuid,connect_extern_info->uuid,64)!=0)
-					continue;
-			}
-			if(name!=NULL)
-			{
-				if(strncmp(name,connect_extern_info->server_name,64)!=0)
-					continue;
-			}
-			if(service==NULL)
-				return this_conn;
-			if(strcmp(connect_extern_info->service,service)==0)
-				return this_conn;		
-
-		}
-	}
-	return NULL;
-}
 
 struct connector_proc_pointer
 {
@@ -584,8 +597,11 @@ int proc_conn_init(void * sub_proc,void * para)
 		{
   	 		ret=temp_conn->conn_ops->listen(temp_conn);
 			if(ret<0)
+			{
+				printf("conn server %s listen error!\n",connector_getname(temp_conn));
 				return -EINVAL;
-		printf("conn server %s begin to listen!\n",connector_getname(temp_conn));
+			}
+			printf("conn server %s begin to listen!\n",connector_getname(temp_conn));
 
 		}	
 		temp_conn=hub_get_next_connector(conn_hub);
@@ -637,13 +653,11 @@ int proc_conn_start(void * sub_proc,void * para)
 			for(i=0;i<180;i++)
 			{
    				ret=temp_conn->conn_ops->connect(temp_conn);
-				printf("waiting for %s connect to server %d times!\n",connector_getname(temp_conn),i);
-				if(retval>=0)
+				if(ret>=0)
 				{
-					printf("connector %s connect succeed! %s \n",connector_getname(temp_conn));
 					break;
 				}
-				sleep(1);
+				usleep(50);
 			}
 
 		}	
@@ -702,9 +716,11 @@ int proc_conn_start(void * sub_proc,void * para)
 				{
 
 
-					while(message_read_from_conn(&message_box,recv_conn)>0)
+					while((ret=message_read_from_conn(&message_box,recv_conn))>0)
 					{
+						printf("proc conn client receive %d data!\n",ret);
 
+						
 						message_head=get_message_head(message_box);
 						retval=message_load_record(message_box);
 						if(retval<0)
@@ -745,7 +761,7 @@ int proc_conn_start(void * sub_proc,void * para)
 						// first: finish the handshake
 						if(strncmp(message_head->record_type,"ACKI",4)==0)
 						{
-							ret=receive_local_client_ack(message_box,recv_conn);
+							ret=receive_local_client_ack(message_box,recv_conn,hub);
 							sec_subject_sendmsg(sub_proc,message_box);
 							printf("channel set name %s!\n",connector_getname(recv_conn));
 							continue;

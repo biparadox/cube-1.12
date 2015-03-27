@@ -129,7 +129,8 @@ int pcr_policy_memdb_init()
 	struct tcm_pcr_set * compute_boot_pcrs;
 	struct tcm_pcr_set * compute_running_pcrs;
 
-	build_compute_boot_pcrs("/dev/sda",hostname,&compute_boot_pcrs);
+//	build_compute_boot_pcrs("/dev/sda",hostname,&compute_boot_pcrs);
+	compute_boot_pcrs=NULL;
 	build_compute_running_pcrs("/dev/sda",hostname,&compute_running_pcrs);
 
 	ret=build_entity_policy(local_uuid,NULL,compute_boot_pcrs,compute_running_pcrs,hostname,&compute_policy);

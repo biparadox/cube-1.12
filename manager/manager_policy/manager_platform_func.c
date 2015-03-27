@@ -75,7 +75,21 @@ int manager_platform_start(void * sub_proc,void * para)
 		}
 		if(strncmp(msg_head->record_type,"PLAP",4)==0)
 		{
-			proc_store_platform_policy(sub_proc,recv_msg,NULL);
+			proc_store_platform_policy(sub_proc,recv_msg,&send_msg);
+			if((msg_head->flow & MSG_FLOW_RESPONSE) &&(send_msg!=NULL) )
+			{
+				void * flow_expand;
+				ret=message_remove_expand(recv_msg,"FTRE",&flow_expand);
+				if(flow_expand!=NULL) 
+				{
+					message_add_expand(send_msg,flow_expand);
+				}
+				else
+				{
+					set_message_head(send_msg,"receiver_uuid",msg_head->sender_uuid);
+				}
+			}
+			sec_subject_sendmsg(sub_proc,send_msg);
 		}
 		if(strncmp(msg_head->record_type,"REQC",4)==0)
 		{
@@ -175,7 +189,7 @@ int proc_store_platform(void * sub_proc,void * message,void * pointer)
 	return count;
 }
 
-int proc_store_platform_policy(void * sub_proc,void * message,void * pointer)
+int proc_store_platform_policy(void * sub_proc,void * message,void ** newmsg)
 {
 	MESSAGE_HEAD * message_head;
 	struct vm_policy * policy;
@@ -198,6 +212,7 @@ int proc_store_platform_policy(void * sub_proc,void * message,void * pointer)
 		// monitor send a new vm message
 //	memset(vm,0,sizeof(struct vm_policy));
   	policy = NULL;
+	newmsg=NULL;
 	for(i=0;i<MAX_RECORD_NUM;i++)
 	{
 		retval=message_get_record(message,&policy,i);
@@ -218,6 +233,9 @@ int proc_store_platform_policy(void * sub_proc,void * message,void * pointer)
 		// send a message to manager_trust
 	retval=ExportPolicyToFile("./lib/PLAP.lib","PLAP");
 		// add the p
+	message_head=get_message_head(message);
+	if(message_head->state & MSG_FLOW_RESPONSE)
+		*newmsg=message;
 
 	return count;
 }

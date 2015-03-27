@@ -59,8 +59,8 @@ int load_policy_pubek(char *pubek_name)
 void * test_login(char * username,char * passwd)
 {
 
-	char * user_list[] = {"zhangsongge","baixin","wangyubo","hujun",NULL};
-	char * passwd_list[] = {"openstack","openstack","openstack","openstack",NULL};
+	char * user_list[] = {"jinyiai","baixin","wangyubo","hujun",NULL};
+	char * passwd_list[] = {"windy","openstack","openstack","openstack",NULL};
 	struct connect_return  * return_data;
 	int i=0;
 	char errmsg[128];
