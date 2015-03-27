@@ -126,10 +126,11 @@ int monitor_process_start(void * sub_proc,void * para)
 	while( vm_policy != NULL)
 	{
 		message_add_record(message_box,vm_policy);
-		struct tcm_pcr_set * pcrs=FindPolicy(vm_policy->boot_pcr_uuid,"PCRP");
+		struct tcm_pcr_set * pcrs;
+		ret=FindPolicy(vm_policy->boot_pcr_uuid,"PCRP",&pcrs);
 		if(pcrs!=NULL)
 			message_add_record(send_msg,pcrs);
-		pcrs=FindPolicy(vm_policy->runtime_pcr_uuid,"PCRP");
+		ret=FindPolicy(vm_policy->runtime_pcr_uuid,"PCRP",pcrs);
 		if(pcrs!=NULL)
 			message_add_record(send_msg,pcrs);
 		vm_policy=GetNextPolicy("IMGP");
