@@ -60,7 +60,7 @@ int monitor_process_start(void * sub_proc,void * para)
 		return ret;
 
 	printf("begin compute monitor process!\n");
-//	proc_send_compute_localinfo(sub_proc,"manager_policy");
+	proc_send_compute_localinfo(sub_proc,NULL,NULL);
 //	printf("send compute %s 's local information to manager_policy !\n",hostname);
 	proc_send_computepolicy(sub_proc,message_box,NULL);
 

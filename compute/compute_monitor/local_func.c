@@ -63,28 +63,19 @@ int proc_send_compute_localinfo(void * sub_proc,void * message,void * para)
 	int  ret;
 	MESSAGE_HEAD * message_head;
     	struct platform_info * platform;
-	message_head=get_message_head(message);
-	if(message_head==NULL)
-		return -EINVAL;	
+	
 	ret=proc_share_data_getvalue("uuid",local_uuid);
-	if(ret<0)
-		return ret;
-	ret=proc_share_data_getvalue("proc_name",proc_name);
-	if(ret<0)
-		return ret;
-	ret=proc_share_data_getvalue("hostname",hostname);
 	if(ret<0)
 		return ret;
 
 	printf("begin send %s localinfo!\n",hostname);
 
-	ret=message_get_record(message,&platform,0);
+	ret=FindPolicy(local_uuid,"PLAI",&platform);
 	if(ret<0)
-		return -EINVAL;
+		return ret;
 	if(platform==NULL)
 		return -EINVAL;
 
-    	memcpy(platform->uuid,local_uuid,DIGEST_SIZE*2);
 	void * send_msg;
 	send_msg=message_create("PLAI");
 	message_add_record(send_msg,platform);

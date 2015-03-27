@@ -49,6 +49,7 @@ int compute_monitor_init(void * proc,void * para);
 int image_policy_memdb_init();
 int vm_policy_memdb_init();
 int platform_policy_memdb_init();
+int platform_info_memdb_init();
 int pcr_policy_memdb_init();
 int file_policy_memdb_init();
 

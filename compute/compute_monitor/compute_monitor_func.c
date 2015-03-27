@@ -109,6 +109,35 @@ int platform_policy_memdb_init()
 {
 	return 0;
 }
+int platform_info_memdb_init()
+{
+	int ret;
+	char local_uuid[DIGEST_SIZE*2+1];
+	char proc_name[DIGEST_SIZE*2+1];
+	char hostname[DIGEST_SIZE*2+1];
+	struct platform_info * platform;
+	ret=proc_share_data_getvalue("uuid",local_uuid);
+	if(ret<0)
+		return ret;
+	ret=proc_share_data_getvalue("proc_name",proc_name);
+	if(ret<0)
+		return ret;
+	ret=proc_share_data_getvalue("hostname",hostname);
+	if(ret<0)
+		return ret;
+
+	platform = malloc(sizeof(struct platform_info));
+	if(platform==NULL)
+		return -ENOMEM;
+	memset(platform,0,sizeof(struct platform_info));
+	Memcpy(platform->uuid,local_uuid,DIGEST_SIZE*2);
+	platform->name=dup_str(hostname,DIGEST_SIZE*2);
+
+	AddPolicy(platform,"PLAI");
+	ExportPolicy("PLAI");
+
+	return 0;
+}
 int pcr_policy_memdb_init()
 {
 	int ret;
