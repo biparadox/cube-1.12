@@ -237,7 +237,7 @@ int proc_router_start(void * sub_proc,void * para)
 			if(ret<0)
 			{
 				message_free(message);
-				return -EINVAL;
+				continue;
 			}
 			if(msg_policy==NULL)
 			{
