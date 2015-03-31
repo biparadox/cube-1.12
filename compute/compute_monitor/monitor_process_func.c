@@ -44,6 +44,9 @@ int monitor_process_start(void * sub_proc,void * para)
 	int retval;
 	void * message_box;
 	void * context;
+	void * recv_msg;
+	void * send_msg;
+	struct tcloud_connector * temp_conn;
 	int i;
 
 	char local_uuid[DIGEST_SIZE*2+1];
@@ -62,36 +65,60 @@ int monitor_process_start(void * sub_proc,void * para)
 	printf("begin compute monitor process!\n");
 	proc_send_compute_localinfo(sub_proc,NULL,NULL);
 //	printf("send compute %s 's local information to manager_policy !\n",hostname);
-	proc_send_computepolicy(sub_proc,message_box,NULL);
+//	proc_send_computepolicy(sub_proc,NULL,NULL);
 
 	for(i=0;i<3000*1000;i++)
 	{
 		usleep(time_val.tv_usec);
-		ret=sec_subject_recvmsg(sub_proc,&message_box);
+		ret=sec_subject_recvmsg(sub_proc,&recv_msg);
 		if(ret<0)
 			continue;
-		if(message_box==NULL)
+		if(recv_msg==NULL)
 			continue;
 		MESSAGE_HEAD * msg_head;
-		msg_head=get_message_head(message_box);
+		msg_head=get_message_head(recv_msg);
 		if(msg_head==NULL)
 			continue;
 		if(strncmp(msg_head->record_type,"PLAI",4)==0)
 		{
-			proc_send_compute_localinfo(sub_proc,message_box,NULL);
+			proc_send_compute_localinfo(sub_proc,recv_msg,NULL);
 		}
 		if(strncmp(msg_head->record_type,"VM_I",4)==0)
 		{
-			proc_compute_vmpolicy(sub_proc,message_box,NULL);
+			proc_compute_vmpolicy(sub_proc,recv_msg,NULL);
 		}
 		if(strncmp(msg_head->record_type,"REQC",4)==0)
 		{
+
 			struct request_cmd * cmd;
-			ret=message_get_record(message_box,&cmd,0);
+			ret=message_get_record(recv_msg,&cmd,0);
 			if(strncmp(cmd->tag,"VM_P",4)==0)
-				proc_send_vmpolicy(sub_proc,message_box,NULL);
+			{
+				proc_send_vmpolicy(sub_proc,recv_msg,&send_msg);
+			}
 			else if(strncmp(cmd->tag,"PLAP",4)==0)
-				proc_send_computepolicy(sub_proc,message_box,NULL);
+			{
+				proc_send_computepolicy(sub_proc,recv_msg,&send_msg);
+			}
+			else
+				continue;
+				
+			if(msg_head->flow & MSG_FLOW_RESPONSE)
+			{
+				void * flow_expand;
+				ret=message_remove_expand(recv_msg,"FTRE",&flow_expand);
+				if(flow_expand!=NULL) 
+				{
+					message_add_expand(send_msg,flow_expand);
+				}
+				else
+				{
+					set_message_head(send_msg,"receiver_uuid",msg_head->sender_uuid);
+				}
+
+			}
+			sec_subject_sendmsg(sub_proc,send_msg);
+			printf("send message succeed!\n");
 		}
 	}
 	printf("compute monitor process finished!\n");
@@ -137,7 +164,7 @@ int proc_compute_vmpolicy(void * sub_proc,void * message,void * pointer)
 
 }
 
-int proc_send_vmpolicy(void * sub_proc,void * message,void * pointer)
+int proc_send_vmpolicy(void * sub_proc,void * message,void ** pointer)
 {
 	MESSAGE_HEAD * message_head;
 	struct request_cmd * cmd;
@@ -185,7 +212,7 @@ int proc_send_vmpolicy(void * sub_proc,void * message,void * pointer)
 
 	send_msg=message_create("VM_P");
 	message_add_record(send_msg,policy);
-	sec_subject_sendmsg(sub_proc,send_msg);
+	*pointer=send_msg;
 	return 0;
 }
 int proc_send_computepolicy(void * sub_proc,void * message,void ** new_msg)
@@ -240,6 +267,7 @@ int proc_send_computepolicy(void * sub_proc,void * message,void ** new_msg)
 	// send compute node's  platform policy
 	send_msg=message_create("PLAP");
 	message_add_record(send_msg,compute_policy);
-	sec_subject_sendmsg(sub_proc,send_msg);
+	*new_msg=send_msg;
+
 	return 0;
 }
