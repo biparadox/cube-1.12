@@ -722,9 +722,6 @@ int proc_conn_start(void * sub_proc,void * para)
 
 						
 						message_head=get_message_head(message_box);
-						retval=message_load_record(message_box);
-						if(retval<0)
-						continue;
 
 						if(strncmp(message_head->record_type,"SYNI",4)==0)
 						// do the handshake	
