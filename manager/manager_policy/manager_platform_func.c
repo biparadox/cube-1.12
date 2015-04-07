@@ -20,6 +20,7 @@
 #include "../include/logic_baselib.h"
 #include "../include/connector.h"
 #include "../include/sec_entity.h"
+#include "../include/policy_ui.h"
 
 #include "cloud_config.h"
 #include "manager_vm_func.h"
@@ -153,6 +154,7 @@ int proc_store_platform(void * sub_proc,void * message,void * pointer)
 
 		// monitor send a new vm message
   	platform = NULL;
+	int ifuuidempty=0;
 	for(i=0;i<MAX_RECORD_NUM;i++)
 	{
 		retval=message_get_record(message,&platform,i);
@@ -161,27 +163,33 @@ int proc_store_platform(void * sub_proc,void * message,void * pointer)
 		if(platform==NULL)
 			break;
 		struct platform_info * oldplatform;
+		
 		printf("policy server receive platform  %s's info from monitor!\n",platform->uuid);
 		if(platform->uuid[0]!=0)
 		{
+			ifuuidempty=1;
 			FindPolicy(platform->uuid,"PLAI",&oldplatform);
 			if(oldplatform!=NULL)
 			{
 				printf("this platform already in the PLAI lib!\n");
 				continue;
 			}
-			oldplatform=GetFirstPolicy("PLAI");
-			while(oldplatform!=NULL)
-			{
-				if(!strncmp(oldplatform->name,platform->name,DIGEST_SIZE*2))
-				{
-					strncpy(oldplatform->uuid,platform->uuid,DIGEST_SIZE*2);
-					break;
-				}
-				oldplatform=GetNextPolicy("PLAI");
-			}			
 		}
-		AddPolicy(platform,"PLAI");
+		else
+			ifuuidempty=0;
+		oldplatform=GetFirstPolicy("PLAI");
+		while(oldplatform!=NULL)
+		{
+			if(!strncmp(oldplatform->name,platform->name,DIGEST_SIZE*2))
+			{
+				if(ifuuidempty==1)
+					strncpy(oldplatform->uuid,platform->uuid,DIGEST_SIZE*2);
+				break;
+			}
+			oldplatform=GetNextPolicy("PLAI");
+		}
+		if(oldplatform==NULL)
+			AddPolicy(platform,"PLAI");
 	}
 		// send a message to manager_trust
 	retval=ExportPolicyToFile("./lib/PLAI.lib","PLAI");

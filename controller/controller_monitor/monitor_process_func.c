@@ -44,6 +44,9 @@ int monitor_process_start(void * sub_proc,void * para)
 	int retval;
 	void * message_box;
 	void * context;
+	void * recv_msg;
+	void * send_msg;
+	struct tcloud_connector * temp_conn;
 	int i;
 
 	char local_uuid[DIGEST_SIZE*2+1];
@@ -115,6 +118,7 @@ int monitor_process_start(void * sub_proc,void * para)
 	// begin monitor
 	struct vm_policy * vm_policy;
 	
+/*
 	message_box=message_create("IMGP");
 	if(message_box==NULL)
 		return -EINVAL;
@@ -138,56 +142,51 @@ int monitor_process_start(void * sub_proc,void * para)
 	// send init message
 	sec_subject_sendmsg(sub_proc,message_box);
 	sec_subject_sendmsg(sub_proc,send_msg);
-
-	for(i=0;i<300*1000;i++)
+*/
+	for(i=0;i<3000*1000;i++)
 	{
 		usleep(time_val.tv_usec);
-	}
-	return 0;
-}
-/*
-int process_monitor_vm(void * sub_proc,void * in, void * out)
-{
-	void * message;
-	MESSAGE_HEAD * message_head;
-	int record_size;
-	BYTE * blob;
-	int bloboffset;
-	int record_num;
-	int ret;
-	char local_uuid[DIGEST_SIZE*2];
-	struct tcloud_connector * policy_server_conn=(struct tcloud_connector *)server_conn;
+		ret=sec_subject_recvmsg(sub_proc,&recv_msg);
+		if(ret<0)
+			continue;
+		if(recv_msg==NULL)
+			continue;
+		MESSAGE_HEAD * msg_head;
+		msg_head=get_message_head(recv_msg);
+		if(msg_head==NULL)
+			continue;
+		if(strncmp(msg_head->record_type,"REQC",4)==0)
+		{
 
-	// send init message to 
-	vm=GetFirstPolicy("VM_I");
-	while( vm != NULL)
-	{
-		message=create_single_message_box(vm,"VM_I",local_uuid,local_uuid);
-		if(message==NULL)
-			return -EINVAL;
-		if(IS_ERR(message))
-			return -EINVAL;
-		record_size=output_message_blob(message,&blob);
-		ret=policy_server_conn->conn_ops->write(policy_server_conn,blob,record_size);
-		if(ret<=0)
-		{
-			printf("send vm message error!");
+			struct request_cmd * cmd;
+			ret=message_get_record(recv_msg,&cmd,0);
+			if(strncmp(cmd->tag,"IMGP",4)==0)
+			{
+				proc_send_imagepolicy(sub_proc,recv_msg,&send_msg);
+			}
+			else
+				continue;
+				
+			if(msg_head->flow & MSG_FLOW_RESPONSE)
+			{
+				void * flow_expand;
+				ret=message_remove_expand(recv_msg,"FTRE",&flow_expand);
+				if(flow_expand!=NULL) 
+				{
+					message_add_expand(send_msg,flow_expand);
+				}
+				else
+				{
+					set_message_head(send_msg,"receiver_uuid",msg_head->sender_uuid);
+				}
+
+			}
+			sec_subject_sendmsg(sub_proc,send_msg);
+			printf("send message succeed!\n");
 		}
-		else
-		{
-			printf("send vm %s 's message to policy server!\n",vm->uuid);
-		}
-		message_free(message);
-		free(message);
-    		vm=GetNextPolicy("VM_I");
-	
 	}
-	
-	monitor_vm_from_dbres(server_conn);
 	return 0;
-		
 }
-*/
 
 int process_monitor_image(void * sub_proc,void * para)
 {
@@ -587,4 +586,56 @@ int monitor_image_from_dbres(void * sub_proc)
 	}
 	mysql_close(&my_connection);
         return 1;
+}
+
+int proc_send_imagepolicy(void * sub_proc,void * message,void ** pointer)
+{
+	MESSAGE_HEAD * message_head;
+	struct request_cmd * cmd;
+	struct vm_policy * policy;
+	int retval;
+	int count=0;
+	int i,j;
+	int ret;
+
+	char local_uuid[DIGEST_SIZE*2+1];
+	char proc_name[DIGEST_SIZE*2+1];
+
+	printf("begin to send vmpolicy!\n");
+
+	ret=proc_share_data_getvalue("uuid",local_uuid);
+	if(ret<0)
+		return ret;
+	ret=proc_share_data_getvalue("proc_name",proc_name);
+	if(ret<0)
+		return ret;
+
+	message_head=get_message_head(message);
+
+	// get  vm info from message
+	retval=message_get_record(message,&cmd,0);
+	if(retval<0)
+		return -EINVAL;
+
+	struct tcm_pcr_set * boot_pcrs;
+	struct tcm_pcr_set * running_pcrs;
+	ret=build_glance_image_policy(cmd->uuid,&boot_pcrs, &running_pcrs,&policy);
+	if(policy==NULL)
+		return -EEXIST;
+	ExportPolicy("IMGP");	
+	
+	void * send_pcr_msg;
+	void * send_msg;
+	// send compute node's pcr policy
+	send_pcr_msg=message_create("PCRP");
+	message_add_record(send_pcr_msg,boot_pcrs);
+	if(running_pcrs!=NULL)
+		message_add_record(send_pcr_msg,running_pcrs);
+		
+	sec_subject_sendmsg(sub_proc,send_pcr_msg);
+
+	send_msg=message_create("IMGP");
+	message_add_record(send_msg,policy);
+	*pointer=send_msg;
+	return 0;
 }
