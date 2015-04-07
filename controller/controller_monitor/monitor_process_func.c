@@ -601,7 +601,7 @@ int proc_send_imagepolicy(void * sub_proc,void * message,void ** pointer)
 	char local_uuid[DIGEST_SIZE*2+1];
 	char proc_name[DIGEST_SIZE*2+1];
 
-	printf("begin to send vmpolicy!\n");
+	printf("begin to send imagepolicy!\n");
 
 	ret=proc_share_data_getvalue("uuid",local_uuid);
 	if(ret<0)
