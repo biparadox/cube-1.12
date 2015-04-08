@@ -244,8 +244,8 @@ int proc_send_computepolicy(void * sub_proc,void * message,void ** new_msg)
 	struct tcm_pcr_set * compute_boot_pcrs;
 	struct tcm_pcr_set * compute_running_pcrs;
 
-	build_compute_boot_pcrs("/dev/sda1",hostname,&compute_boot_pcrs);
-	build_compute_running_pcrs("/dev/sda1",hostname,&compute_running_pcrs);
+	build_compute_boot_pcrs("/dev/sda",hostname,&compute_boot_pcrs);
+	build_compute_running_pcrs("/dev/sda",hostname,&compute_running_pcrs);
 
 	ret=build_entity_policy(local_uuid,NULL,compute_boot_pcrs,compute_running_pcrs,hostname,&compute_policy);
 	if(compute_policy==NULL)
