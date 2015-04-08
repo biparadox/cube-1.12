@@ -90,7 +90,7 @@ int main(int argc,char * argv[])
 
    record=GetFirstPolicy(argv[1]);
    int offset=0;
-   if(record!=NULL)
+   while(record!=NULL)
    {
 
 	   ret=struct_2_json(record,audit_text,struct_template,&offset);
