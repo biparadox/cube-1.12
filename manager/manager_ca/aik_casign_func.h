@@ -24,9 +24,7 @@ static NAME2VALUE aik_state_list[]=
 	{NULL,0}
 };
 
-int proc_aik_request(void * sub_proc,void * message,void * pointer);
-int proc_aik_activate(void * sub_proc,void * message,void * pointer);
-int proc_aik_casign(void * sub_proc,void * recv_msg,void ** send_msg);
+int proc_aik_casign(void * sub_proc,void * recv_msg);
 
 static NAME2POINTER aik_casign_func[]=
 {

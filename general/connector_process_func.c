@@ -416,7 +416,7 @@ void * build_server_syn_message(char * service,char * local_uuid,char * proc_nam
 
 	if(service!=NULL)
 		server_syn->service=dup_str(service,0);
-	message_box=message_create("SYNI");
+	message_box=message_create("SYNI",NULL);
 	if(message_box==NULL)
 		return -EINVAL;
 	if(IS_ERR(message_box))
@@ -438,6 +438,7 @@ void * build_client_ack_message(void * message_box,char * local_uuid,char * proc
 	int record_size;
 	void * blob;
 	struct tcloud_connector * temp_conn=conn;
+	void * new_msg;
 
 	client_ack=malloc(sizeof(struct connect_ack));
 	if(client_ack==NULL)
@@ -469,15 +470,12 @@ void * build_client_ack_message(void * message_box,char * local_uuid,char * proc
 	client_ack->flags=server_syn->flags;
 	strncpy(client_ack->nonce,server_syn->nonce,DIGEST_SIZE);
 
-	message_box=message_create("ACKI");
-	if(message_box==NULL)
-		return -EINVAL;
-	if(IS_ERR(message_box))
+	new_msg=message_create("ACKI",message_box);
+	if(new_msg==NULL)
 		return -EINVAL;
 
-	retval=message_add_record(message_box,client_ack);
-	printf("create a client ack message!\n");
-	return message_box;
+	retval=message_add_record(new_msg,client_ack);
+	return new_msg;
 }
 
 int receive_local_client_ack(void * message_box,void * conn,void * hub)

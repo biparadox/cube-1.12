@@ -176,7 +176,7 @@ int proc_ca_verify(void * sub_proc,void * message,void ** send_msg)
 		return -EINVAL;
 
 	struct message_box * new_msg;
-	new_msg=message_create("RETC");
+	new_msg=message_create("RETC",message);
 //  	if(IS_ERR(new_msg_box))
   //  		     return -EINVAL;
 	message_add_record(new_msg,return_data);

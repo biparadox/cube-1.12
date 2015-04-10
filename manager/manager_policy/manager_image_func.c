@@ -40,14 +40,13 @@ int manager_image_start(void * sub_proc,void * para)
 {
 	int ret;
 	int retval;
-	void * message_box;
 	void * context;
 	int i;
 	void * recv_msg;
-	void * send_msg;
 
 	char local_uuid[DIGEST_SIZE*2+1];
 	char proc_name[DIGEST_SIZE*2+1];
+	const char * type;
 	
 	ret=proc_share_data_getvalue("uuid",local_uuid);
 	if(ret<0)
@@ -66,23 +65,22 @@ int manager_image_start(void * sub_proc,void * para)
 			continue;
 		if(recv_msg==NULL)
 			continue;
-		MESSAGE_HEAD * msg_head;
-		msg_head=get_message_head(recv_msg);
-		if(msg_head==NULL)
+		type=message_get_recordtype(recv_msg);
+		if(type==NULL)
 			continue;
-		if(strncmp(msg_head->record_type,"IMGI",4)==0)
+		if(strncmp(type,"IMGI",4)==0)
 		{
-			proc_store_image(sub_proc,recv_msg,NULL);
+			proc_store_image(sub_proc,recv_msg);
 		}
-		if(strncmp(msg_head->record_type,"IMGP",4)==0)
+		if(strncmp(type,"IMGP",4)==0)
 		{
-			proc_store_image_policy(sub_proc,recv_msg,NULL);
+			proc_store_image_policy(sub_proc,recv_msg);
 		}
-		if(strncmp(msg_head->record_type,"PCRP",4)==0)
+		if(strncmp(type,"PCRP",4)==0)
 		{
-			proc_store_pcr_policy(sub_proc,recv_msg,NULL);
+			proc_store_pcr_policy(sub_proc,recv_msg);
 		}
-		if(strncmp(msg_head->record_type,"REQC",4)==0)
+		if(strncmp(type,"REQC",4)==0)
 		{
 			struct request_cmd * req;
 			ret=message_get_record(recv_msg,&req,0);
@@ -93,39 +91,11 @@ int manager_image_start(void * sub_proc,void * para)
 			}
 			if(strncmp(req->tag,"IMGI",4)==0)
 			{
-				proc_send_image_info(sub_proc,recv_msg,&send_msg);
-				if((msg_head->flow & MSG_FLOW_RESPONSE) &&(send_msg!=NULL) )
-				{
-					void * flow_expand;
-					ret=message_remove_expand(recv_msg,"FTRE",&flow_expand);
-					if(flow_expand!=NULL) 
-					{
-						message_add_expand(send_msg,flow_expand);
-					}
-					else
-					{
-						set_message_head(send_msg,"receiver_uuid",msg_head->sender_uuid);
-					}
-				}
-				sec_subject_sendmsg(sub_proc,send_msg);
+				proc_send_image_info(sub_proc,recv_msg);
 			}
 			else if(strncmp(req->tag,"IMGP",4)==0)
 			{
-				proc_send_image_policy(sub_proc,recv_msg,&send_msg);
-				if((msg_head->flow & MSG_FLOW_RESPONSE) &&(send_msg!=NULL) )
-				{
-					void * flow_expand;
-					ret=message_remove_expand(recv_msg,"FTRE",&flow_expand);
-					if(flow_expand!=NULL) 
-					{
-						message_add_expand(send_msg,flow_expand);
-					}
-					else
-					{
-						set_message_head(send_msg,"receiver_uuid",msg_head->sender_uuid);
-					}
-				}
-        			sec_subject_sendmsg(sub_proc,send_msg);
+				proc_send_image_policy(sub_proc,recv_msg);
 			}
 		}
 	}
@@ -134,7 +104,7 @@ int manager_image_start(void * sub_proc,void * para)
 }
 #define MAX_RECORD_NUM 100
 
-int proc_store_image(void * sub_proc,void * message,void * pointer)
+int proc_store_image(void * sub_proc,void * message)
 {
 	MESSAGE_HEAD * message_head;
 	struct image_info * image;
@@ -168,7 +138,7 @@ int proc_store_image(void * sub_proc,void * message,void * pointer)
 	return count;
 }
 
-int proc_store_image_policy(void * sub_proc,void * message,void * pointer)
+int proc_store_image_policy(void * sub_proc,void * message)
 {
 	MESSAGE_HEAD * message_head;
 	struct vm_policy * image;
@@ -214,7 +184,7 @@ int proc_store_image_policy(void * sub_proc,void * message,void * pointer)
 	return count;
 }
 
-int proc_store_pcr_policy(void * sub_proc,void * message,void * pointer)
+int proc_store_pcr_policy(void * sub_proc,void * message)
 {
 	MESSAGE_HEAD * message_head;
 	struct tcm_pcr_set * pcrs;
@@ -259,7 +229,7 @@ int proc_store_pcr_policy(void * sub_proc,void * message,void * pointer)
 	return count;
 }
 
-int proc_send_image_info(void * sub_proc,void * message,void ** new_msg)
+int proc_send_image_info(void * sub_proc,void * message)
 {
 	MESSAGE_HEAD * message_head;
 	struct image_info * image;
@@ -290,7 +260,7 @@ int proc_send_image_info(void * sub_proc,void * message,void ** new_msg)
 //	memset(vm,0,sizeof(struct vm_policy));
 
 	image=NULL;
-	send_msg=message_create("IMGI");
+	send_msg=message_create("IMGI",message);
 	if(send_msg==NULL)
 		return -EINVAL;
 	image=GetFirstPolicy("IMGI");
@@ -299,11 +269,11 @@ int proc_send_image_info(void * sub_proc,void * message,void ** new_msg)
 		message_add_record(send_msg,image);
 		image=GetNextPolicy("IMGI");
 	}
-	*new_msg=send_msg;
+	sec_subject_sendmsg(sub_proc,send_msg);
 	
 	return;
 }
-int proc_send_image_policy(void * sub_proc,void * message,void ** new_msg)
+int proc_send_image_policy(void * sub_proc,void * message)
 {
 	MESSAGE_HEAD * message_head;
 	struct request_cmd * cmd;
@@ -326,9 +296,8 @@ int proc_send_image_policy(void * sub_proc,void * message,void ** new_msg)
 	printf("begin image send image policy process!\n");
 
 	void * send_msg;
+	void * send_pcr_msg;
 	
-	*new_msg=NULL;
-
 	message_head=get_message_head(message);
 	if(message_head==NULL)
 		return -EINVAL;
@@ -342,24 +311,24 @@ int proc_send_image_policy(void * sub_proc,void * message,void ** new_msg)
 	FindPolicy(cmd->uuid,"IMGP",&image_policy);
 	if( image_policy == NULL)
 		return 0;
-	send_msg=message_create("IMGP");
+	send_msg=message_create("IMGP",message);
 	if(send_msg==NULL)
 		return -EINVAL;
 	message_add_record(send_msg,image_policy);
-	*new_msg=send_msg;
+	sec_subject_sendmsg(sub_proc,send_msg);
 
-	send_msg=message_create("PCRP");
-	if(send_msg==NULL)
+	send_pcr_msg=message_create("PCRP",message);
+	if(send_pcr_msg==NULL)
 		return -EINVAL;
 	FindPolicy(image_policy->boot_pcr_uuid,"PCRP",&pcrs);
 	if(pcrs!=NULL)
-		message_add_record(send_msg,pcrs);
+		message_add_record(send_pcr_msg,pcrs);
 	FindPolicy(image_policy->runtime_pcr_uuid,"PCRP",&pcrs);
 	if(pcrs!=NULL)
-		message_add_record(send_msg,pcrs);
-
-	sec_subject_sendmsg(sub_proc,send_msg);
-	usleep(100);	
+	{
+		message_add_record(send_pcr_msg,pcrs);
+		sec_subject_sendmsg(sub_proc,send_pcr_msg);
+	}
 
 	return;
 }

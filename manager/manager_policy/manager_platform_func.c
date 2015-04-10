@@ -40,14 +40,13 @@ int manager_platform_start(void * sub_proc,void * para)
 {
 	int ret;
 	int retval;
-	void * message_box;
 	void * context;
 	int i;
 	void * recv_msg;
-	void * send_msg;
 
 	char local_uuid[DIGEST_SIZE*2+1];
 	char proc_name[DIGEST_SIZE*2+1];
+	const char * type;
 	
 	ret=proc_share_data_getvalue("uuid",local_uuid);
 	if(ret<0)
@@ -66,33 +65,18 @@ int manager_platform_start(void * sub_proc,void * para)
 			continue;
 		if(recv_msg==NULL)
 			continue;
-		MESSAGE_HEAD * msg_head;
-		msg_head=get_message_head(recv_msg);
-		if(msg_head==NULL)
+		type=message_get_recordtype(recv_msg);
+		if(type==NULL)
 			continue;
-		if(strncmp(msg_head->record_type,"PLAI",4)==0)
+		if(strncmp(type,"PLAI",4)==0)
 		{
-			proc_store_platform(sub_proc,recv_msg,NULL);
+			proc_store_platform(sub_proc,recv_msg);
 		}
-		if(strncmp(msg_head->record_type,"PLAP",4)==0)
+		if(strncmp(type,"PLAP",4)==0)
 		{
-			proc_store_platform_policy(sub_proc,recv_msg,&send_msg);
-			if((msg_head->flow & MSG_FLOW_RESPONSE) &&(send_msg!=NULL) )
-			{
-				void * flow_expand;
-				ret=message_remove_expand(recv_msg,"FTRE",&flow_expand);
-				if(flow_expand!=NULL) 
-				{
-					message_add_expand(send_msg,flow_expand);
-				}
-				else
-				{
-					set_message_head(send_msg,"receiver_uuid",msg_head->sender_uuid);
-				}
-			}
-			sec_subject_sendmsg(sub_proc,send_msg);
+			proc_store_platform_policy(sub_proc,recv_msg);
 		}
-		if(strncmp(msg_head->record_type,"REQC",4)==0)
+		if(strncmp(type,"REQC",4)==0)
 		{
 			struct request_cmd * req;
 			ret=message_get_record(recv_msg,&req,0);
@@ -103,39 +87,11 @@ int manager_platform_start(void * sub_proc,void * para)
 			}
 			if(strncmp(req->tag,"PLAI",4)==0)
 			{
-				proc_send_platform_info(sub_proc,recv_msg,&send_msg);
-				if((msg_head->flow & MSG_FLOW_RESPONSE) &&(send_msg!=NULL) )
-				{
-					void * flow_expand;
-					ret=message_remove_expand(recv_msg,"FTRE",&flow_expand);
-					if(flow_expand!=NULL) 
-					{
-						message_add_expand(send_msg,flow_expand);
-					}
-					else
-					{
-						set_message_head(send_msg,"receiver_uuid",msg_head->sender_uuid);
-					}
-				}
-				sec_subject_sendmsg(sub_proc,send_msg);
+				proc_send_platform_info(sub_proc,recv_msg);
 			}
 			else if(strncmp(req->tag,"PLAP",4)==0)
 			{
-				proc_send_platform_policy(sub_proc,recv_msg,&send_msg);
-				if((msg_head->flow & MSG_FLOW_RESPONSE) &&(send_msg!=NULL) )
-				{
-					void * flow_expand;
-					ret=message_remove_expand(recv_msg,"FTRE",&flow_expand);
-					if(flow_expand!=NULL) 
-					{
-						message_add_expand(send_msg,flow_expand);
-					}
-					else
-					{
-						set_message_head(send_msg,"receiver_uuid",msg_head->sender_uuid);
-					}
-				}
-        			sec_subject_sendmsg(sub_proc,send_msg);
+				proc_send_platform_policy(sub_proc,recv_msg);
 			}
 		}
 	}
@@ -144,7 +100,7 @@ int manager_platform_start(void * sub_proc,void * para)
 }
 #define MAX_RECORD_NUM 100
 
-int proc_store_platform(void * sub_proc,void * message,void * pointer)
+int proc_store_platform(void * sub_proc,void * message)
 {
 	MESSAGE_HEAD * message_head;
 	struct platform_info * platform;
@@ -197,7 +153,7 @@ int proc_store_platform(void * sub_proc,void * message,void * pointer)
 	return count;
 }
 
-int proc_store_platform_policy(void * sub_proc,void * message,void ** newmsg)
+int proc_store_platform_policy(void * sub_proc,void * message)
 {
 	MESSAGE_HEAD * message_head;
 	struct vm_policy * policy;
@@ -218,9 +174,7 @@ int proc_store_platform_policy(void * sub_proc,void * message,void ** newmsg)
 	printf("begin platform policy process!\n");
 
 		// monitor send a new vm message
-//	memset(vm,0,sizeof(struct vm_policy));
   	policy = NULL;
-	newmsg=NULL;
 	for(i=0;i<MAX_RECORD_NUM;i++)
 	{
 		retval=message_get_record(message,&policy,i);
@@ -241,14 +195,11 @@ int proc_store_platform_policy(void * sub_proc,void * message,void ** newmsg)
 		// send a message to manager_trust
 	retval=ExportPolicyToFile("./lib/PLAP.lib","PLAP");
 		// add the p
-	message_head=get_message_head(message);
-	if(message_head->state & MSG_FLOW_RESPONSE)
-		*newmsg=message;
 
 	return count;
 }
 
-int proc_send_platform_info(void * sub_proc,void * message,void ** new_msg)
+int proc_send_platform_info(void * sub_proc,void * message)
 {
 	MESSAGE_HEAD * message_head;
 	struct platform_info * platform;
@@ -271,14 +222,10 @@ int proc_send_platform_info(void * sub_proc,void * message,void ** new_msg)
 	void * send_msg;
 	
 
-	message_head=get_message_head(message);
-	if(message_head==NULL)
-		return -EINVAL;
-
 		// monitor send a new vm message
 //	memset(vm,0,sizeof(struct vm_policy));
   	platform = NULL;
-	send_msg=message_create("PLAI");
+	send_msg=message_create("PLAI",message);
 	if(send_msg==NULL)
 		return -EINVAL;
 	platform=GetFirstPolicy("PLAI");
@@ -287,15 +234,13 @@ int proc_send_platform_info(void * sub_proc,void * message,void ** new_msg)
 		message_add_record(send_msg,platform);
     		platform=GetNextPolicy("PLAI");
 	}
-	*new_msg=send_msg;
-
+	sec_subject_sendmsg(sub_proc,send_msg);
 	
 	return;
 }
 
-int proc_send_platform_policy(void * sub_proc,void * message,void ** new_msg)
+int proc_send_platform_policy(void * sub_proc,void * message)
 {
-	MESSAGE_HEAD * message_head;
 	struct vm_policy * platform;
 	struct request_cmd * cmd;
 	int retval;
@@ -315,13 +260,12 @@ int proc_send_platform_policy(void * sub_proc,void * message,void ** new_msg)
 	printf("begin send platform policy process!\n");
 
 	void * send_msg;
+	void * send_pcr_msg;
 	
 
 	ret=message_get_record(message,&cmd,0);
 	if(ret<0)
 		return -EINVAL;
-
-	*new_msg=NULL;
 
 		// monitor send a new vm message
 //	memset(vm,0,sizeof(struct vm_policy));
@@ -329,23 +273,23 @@ int proc_send_platform_policy(void * sub_proc,void * message,void ** new_msg)
 	FindPolicy(cmd->uuid,"PLAP",&platform);
 	if(platform==NULL)
 		return 0;
-	send_msg=message_create("PLAP");
+	send_msg=message_create("PLAP",message);
 	if(send_msg==NULL)
 		return -EINVAL;
 	message_add_record(send_msg,platform);
-	*new_msg=send_msg;
+	sec_subject_sendmsg(sub_proc,send_msg);
 	
-	send_msg=message_create("PCRP");
+	send_pcr_msg=message_create("PCRP",message);
 	struct tcm_pcr_set * pcrpolicy;
 	FindPolicy(platform->boot_pcr_uuid,"PCRP",&pcrpolicy);
 	if(pcrpolicy!=NULL)
 	{
-		message_add_record(send_msg,pcrpolicy);
-       		sec_subject_sendmsg(sub_proc,send_msg);
+		message_add_record(send_pcr_msg,pcrpolicy);
+       		sec_subject_sendmsg(sub_proc,send_pcr_msg);
 	}
 	return;
 }
-
+/*
 int proc_send_platformpolicy_req(void * sub_proc,void * message,void * pointer)
 {
 	MESSAGE_HEAD * message_head;
@@ -386,47 +330,4 @@ int proc_send_platformpolicy_req(void * sub_proc,void * message,void * pointer)
         ret=message_add_record(send_msg,cmd);
         sec_subject_sendmsg(sub_proc,send_msg);
 	return 0;
-}
-/*
-int process_monitor_vm(void * sub_proc,void * in, void * out)
-{
-	void * message;
-	MESSAGE_HEAD * message_head;
-	int record_size;
-	BYTE * blob;
-	int bloboffset;
-	int record_num;
-	int ret;
-	char local_uuid[DIGEST_SIZE*2];
-	struct tcloud_connector * policy_server_conn=(struct tcloud_connector *)server_conn;
-
-	// send init message to 
-	vm=GetFirstPolicy("VM_I");
-	while( vm != NULL)
-	{
-		message=create_single_message_box(vm,"VM_I",local_uuid,local_uuid);
-		if(message==NULL)
-			return -EINVAL;
-		if(IS_ERR(message))
-			return -EINVAL;
-		record_size=output_message_blob(message,&blob);
-		ret=policy_server_conn->conn_ops->write(policy_server_conn,blob,record_size);
-		if(ret<=0)
-		{
-			printf("send vm message error!");
-		}
-		else
-		{
-			printf("send vm %s 's message to policy server!\n",vm->uuid);
-		}
-		message_free(message);
-		free(message);
-    		vm=GetNextPolicy("VM_I");
-	
-	}
-	
-	monitor_vm_from_dbres(server_conn);
-	return 0;
-		
-}
-*/
+}*/

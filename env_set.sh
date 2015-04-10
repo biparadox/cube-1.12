@@ -1,5 +1,5 @@
 #!/bin/sh
-export CUBELIBPATH=/root/cube-1.1/cubelib/
+export CUBELIBPATH=/root/cube-1.11/cubelib/
 ln -s $CUBELIBPATH/include .
 ln -s $CUBELIBPATH/lib .
 cd manager

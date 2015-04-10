@@ -98,6 +98,7 @@ int aik_casign_start(void * sub_proc,void * para)
 	void * send_msg;
 	void * context;
 	int i;
+	const char * type;
 
 	char local_uuid[DIGEST_SIZE*2+1];
 	char proc_name[DIGEST_SIZE*2+1];
@@ -115,15 +116,14 @@ int aik_casign_start(void * sub_proc,void * para)
 			continue;
 		if(recv_msg==NULL)
 			continue;
-		MESSAGE_HEAD * msg_head;
-		msg_head=get_message_head(recv_msg);
-		if(msg_head==NULL)
+		type=message_get_recordtype(recv_msg);
+		if(type==NULL)
 			continue;
-		else if(strncmp(msg_head->record_type,"FILD",4)==0)
+		if(strncmp(type,"FILD",4)==0)
 		{
-			proc_aik_casign(sub_proc,recv_msg,&send_msg);
-
+			proc_aik_casign(sub_proc,recv_msg);
 		}
+/*		
 		if(msg_head->flow & MSG_FLOW_RESPONSE)
 		{
 			void * flow_expand;
@@ -140,12 +140,13 @@ int aik_casign_start(void * sub_proc,void * para)
 		}
 		sec_subject_sendmsg(sub_proc,send_msg);
 		printf("send message succeed!\n");
+*/
 	}
 
 	return 0;
 };
 
-int proc_aik_casign(void * sub_proc,void * recv_msg,void ** send_msg)
+int proc_aik_casign(void * sub_proc,void * recv_msg)
 {
 	TSS_RESULT result;
 	TSS_HKEY 	hSignKey;
@@ -232,9 +233,11 @@ int proc_aik_casign(void * sub_proc,void * recv_msg,void ** send_msg)
 
 //	sec_subject_setstate(sub_proc,PROC_AIK_CREATEKEY);
 
+	void * send_msg;
 	ret=build_filedata_struct(&reqdata,"cert/active.req");
-	*send_msg=message_create("FILD");
-	message_add_record(*send_msg,reqdata);
+	send_msg=message_create("FILD",recv_msg);
+	message_add_record(send_msg,reqdata);
+	sec_subject_sendmsg(sub_proc,send_msg);
 
 	return 0;
 

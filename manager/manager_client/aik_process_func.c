@@ -78,10 +78,11 @@ int proc_aikclient_start(void * sub_proc,void * para)
 {
 	int ret;
 	int retval;
-	void * message_box;
+	void * recv_msg;
+	void * send_msg;
 	void * context;
 	int i;
-	struct tcloud_connector * temp_conn;
+	const char * type;
 
 	char local_uuid[DIGEST_SIZE*2+1];
 	char proc_name[DIGEST_SIZE*2+1];
@@ -94,22 +95,25 @@ int proc_aikclient_start(void * sub_proc,void * para)
 	for(i=0;i<300*1000;i++)
 	{
 		usleep(time_val.tv_usec);
-		ret=sec_subject_recvmsg(sub_proc,&message_box);
+		ret=sec_subject_recvmsg(sub_proc,&recv_msg);
 		if(ret<0)
 			continue;
-		if(message_box==NULL)
+		if(recv_msg==NULL)
 			continue;
-		MESSAGE_HEAD * msg_head;
-		msg_head=get_message_head(message_box);
-		if(msg_head==NULL)
-			continue;
-		if(strncmp(msg_head->record_type,"SYNI",4)==0)
+
+ 		type=message_get_recordtype(recv_msg);
+		if(type==NULL)
 		{
-			proc_aik_request(sub_proc,message_box,NULL);
+			message_free(recv_msg);
+			continue;
 		}
-		else if(strncmp(msg_head->record_type,"FILD",4)==0)
+		if(strncmp(type,"SYNI",4)==0)
 		{
-			proc_aik_activate(sub_proc,message_box,NULL);
+			proc_aik_request(sub_proc,recv_msg);
+		}
+		else if(strncmp(type,"FILD",4)==0)
+		{
+			proc_aik_activate(sub_proc,recv_msg);
 		}
 	}
 
@@ -117,7 +121,7 @@ int proc_aikclient_start(void * sub_proc,void * para)
 };
 
 
-int proc_aik_request(void * sub_proc,void * message,void * pointer)
+int proc_aik_request(void * sub_proc,void * message)
 {
 	TSS_RESULT result;
 	TSS_HKEY 	hSignKey;
@@ -135,12 +139,6 @@ int proc_aik_request(void * sub_proc,void * message,void * pointer)
 	ret=proc_share_data_getvalue("proc_name",proc_name);
 
 	printf("begin aik request!\n");
-//	result=TESI_Local_ReloadWithAuth("ooo","sss");
-//	if(result!=TSS_SUCCESS)
-//	{
-//		printf("open tpm error %d!\n",result);
-//		return -ENFILE;
-//	}
 	char buffer[1024];
 	char digest[DIGEST_SIZE];
 	int blobsize=0;
@@ -191,22 +189,21 @@ int proc_aik_request(void * sub_proc,void * message,void * pointer)
 	}
 	TESI_Local_WriteKeyBlob(hAIKey,"privkey/AIK");
 
-//	sleep(2);
 	sec_subject_setstate(sub_proc,PROC_AIK_CREATEKEY);
 
 	ret=build_filedata_struct(&reqdata,"cert/aik.req");
+
 	void * send_msg;
-	send_msg=message_create("FILD");
-	message_add_record(send_msg,reqdata);
-	sec_subject_sendmsg(sub_proc,send_msg);
-
-	printf("aik client send message succeed!\n");
-
+	send_msg=message_create("FILD",message);
+	if(send_msg!=NULL)
+	{
+		message_add_record(send_msg,reqdata);
+		sec_subject_sendmsg(sub_proc,send_msg);
+	}
 	return 0;
-
 }
 
-int proc_aik_activate(void * sub_proc,void * message,void * pointer)
+int proc_aik_activate(void * sub_proc,void * message)
 {
 	printf("begin aik activate!\n");
 	TSS_RESULT	result;
