@@ -10,6 +10,9 @@
    // PLAI:  this cloud's platform information
    // 
 
+static char * main_proc_name="manager_policy";
+static int  (*main_proc_initfunc)()=&manager_policy_init;
+
 static PROCDB_INIT procdb_init_list[]=
 {
 	{"VM_I",&vm_info_memdb_init,0},
@@ -24,17 +27,14 @@ static PROCDB_INIT procdb_init_list[]=
 };
 
 static PROC_INIT main_proc_initdata=
-	{PROC_NAME,PROC_TYPE_MAIN,&manager_policy_init,NULL,main_state_name,main_func_name};
+	{PROC_NAME,PROC_TYPE_MAIN,&manager_policy_init,NULL};
 
 static PROC_INIT proc_init_list[]=
 {
-	{"manager_vm",PROC_TYPE_DECIDE,&manager_vm_init,&manager_vm_start,manager_vm_state_name,manager_vm_func_name},
-	{"manager_image",PROC_TYPE_DECIDE,&manager_image_init,&manager_image_start,manager_image_state_name,manager_image_func_name},
-	{"manager_platform",PROC_TYPE_DECIDE,&manager_platform_init,&manager_platform_start,manager_platform_state_name,manager_platform_func_name},
+	{"manager_vm",PROC_TYPE_DECIDE,&manager_vm_init,&manager_vm_start},
+	{"manager_image",PROC_TYPE_DECIDE,&manager_image_init,&manager_image_start},
+	{"manager_platform",PROC_TYPE_DECIDE,&manager_platform_init,&manager_platform_start},
 	{NULL,0,NULL,NULL}
 };
-
-static char * default_local_port=NULL; 
-static char * default_remote_port="trust_client"; 
 
 #endif // PROC_CONFIG_H

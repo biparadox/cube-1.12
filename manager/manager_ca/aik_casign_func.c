@@ -57,8 +57,6 @@ int aik_casign_init(void * sub_proc,void * para)
 		return -ENOMEM;
 	memset(aik_pointer,0,sizeof(struct aik_proc_pointer));
 
-	sec_subject_register_statelist(sub_proc,aik_state_list);
-
 	OpenSSL_add_all_algorithms();
         ERR_load_crypto_strings();
 	result=TESI_Local_Reload();
@@ -67,7 +65,6 @@ int aik_casign_init(void * sub_proc,void * para)
 		printf("open tpm error %d!\n",result);
 		return -ENFILE;
 	}
-	sec_subject_setstate(sub_proc,PROC_AIK_TPMOPEN);
 
 	ReadPrivKey(&(aik_pointer->cakey),"privkey/CA","my ca center");
 	if(aik_pointer->cakey == NULL)
@@ -123,24 +120,6 @@ int aik_casign_start(void * sub_proc,void * para)
 		{
 			proc_aik_casign(sub_proc,recv_msg);
 		}
-/*		
-		if(msg_head->flow & MSG_FLOW_RESPONSE)
-		{
-			void * flow_expand;
-			ret=message_remove_expand(recv_msg,"FTRE",&flow_expand);
-			if(flow_expand!=NULL) 
-			{
-				message_add_expand(send_msg,flow_expand);
-			}
-			else
-			{
-				set_message_head(send_msg,"receiver_uuid",msg_head->sender_uuid);
-			}
-
-		}
-		sec_subject_sendmsg(sub_proc,send_msg);
-		printf("send message succeed!\n");
-*/
 	}
 
 	return 0;

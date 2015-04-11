@@ -31,8 +31,6 @@ int manager_platform_init(void * sub_proc,void * para)
 	int ret;
 	char local_uuid[DIGEST_SIZE*2];
 	
-	sec_subject_register_statelist(sub_proc,monitor_state_list);
-
 	return 0;
 }
 

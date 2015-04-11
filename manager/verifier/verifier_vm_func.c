@@ -31,10 +31,6 @@ int verifier_vm_init(void * sub_proc,void * para)
 	int ret;
 	char local_uuid[DIGEST_SIZE*2];
 	
-//	struct aik_proc_pointer * aik_pointer;
-//	main_pointer= kmalloc(sizeof(struct main_proc_pointer),GFP_KERNEL);
-	sec_subject_register_statelist(sub_proc,subproc_state_list);
-
 	return 0;
 }
 
@@ -72,7 +68,7 @@ int verifier_vm_start(void * sub_proc,void * para)
 			continue;
 		if(strncmp(msg_head->record_type,"VM_P",4)==0)
 		{
-			proc_verify_vm(sub_proc,message_box,NULL);
+			proc_verify_vm(sub_proc,message_box);
 		}
 	}
 
@@ -80,7 +76,7 @@ int verifier_vm_start(void * sub_proc,void * para)
 }
 #define MAX_RECORD_NUM 100
 
-int proc_verify_vm(void * sub_proc,void * message,void * pointer)
+int proc_verify_vm(void * sub_proc,void * message)
 {
 	MESSAGE_HEAD * message_head;
 	struct vm_policy * policy;
@@ -129,12 +125,9 @@ int proc_verify_vm(void * sub_proc,void * message,void * pointer)
 			{
 				
 				FindPolicy(policy->boot_pcr_uuid,"PCRI",&boot_pcrs);
-//				temp_pointer=FindPolicy(policy->boot_pcr_uuid,"PCRI");
-//				boot_pcrs=(struct tcm_pcr_sets *)temp_pointer;
 			}
 			if(policy->runtime_pcr_uuid[0]!=0)
 				FindPolicy(policy->runtime_pcr_uuid,"PCRI",&running_pcrs);
-				//running_pcrs=(struct tcm_pcr_sets *)FindPolicy(policy->runtime_pcr_uuid,"PCRI");
 			if((boot_pcrs!=NULL) || (running_pcrs!=NULL))
 				break;
 			usleep(100);
@@ -153,7 +146,7 @@ int proc_verify_vm(void * sub_proc,void * message,void * pointer)
 
 
 		void * send_msg;
-		send_msg=message_create("VERI");
+		send_msg=message_create("VERI",message);
 
 		int curr_verify=0;
 		while(verify_list[curr_verify]!=NULL)
@@ -163,20 +156,7 @@ int proc_verify_vm(void * sub_proc,void * message,void * pointer)
 			message_add_record(send_msg,verify_list[curr_verify]);
 			curr_verify++;
 		}
-		if((send_msg!=NULL) &&(message_head->flow & MSG_FLOW_RESPONSE))
-		{
-			void * flow_expand;
-			ret=message_remove_expand(message,"FTRE",&flow_expand);
-			if(flow_expand!=NULL) 
-			{
-				message_add_expand(send_msg,flow_expand);
-			}
-			else
-			{
-				set_message_head(send_msg,"receiver_uuid",message_head->sender_uuid);
-			}
-			sec_subject_sendmsg(sub_proc,send_msg);
-		}
+		sec_subject_sendmsg(sub_proc,send_msg);
 	}
 	return 0;
 }

@@ -69,7 +69,6 @@ int trust_manager_init(void * proc,void * para)
 	}
         printf("open tpm success!\n");
 	proc_share_data_setpointer(main_pointer);
-	sec_subject_register_statelist(proc,main_state_list);
 	return 0;
 }
 
@@ -124,7 +123,7 @@ int public_key_memdb_init()
 			return retval;
 		printf("load pubek %s succeed!\n",namebuf);
 	}
-	proc_share_data_setstate(PROC_LOADPUBEK);
+//	proc_share_data_setstate(PROC_LOADPUBEK);
 	return 0;
 }
 

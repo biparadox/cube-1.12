@@ -30,10 +30,6 @@ int verifier_image_init(void * sub_proc,void * para)
 	int ret;
 	char local_uuid[DIGEST_SIZE*2];
 	
-//	struct aik_proc_pointer * aik_pointer;
-//	main_pointer= kmalloc(sizeof(struct main_proc_pointer),GFP_KERNEL);
-	sec_subject_register_statelist(sub_proc,subproc_state_list);
-
 	return 0;
 }
 
@@ -45,7 +41,6 @@ int verifier_image_start(void * sub_proc,void * para)
 	void * context;
 	int i;
 	void * recv_msg;
-	void * send_msg;
 
 	char local_uuid[DIGEST_SIZE*2+1];
 	char proc_name[DIGEST_SIZE*2+1];
@@ -73,7 +68,7 @@ int verifier_image_start(void * sub_proc,void * para)
 			continue;
 		if(strncmp(msg_head->record_type,"IMGP",4)==0)
 		{
-			proc_verify_image(sub_proc,recv_msg,&send_msg);
+			proc_verify_image(sub_proc,recv_msg);
 		}
 	}
 
@@ -81,7 +76,7 @@ int verifier_image_start(void * sub_proc,void * para)
 }
 #define MAX_RECORD_NUM 100
 
-int proc_verify_image(void * sub_proc,void * message,void ** pointer)
+int proc_verify_image(void * sub_proc,void * message)
 {
 	MESSAGE_HEAD * message_head;
 	struct vm_policy * policy;
@@ -154,7 +149,7 @@ int proc_verify_image(void * sub_proc,void * message,void ** pointer)
 
 
 		void * send_msg;
-		send_msg=message_create("VERI");
+		send_msg=message_create("VERI",message);
 
 		int curr_verify=0;
 		while(verify_list[curr_verify]!=NULL)
@@ -164,21 +159,7 @@ int proc_verify_image(void * sub_proc,void * message,void ** pointer)
 			message_add_record(send_msg,verify_list[curr_verify]);
 			curr_verify++;
 		}
-		if((send_msg!=NULL) &&(message_head->flow & MSG_FLOW_RESPONSE))
-		{
-			void * flow_expand;
-			ret=message_remove_expand(message,"FTRE",&flow_expand);
-			if(flow_expand!=NULL) 
-			{
-				message_add_expand(send_msg,flow_expand);
-			}
-			else
-			{
-				set_message_head(send_msg,"receiver_uuid",message_head->sender_uuid);
-			}
-			sec_subject_sendmsg(sub_proc,send_msg);
-
-		}
+		sec_subject_sendmsg(sub_proc,send_msg);
 	}
 
 	return 0;

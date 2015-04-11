@@ -41,7 +41,6 @@ int verifier_init(void * proc,void * para)
 	char local_uuid[DIGEST_SIZE*2];
 	
 	struct main_proc_pointer * main_pointer;
-//	main_pointer= kmalloc(sizeof(struct main_proc_pointer),GFP_KERNEL);
 	main_pointer= malloc(sizeof(struct main_proc_pointer));
 	if(main_pointer==NULL)
 		return -ENOMEM;
@@ -50,7 +49,6 @@ int verifier_init(void * proc,void * para)
 	proc_share_data_setvalue("local_uuid",local_uuid);
 	proc_share_data_setvalue("proc_name",para);
 	proc_share_data_setpointer(main_pointer);
-	sec_subject_register_statelist(proc,main_state_list);
 	return 0;
 }
 int image_policy_memdb_init()

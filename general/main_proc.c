@@ -52,34 +52,19 @@ int main()
     openstack_trust_lib_init();
     sec_respool_list_init();
     // init the main proc struct
-    ret=sec_subject_create(main_proc_initdata.name,PROC_TYPE_MAIN,NULL,&main_proc);
+    ret=sec_subject_create(main_proc_name,PROC_TYPE_MAIN,NULL,&main_proc);
     if(ret<0)
     	return ret;
-    // create subject's statelist
-    if(main_proc_initdata.statelist!=NULL)
-    {
-  	  ret=sec_subject_create_statelist(main_proc, main_proc_initdata.statelist);  
-	  if(ret<0)
-    		return ret;
-    }
 
-    // create subject's funclist
-    if(main_proc_initdata.funclist!=NULL)
-    {
-   	 ret=sec_subject_create_funclist(main_proc, main_proc_initdata.funclist);  
- 	 if(ret<0)
-    		return ret;
-    }
     // init the proc's main share data
     ret=proc_share_data_init(share_data_desc);
 
     // do the main proc's init function
-    sec_subject_setinitfunc(main_proc,main_proc_initdata.init);
-    sec_subject_setstartfunc(main_proc,main_proc_initdata.start);
-    sec_subject_init(main_proc,main_proc_initdata.name);
+    sec_subject_setinitfunc(main_proc,main_proc_initfunc);
+    sec_subject_setstartfunc(main_proc,NULL);
+    sec_subject_init(main_proc,main_proc_name);
 	
     // init all the proc database
-
 
     usleep(time_val.tv_usec);
 
@@ -103,10 +88,9 @@ int main()
 		 if(retval<0)
 			return -EINVAL;
 	    }
-	    if(db_init->proc_state!=0)
-	    {
-    		proc_share_data_setstate(db_init->proc_state);
-	    }
+	  //  {
+    	  //		proc_share_data_setstate(db_init->proc_state);
+	  //  }
     }
 		
 
@@ -119,16 +103,13 @@ int main()
     sec_subject_setstartfunc(conn_proc,conn_proc_initdata.start);
 
 
-   struct conn_init_para * conn_init_para = malloc(sizeof(struct conn_init_para));
-   if(conn_init_para ==NULL)
-	return -ENOMEM;
+//   struct conn_init_para * conn_init_para = malloc(sizeof(struct conn_init_para));
+//   if(conn_init_para ==NULL)
+//	return -ENOMEM;
   
-    //conn_init_para->hub=hub;
-    //conn_init_para->default_local_port=default_local_port;
-    //conn_init_para->default_remote_port=default_remote_port;
- 
-    sec_subject_init(conn_proc,conn_init_para);
-    free(conn_init_para);
+//    sec_subject_init(conn_proc,conn_init_para);
+//   free(conn_init_para);
+    sec_subject_init(conn_proc,NULL);
 
     add_sec_subject(conn_proc);
 
@@ -164,12 +145,6 @@ int main()
 		  printf("create sub_proc %s failed!\n",proc_init_list[i].name);
 		  return -EINVAL;
 	  }
-	  ret=sec_subject_create_statelist(sub_proc, proc_init_list[i].statelist);  
-	  if(ret<0)
-  		return ret;
-	  ret=sec_subject_create_funclist(sub_proc, proc_init_list[i].funclist);  
-	  if(ret<0)
-  		return ret;
     	  sec_subject_setinitfunc(sub_proc,proc_init_list[i].init);
    	  sec_subject_setstartfunc(sub_proc,proc_init_list[i].start);
   	  sec_subject_init(sub_proc,NULL);

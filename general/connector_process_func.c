@@ -547,19 +547,6 @@ int proc_conn_init(void * sub_proc,void * para)
 	struct connector_proc_pointer * sub_proc_pointer;
 	struct conn_init_para * conn_init_para = (struct conn_init_para *)para;
 
-	ret=sec_subject_create_statelist(sub_proc, connector_process_state_name);
-        if(ret<0)
-		return ret;	
-	ret=sec_subject_register_statelist(sub_proc,conn_state_list);
-        if(ret<0)
-		return ret;	
-
-	ret=sec_subject_create_funclist(sub_proc, connector_process_func_name);
-        if(ret<0)
-		return ret;	
-	ret=sec_subject_register_funclist(sub_proc, conn_func_list);
-        if(ret<0)
-		return ret;	
 	register_record_type("SYNI",connect_syn_desc,NULL);
 	register_record_type("ACKI",connect_ack_desc,NULL);
 	struct tcloud_connector_hub * conn_hub;

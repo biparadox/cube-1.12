@@ -156,22 +156,6 @@ int proc_router_init(void * sub_proc,void * para)
 //	    return ret;
     }
 
-    ret=sec_subject_create_statelist(sub_proc, router_process_state_name);
-    if(ret<0)
-	return ret;	
-    ret=sec_subject_register_statelist(sub_proc,router_state_list);
-    if(ret<0)
-	return ret;	
-
-    ret=sec_subject_create_funclist(sub_proc, router_process_func_name);
-    if(ret<0)
-	return ret;	
-    ret=sec_subject_register_funclist(sub_proc, router_func_list);
-    if(ret<0)
-	return ret;	
-//	register_record_type("CONE",expand_data_router_desc,NULL);
-
-
     void * context;
     ret=sec_subject_getcontext(sub_proc,&context);
     if(ret<0)

@@ -57,8 +57,6 @@ int ca_verify_init(void * sub_proc,void * para)
 		return -ENOMEM;
 	memset(caverify_pointer,0,sizeof(struct caverify_proc_pointer));
 
-	sec_subject_register_statelist(sub_proc,aik_state_list);
-
 	OpenSSL_add_all_algorithms();
         ERR_load_crypto_strings();
 	result=TESI_Local_Reload();
@@ -67,7 +65,6 @@ int ca_verify_init(void * sub_proc,void * para)
 		printf("open tpm error %d!\n",result);
 		return -ENFILE;
 	}
-	sec_subject_setstate(sub_proc,PROC_AIK_TPMOPEN);
 
 	ReadPrivKey(&(caverify_pointer->cakey),"privkey/CA","my ca center");
 	if(caverify_pointer->cakey == NULL)

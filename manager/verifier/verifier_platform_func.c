@@ -30,11 +30,6 @@ int verifier_platform_init(void * sub_proc,void * para)
 {
 	int ret;
 	char local_uuid[DIGEST_SIZE*2];
-	
-//	struct aik_proc_pointer * aik_pointer;
-//	main_pointer= kmalloc(sizeof(struct main_proc_pointer),GFP_KERNEL);
-	sec_subject_register_statelist(sub_proc,subproc_state_list);
-
 	return 0;
 }
 
@@ -74,18 +69,18 @@ int verifier_platform_start(void * sub_proc,void * para)
 			continue;
 		if(strncmp(msg_head->record_type,"PLAP",4)==0)
 		{
-			proc_verify_platform(sub_proc,recv_msg,&send_msg);
+			proc_verify_platform(sub_proc,recv_msg);
 		}
 		if(strncmp(msg_head->record_type,"PCRP",4)==0)
 		{
-			proc_keep_pcrpolicy(sub_proc,recv_msg,&send_msg);
+			proc_keep_pcrpolicy(sub_proc,recv_msg);
 		}
 	}
 
 	return 0;
 }
 #define MAX_RECORD_NUM 100
-int proc_keep_pcrpolicy(void * sub_proc,void * message,void ** pointer)
+int proc_keep_pcrpolicy(void * sub_proc,void * message)
 {
 	MESSAGE_HEAD * message_head;
 	int retval;
@@ -104,11 +99,10 @@ int proc_keep_pcrpolicy(void * sub_proc,void * message,void ** pointer)
 		AddPolicy(pcrs,"PCRI");
 	}
 	ExportPolicy("PCRI");
-	*pointer=NULL;
 	return 0;
 }
 
-int proc_verify_platform(void * sub_proc,void * message,void ** pointer)
+int proc_verify_platform(void * sub_proc,void * message)
 {
 	MESSAGE_HEAD * message_head;
 	struct vm_policy * policy;
@@ -157,12 +151,9 @@ int proc_verify_platform(void * sub_proc,void * message,void ** pointer)
 			{
 				
 				FindPolicy(policy->boot_pcr_uuid,"PCRI",&boot_pcrs);
-//				temp_pointer=FindPolicy(policy->boot_pcr_uuid,"PCRI");
-//				boot_pcrs=(struct tcm_pcr_sets *)temp_pointer;
 			}
 			if(policy->runtime_pcr_uuid[0]!=0)
 				FindPolicy(policy->runtime_pcr_uuid,"PCRI",&running_pcrs);
-				//running_pcrs=(struct tcm_pcr_sets *)FindPolicy(policy->runtime_pcr_uuid,"PCRI");
 			if((boot_pcrs!=NULL) || (running_pcrs!=NULL))
 				break;
 			usleep(100);
@@ -181,7 +172,7 @@ int proc_verify_platform(void * sub_proc,void * message,void ** pointer)
 
 
 		void * send_msg;
-		send_msg=message_create("VERI");
+		send_msg=message_create("VERI",message);
 
 		int curr_verify=0;
 		while(verify_list[curr_verify]!=NULL)
@@ -191,21 +182,7 @@ int proc_verify_platform(void * sub_proc,void * message,void ** pointer)
 			message_add_record(send_msg,verify_list[curr_verify]);
 			curr_verify++;
 		}
-		if((send_msg!=NULL) &&(message_head->flow & MSG_FLOW_RESPONSE))
-		{
-			void * flow_expand;
-			ret=message_remove_expand(message,"FTRE",&flow_expand);
-			if(flow_expand!=NULL) 
-			{
-				message_add_expand(send_msg,flow_expand);
-			}
-			else
-			{
-				set_message_head(send_msg,"receiver_uuid",message_head->sender_uuid);
-			}
-			sec_subject_sendmsg(sub_proc,send_msg);
-
-		}
+		sec_subject_sendmsg(sub_proc,send_msg);
 	}
 	return 0;
 }

@@ -60,17 +60,20 @@ int proc_aikclient_init(void * sub_proc,void * para)
 		return -ENOMEM;
 	memset(aik_pointer,0,sizeof(struct aik_proc_pointer));
 
-	sec_subject_register_statelist(sub_proc,aik_state_list);
 
-//	OpenSSL_add_all_algorithms();
-//      ERR_load_crypto_strings();
 	result=TESI_Local_ReloadWithAuth("ooo","sss");
 	if(result!=TSS_SUCCESS)
 	{
 		printf("open tpm error %d!\n",result);
 		return -ENFILE;
 	}
-	sec_subject_setstate(sub_proc,PROC_AIK_TPMOPEN);
+	void * context;
+	ret=sec_subject_getcontext(sub_proc,&context);
+	if(ret<0)
+		return ret;
+	ret=sec_object_setpointer(context,aik_pointer);
+	if(ret<0)
+		return ret;
 	return 0;
 }
 
@@ -188,8 +191,6 @@ int proc_aik_request(void * sub_proc,void * message)
 		exit(result);
 	}
 	TESI_Local_WriteKeyBlob(hAIKey,"privkey/AIK");
-
-	sec_subject_setstate(sub_proc,PROC_AIK_CREATEKEY);
 
 	ret=build_filedata_struct(&reqdata,"cert/aik.req");
 
