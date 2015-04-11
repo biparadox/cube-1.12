@@ -11,24 +11,6 @@ static struct struct_elem_attr share_data_desc[]=
 	{NULL,OS210_TYPE_ENDDATA,0,NULL}
 };
 
-
-enum json_server_state
-{
-    JSON_SERVER_INIT=0x1000,
-    JSON_SERVER_START,
-    JSON_SERVER_STOP,
-    JSON_SERVER_FAIL,
-};
-
-static NAME2VALUE json_server_state_list[]=
-{
-    {"init",JSON_SERVER_INIT},
-    {"start",JSON_SERVER_START},
-    {"stop",JSON_SERVER_STOP},
-    {"fail",JSON_SERVER_FAIL},
-	{NULL,0}
-};
-
 // init function
 int json_port_init(void * proc,void * para);
 int json_port_start(void * proc,void * para);

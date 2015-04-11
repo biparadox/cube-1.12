@@ -30,10 +30,6 @@ int monitor_process_init(void * sub_proc,void * para)
 {
 	int ret;
 	char local_uuid[DIGEST_SIZE*2];
-	
-//	struct aik_proc_pointer * aik_pointer;
-//	main_pointer= kmalloc(sizeof(struct main_proc_pointer),GFP_KERNEL);
-	sec_subject_register_statelist(sub_proc,monitor_state_list);
 
 	return 0;
 }
@@ -63,7 +59,7 @@ int monitor_process_start(void * sub_proc,void * para)
 
 	struct vm_info * vm;
 	
-	message_box=message_create("VM_I");
+	message_box=message_create("VM_I",NULL);
 	if(message_box==NULL)
 		return -EINVAL;
 	if(IS_ERR(message_box))
@@ -82,7 +78,7 @@ int monitor_process_start(void * sub_proc,void * para)
 
 	struct image_info * image;
 	
-	message_box=message_create("IMGI");
+	message_box=message_create("IMGI",NULL);
 	if(message_box==NULL)
 		return -EINVAL;
 	if(IS_ERR(message_box))
@@ -99,7 +95,7 @@ int monitor_process_start(void * sub_proc,void * para)
 	usleep(time_val.tv_usec);
 	struct platform_info * platform;
 	
-	message_box=message_create("PLAI");
+	message_box=message_create("PLAI",NULL);
 	if(message_box==NULL)
 		return -EINVAL;
 	if(IS_ERR(message_box))
@@ -118,31 +114,6 @@ int monitor_process_start(void * sub_proc,void * para)
 	// begin monitor
 	struct vm_policy * vm_policy;
 	
-/*
-	message_box=message_create("IMGP");
-	if(message_box==NULL)
-		return -EINVAL;
-	if(IS_ERR(message_box))
-		return -EINVAL;
-	vm_policy=GetFirstPolicy("IMGP");
-
-	void * send_msg=message_create("PCRP");
-	while( vm_policy != NULL)
-	{
-		message_add_record(message_box,vm_policy);
-		struct tcm_pcr_set * pcrs;
-		ret=FindPolicy(vm_policy->boot_pcr_uuid,"PCRP",&pcrs);
-		if(pcrs!=NULL)
-			message_add_record(send_msg,pcrs);
-		ret=FindPolicy(vm_policy->runtime_pcr_uuid,"PCRP",pcrs);
-		if(pcrs!=NULL)
-			message_add_record(send_msg,pcrs);
-		vm_policy=GetNextPolicy("IMGP");
-	}
-	// send init message
-	sec_subject_sendmsg(sub_proc,message_box);
-	sec_subject_sendmsg(sub_proc,send_msg);
-*/
 	for(i=0;i<3000*1000;i++)
 	{
 		usleep(time_val.tv_usec);
@@ -162,27 +133,11 @@ int monitor_process_start(void * sub_proc,void * para)
 			ret=message_get_record(recv_msg,&cmd,0);
 			if(strncmp(cmd->tag,"IMGP",4)==0)
 			{
-				proc_send_imagepolicy(sub_proc,recv_msg,&send_msg);
+				proc_send_imagepolicy(sub_proc,recv_msg);
 			}
 			else
 				continue;
 				
-			if(msg_head->flow & MSG_FLOW_RESPONSE)
-			{
-				void * flow_expand;
-				ret=message_remove_expand(recv_msg,"FTRE",&flow_expand);
-				if(flow_expand!=NULL) 
-				{
-					message_add_expand(send_msg,flow_expand);
-				}
-				else
-				{
-					set_message_head(send_msg,"receiver_uuid",msg_head->sender_uuid);
-				}
-
-			}
-			sec_subject_sendmsg(sub_proc,send_msg);
-			printf("send message succeed!\n");
 		}
 	}
 	return 0;
@@ -205,7 +160,7 @@ int process_monitor_image(void * sub_proc,void * para)
 	image=GetFirstPolicy("IMGI");
 	while( image!= NULL)
 	{
-		message=message_create("IMGI");
+		message=message_create("IMGI",NULL);
 		if(message==NULL)
 			return -EINVAL;
 		if(IS_ERR(message))
@@ -227,7 +182,7 @@ int process_monitor_image(void * sub_proc,void * para)
 		}
 		else
 		{
-			message=message_create("IMGP");
+			message=message_create("IMGP",NULL);
 			if(message==NULL)
 				return -EINVAL;
 			if(IS_ERR(message))
@@ -448,7 +403,7 @@ int monitor_vm_from_dbres(void * sub_proc)
               			 return -ENOMEM;
 			strcpy(vm->diskinfo.sourcefile,temp);
 			*/
-			message=message_create("VM_I");
+			message=message_create("VM_I",NULL);
 			if(message==NULL)
 				return -EINVAL;
 			if(IS_ERR(message))
@@ -569,7 +524,7 @@ int monitor_image_from_dbres(void * sub_proc)
                                                         return -EINVAL;
 						else
 						{
-							message=message_create("IMGI");
+							message=message_create("IMGI",NULL);
 							if(message==NULL)
 								return -EINVAL;
 							if(IS_ERR(message))
@@ -588,7 +543,7 @@ int monitor_image_from_dbres(void * sub_proc)
         return 1;
 }
 
-int proc_send_imagepolicy(void * sub_proc,void * message,void ** pointer)
+int proc_send_imagepolicy(void * sub_proc,void * message)
 {
 	MESSAGE_HEAD * message_head;
 	struct request_cmd * cmd;
@@ -627,15 +582,15 @@ int proc_send_imagepolicy(void * sub_proc,void * message,void ** pointer)
 	void * send_pcr_msg;
 	void * send_msg;
 	// send compute node's pcr policy
-	send_pcr_msg=message_create("PCRP");
+	send_pcr_msg=message_create("PCRP",message);
 	message_add_record(send_pcr_msg,boot_pcrs);
 	if(running_pcrs!=NULL)
 		message_add_record(send_pcr_msg,running_pcrs);
 		
 	sec_subject_sendmsg(sub_proc,send_pcr_msg);
 
-	send_msg=message_create("IMGP");
+	send_msg=message_create("IMGP",message);
 	message_add_record(send_msg,policy);
-	*pointer=send_msg;
+	sec_subject_sendmsg(sub_proc,send_msg);
 	return 0;
 }

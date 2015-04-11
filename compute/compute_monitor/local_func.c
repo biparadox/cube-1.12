@@ -42,7 +42,7 @@ int proc_send_reqcmd(void * sub_proc,char * receiver,void * para)
 		return ret;
 	printf("begin send %s reqcmd!\n",cmd_type);
     	void * send_msg;
-    	send_msg=message_create("REQC");
+    	send_msg=message_create("REQC",NULL);
     	struct request_cmd * cmd;
     	cmd=(struct request_cmd *)malloc(sizeof(struct request_cmd));
    	if(cmd==NULL)
@@ -55,7 +55,7 @@ int proc_send_reqcmd(void * sub_proc,char * receiver,void * para)
 
 
 
-int proc_send_compute_localinfo(void * sub_proc,void * message,void * para)
+int proc_send_compute_localinfo(void * sub_proc,void * message)
 {
 	char local_uuid[DIGEST_SIZE*2+1];
 	char proc_name[DIGEST_SIZE*2+1];
@@ -77,7 +77,7 @@ int proc_send_compute_localinfo(void * sub_proc,void * message,void * para)
 		return -EINVAL;
 
 	void * send_msg;
-	send_msg=message_create("PLAI");
+	send_msg=message_create("PLAI",message);
 	message_add_record(send_msg,platform);
         sec_subject_sendmsg(sub_proc,send_msg);
 	return 0;

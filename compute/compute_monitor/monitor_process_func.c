@@ -30,10 +30,6 @@ int monitor_process_init(void * sub_proc,void * para)
 {
 	int ret;
 	char local_uuid[DIGEST_SIZE*2];
-	
-//	struct aik_proc_pointer * aik_pointer;
-//	main_pointer= kmalloc(sizeof(struct main_proc_pointer),GFP_KERNEL);
-	sec_subject_register_statelist(sub_proc,subproc_state_list);
 
 	return 0;
 }
@@ -45,7 +41,6 @@ int monitor_process_start(void * sub_proc,void * para)
 	void * message_box;
 	void * context;
 	void * recv_msg;
-	void * send_msg;
 	struct tcloud_connector * temp_conn;
 	int i;
 
@@ -63,9 +58,7 @@ int monitor_process_start(void * sub_proc,void * para)
 		return ret;
 
 	printf("begin compute monitor process!\n");
-	proc_send_compute_localinfo(sub_proc,NULL,NULL);
-//	printf("send compute %s 's local information to manager_policy !\n",hostname);
-//	proc_send_computepolicy(sub_proc,NULL,NULL);
+	proc_send_compute_localinfo(sub_proc,NULL);
 
 	for(i=0;i<3000*1000;i++)
 	{
@@ -81,7 +74,7 @@ int monitor_process_start(void * sub_proc,void * para)
 			continue;
 		if(strncmp(msg_head->record_type,"PLAI",4)==0)
 		{
-			proc_send_compute_localinfo(sub_proc,recv_msg,NULL);
+			proc_send_compute_localinfo(sub_proc,recv_msg);
 		}
 		if(strncmp(msg_head->record_type,"VM_I",4)==0)
 		{
@@ -94,40 +87,23 @@ int monitor_process_start(void * sub_proc,void * para)
 			ret=message_get_record(recv_msg,&cmd,0);
 			if(strncmp(cmd->tag,"VM_P",4)==0)
 			{
-				proc_send_vmpolicy(sub_proc,recv_msg,&send_msg);
+				proc_send_vmpolicy(sub_proc,recv_msg);
 			}
 			else if(strncmp(cmd->tag,"PLAP",4)==0)
 			{
-				proc_send_computepolicy(sub_proc,recv_msg,&send_msg);
+				proc_send_computepolicy(sub_proc,recv_msg);
 			}
 			else
 				continue;
 				
-			if(msg_head->flow & MSG_FLOW_RESPONSE)
-			{
-				void * flow_expand;
-				ret=message_remove_expand(recv_msg,"FTRE",&flow_expand);
-				if(flow_expand!=NULL) 
-				{
-					message_add_expand(send_msg,flow_expand);
-				}
-				else
-				{
-					set_message_head(send_msg,"receiver_uuid",msg_head->sender_uuid);
-				}
-
-			}
-			sec_subject_sendmsg(sub_proc,send_msg);
-			printf("send message succeed!\n");
 		}
 	}
-	printf("compute monitor process finished!\n");
 
 	return 0;
 }
 #define MAX_RECORD_NUM 100
 
-int proc_compute_vmpolicy(void * sub_proc,void * message,void * pointer)
+int proc_compute_vmpolicy(void * sub_proc,void * message)
 {
 	MESSAGE_HEAD * message_head;
 	struct vm_policy * policy;
@@ -164,7 +140,7 @@ int proc_compute_vmpolicy(void * sub_proc,void * message,void * pointer)
 
 }
 
-int proc_send_vmpolicy(void * sub_proc,void * message,void ** pointer)
+int proc_send_vmpolicy(void * sub_proc,void * message)
 {
 	MESSAGE_HEAD * message_head;
 	struct request_cmd * cmd;
@@ -203,19 +179,20 @@ int proc_send_vmpolicy(void * sub_proc,void * message,void ** pointer)
 	void * send_pcr_msg;
 	void * send_msg;
 	// send compute node's pcr policy
-	send_pcr_msg=message_create("PCRP");
+	send_pcr_msg=message_create("PCRP",message);
 	message_add_record(send_pcr_msg,boot_pcrs);
 	if(running_pcrs!=NULL)
 		message_add_record(send_pcr_msg,running_pcrs);
 		
 	sec_subject_sendmsg(sub_proc,send_pcr_msg);
 
-	send_msg=message_create("VM_P");
+	send_msg=message_create("VM_P",message);
 	message_add_record(send_msg,policy);
-	*pointer=send_msg;
+	sec_subject_sendmsg(sub_proc,send_msg);
 	return 0;
 }
-int proc_send_computepolicy(void * sub_proc,void * message,void ** new_msg)
+
+int proc_send_computepolicy(void * sub_proc,void * message)
 {
 	MESSAGE_HEAD * message_head;
 	struct request_cmd * cmd;
@@ -255,7 +232,7 @@ int proc_send_computepolicy(void * sub_proc,void * message,void ** new_msg)
 	void * send_pcr_msg;
 	void * send_msg;
 	// send compute node's pcr policy
-	send_pcr_msg=message_create("PCRP");
+	send_pcr_msg=message_create("PCRP",message);
 	message_add_record(send_pcr_msg,compute_boot_pcrs);
 	if(compute_running_pcrs!=NULL)
 		message_add_record(send_pcr_msg,compute_running_pcrs);
@@ -265,9 +242,9 @@ int proc_send_computepolicy(void * sub_proc,void * message,void ** new_msg)
 	
 	usleep(time_val.tv_usec*3);
 	// send compute node's  platform policy
-	send_msg=message_create("PLAP");
+	send_msg=message_create("PLAP",message);
 	message_add_record(send_msg,compute_policy);
-	*new_msg=send_msg;
+	sec_subject_sendmsg(sub_proc,send_msg);
 
 	return 0;
 }

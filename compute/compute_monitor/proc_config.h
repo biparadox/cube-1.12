@@ -4,6 +4,8 @@
 #define PROC_NAME	"compute_monitor"
 
 
+static char * main_proc_name="compute_monitor";
+static int  (*main_proc_initfunc)()=&compute_monitor_init;
    // this proc has these memory_database:
    // IMGI:  the image list of this cloud
    // VM_I:  all th vm created by the cloud
@@ -21,16 +23,10 @@ static PROCDB_INIT procdb_init_list[]=
 	{NULL,NULL,0}
 };
 
-static PROC_INIT main_proc_initdata=
-	{PROC_NAME,PROC_TYPE_MAIN,&compute_monitor_init,NULL,main_state_name,main_func_name};
-
 static PROC_INIT proc_init_list[]=
 {
-	{"monitor_process",PROC_TYPE_MONITOR,&monitor_process_init,&monitor_process_start,monitor_process_state_name,monitor_process_func_name},
+	{"monitor_process",PROC_TYPE_MONITOR,&monitor_process_init,&monitor_process_start},
 	{NULL,0,NULL,NULL}
 };
-
-static char * default_local_port=NULL; 
-static char * default_remote_port="compute_client"; 
 
 #endif // PROC_CONFIG_H

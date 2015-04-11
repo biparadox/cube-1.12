@@ -76,10 +76,6 @@ int json_port_init(void * sub_proc,void * para)
     register_record_type("SYNI",connect_syn_desc,NULL);
 
     // process init
-    sec_subject_register_statelist(sub_proc,json_server_state_list);
-    ret=sec_subject_create_statelist(sub_proc, json_server_state_list);
-    if(ret<0)
-        return ret;
     sub_context=malloc(sizeof(struct json_server_context));
     if(sub_context==NULL)
         return -ENOMEM;

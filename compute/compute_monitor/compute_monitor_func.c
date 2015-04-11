@@ -44,7 +44,6 @@ int compute_monitor_init(void * proc,void * para)
 	
 	struct main_proc_pointer * main_pointer;
 	system("mkdir mnt");
-//	main_pointer= kmalloc(sizeof(struct main_proc_pointer),GFP_KERNEL);
 	main_pointer= malloc(sizeof(struct main_proc_pointer));
 	if(main_pointer==NULL)
 		return -ENOMEM;
@@ -58,7 +57,6 @@ int compute_monitor_init(void * proc,void * para)
 	proc_share_data_setvalue("hostname",hostname);
 	proc_share_data_setvalue("proc_name",para);
 	proc_share_data_setpointer(main_pointer);
-	sec_subject_register_statelist(proc,main_state_list);
 	build_image_mount_respool(8,16,"image_mntpoint");
 
 	return 0;
@@ -67,33 +65,6 @@ int image_policy_memdb_init()
 {
 	int retval;
 	char *image_dirname="image";
-/*	
-	DIR * image_dir;
-
-	image_dir=opendir(image_dirname);
-	if(image_dir==NULL)
-	{
-		return -EINVAL;
-	}
-	struct dirent * dentry;
-
-	while((dentry=readdir(image_dir))!=NULL)
-	{
-		if((dentry->d_type !=DT_REG) &&(dentry->d_type!=DT_LNK))
-			continue;
-		// check if file's tail is string ".img"
-		int namelen=strlen(dentry->d_name);
-		if(namelen<=4)
-			continue;
-		char * tail=dentry->d_name+namelen-4;
-		if(strcmp(tail,".img")!=0)
-			continue;
-
-		retval=build_image_policy(dentry->d_name);
-		if(IS_ERR(retval))
-			return retval;
-	}
-*/
 	return 0;
 }
 
@@ -158,7 +129,6 @@ int pcr_policy_memdb_init()
 	struct tcm_pcr_set * compute_boot_pcrs;
 	struct tcm_pcr_set * compute_running_pcrs;
 
-//	build_compute_boot_pcrs("/dev/sda",hostname,&compute_boot_pcrs);
 	compute_boot_pcrs=NULL;
 	build_compute_running_pcrs("/dev/sda",hostname,&compute_running_pcrs);
 

@@ -64,7 +64,6 @@ int controller_monitor_init(void * proc,void * para)
    	}
 
 	proc_share_data_setpointer(main_pointer);
-	sec_subject_register_statelist(proc,main_state_list);
 	build_image_mount_respool(0,7,"image_mntpoint");
 	return 0;
 }

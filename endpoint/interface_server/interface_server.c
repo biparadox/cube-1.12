@@ -41,7 +41,6 @@ int interface_server_init(void * proc,void * para)
 	char local_uuid[DIGEST_SIZE*2];
 	
 	struct main_proc_pointer * main_pointer;
-//	main_pointer= kmalloc(sizeof(struct main_proc_pointer),GFP_KERNEL);
 	main_pointer= malloc(sizeof(struct main_proc_pointer));
 	if(main_pointer==NULL)
 		return -ENOMEM;
@@ -50,35 +49,5 @@ int interface_server_init(void * proc,void * para)
 	proc_share_data_setvalue("uuid",local_uuid);
 	proc_share_data_setvalue("proc_name",para);
 	proc_share_data_setpointer(main_pointer);
-    sec_subject_register_statelist(proc,interface_server_list);
 	return 0;
-}
-int vm_info_memdb_init()
-{
-    return 0;
-
-}
-int image_info_memdb_init()
-{
-    return 0;
-
-}
-int platform_info_memdb_init()
-{
-    return 0;
-
-}
-int vm_policy_memdb_init()
-{
-    return 0;
-
-}
-int pcr_policy_memdb_init()
-{
-    return 0;
-
-}
-int file_policy_memdb_init()
-{
-    return 0;
 }
