@@ -14,13 +14,13 @@ static int  (*main_proc_initfunc)()=&compute_monitor_init;
 
 static PROCDB_INIT procdb_init_list[]=
 {
-	{"IMGP",&image_policy_memdb_init,0},
-	{"VM_P",&vm_policy_memdb_init,0},
-	{"PLAI",&platform_info_memdb_init,0},
-	{"PLAP",&platform_policy_memdb_init,0},
-	{"PCRP",&pcr_policy_memdb_init,0},
-	{"FILP",&file_policy_memdb_init,0},
-	{NULL,NULL,0}
+	{"IMGP",&image_policy_memdb_init,NULL,NULL},
+	{"VM_P",&vm_policy_memdb_init,NULL,NULL},
+	{"PLAI",&platform_info_memdb_init,NULL,NULL},
+	{"PLAP",&platform_policy_memdb_init,NULL,NULL},
+	{"PCRP",&pcr_policy_memdb_init,NULL,NULL},
+	{"FILP",&file_policy_memdb_init,NULL,NULL},
+	{NULL,NULL,NULL,NULL}
 };
 
 static PROC_INIT proc_init_list[]=

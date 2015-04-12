@@ -30,25 +30,9 @@
 #include "main_proc_func.h"
 #include "proc_config.h"
 
-
-struct main_proc_pointer
-{
-	void * pointer;
-};
-int manager_policy_init(void * proc,void * para)
+int manager_policy_init()
 {
 	int ret;
-	char local_uuid[DIGEST_SIZE*2];
-	
-	struct main_proc_pointer * main_pointer;
-	main_pointer= malloc(sizeof(struct main_proc_pointer));
-	if(main_pointer==NULL)
-		return -ENOMEM;
-        ret=get_local_uuid(local_uuid);
-        printf("this machine's local uuid is %s\n",local_uuid);
-	proc_share_data_setvalue("uuid",local_uuid);
-	proc_share_data_setvalue("proc_name",para);
-	proc_share_data_setpointer(main_pointer);
 	return 0;
 }
 

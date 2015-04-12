@@ -14,10 +14,10 @@ static char * main_proc_name="verifier";
 static int  (*main_proc_initfunc)()=&verifier_init;
 static PROCDB_INIT procdb_init_list[]=
 {
-	{"VM_P",&image_policy_memdb_init,0},
-	{"PCRP",&pcr_policy_memdb_init,0},
-	{"PCRI",&pcr_info_memdb_init,0},
-	{"FILP",&file_policy_memdb_init,0},
+	{"VM_P",&image_policy_memdb_init,NULL,NULL},
+	{"PCRP",&null_init_func,NULL,NULL},
+	{"PCRI",&null_init_func,NULL,NULL},
+	{"FILP",&null_init_func,NULL,NULL},
 	{NULL,NULL,0}
 };
 

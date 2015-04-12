@@ -38,7 +38,7 @@ struct main_proc_pointer
 	TSS_HKEY hAIKey;
 };
 
-int trust_manager_init(void * proc,void * para)
+int client_manager_init(void * proc,void * para)
 {
 	int ret;
 	TSS_RESULT result;	
@@ -52,10 +52,6 @@ int trust_manager_init(void * proc,void * para)
 	main_pointer= malloc(sizeof(struct main_proc_pointer));
 	if(main_pointer==NULL)
 		return -ENOMEM;
-        ret=get_local_uuid(local_uuid);
-        printf("this machine's local uuid is %s\n",local_uuid);
-	proc_share_data_setvalue("uuid",local_uuid);
-	proc_share_data_setvalue("proc_name",para);
 	main_pointer->hAIKey=NULL;
 
 	OpenSSL_add_all_algorithms();
@@ -68,13 +64,6 @@ int trust_manager_init(void * proc,void * para)
 	}
         printf("open tpm success!\n");
 	proc_share_data_setpointer(main_pointer);
-	return 0;
-}
-
-
-
-int wrapped_key_memdb_init()
-{
 	return 0;
 }
 

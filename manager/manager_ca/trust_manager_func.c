@@ -18,7 +18,9 @@
 #include "../include/crypto_func.h"
 #include "../include/extern_struct.h"
 #include "../include/extern_defno.h"
+#include "../include/valuename.h"
 #include "../include/message_struct.h"
+#include "../include/message_struct_desc.h"
 #include "../include/vmlist.h"
 #include "../include/vtpm_struct.h"
 #include "../include/vm_policy.h"
@@ -32,14 +34,13 @@
 #include "cloud_config.h"
 #include "local_func.h"
 #include "main_proc_func.h"
-#include "proc_config.h"
 
 struct main_proc_pointer
 {
 	TSS_HKEY hAIKey;
 };
 
-int trust_manager_init(void * proc,void * para)
+int trust_manager_init()
 {
 	int ret;
 	TSS_RESULT result;	
@@ -53,10 +54,6 @@ int trust_manager_init(void * proc,void * para)
 	main_pointer= malloc(sizeof(struct main_proc_pointer));
 	if(main_pointer==NULL)
 		return -ENOMEM;
-        ret=get_local_uuid(local_uuid);
-        printf("this machine's local uuid is %s\n",local_uuid);
-	proc_share_data_setvalue("uuid",local_uuid);
-	proc_share_data_setvalue("proc_name",para);
 	main_pointer->hAIKey=NULL;
 
 	OpenSSL_add_all_algorithms();
@@ -71,8 +68,6 @@ int trust_manager_init(void * proc,void * para)
 	proc_share_data_setpointer(main_pointer);
 	return 0;
 }
-
-
 
 int wrapped_key_memdb_init()
 {
@@ -174,6 +169,11 @@ int vtpm_memdb_init()  // get the tpm information and init the vtpm database
 
 	printf("create local tpm info success!\n");
 	TESI_Local_Fin();
+	return 0;
+}
+
+int login_name_memdb_init()
+{
 	return 0;
 }
 

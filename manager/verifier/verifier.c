@@ -30,25 +30,9 @@
 #include "main_proc_func.h"
 #include "proc_config.h"
 
-
-struct main_proc_pointer
-{
-	void * pointer;
-};
-int verifier_init(void * proc,void * para)
+int verifier_init()
 {
 	int ret;
-	char local_uuid[DIGEST_SIZE*2];
-	
-	struct main_proc_pointer * main_pointer;
-	main_pointer= malloc(sizeof(struct main_proc_pointer));
-	if(main_pointer==NULL)
-		return -ENOMEM;
-        ret=get_local_uuid(local_uuid);
-        printf("this machine's local uuid is %s\n",local_uuid);
-	proc_share_data_setvalue("local_uuid",local_uuid);
-	proc_share_data_setvalue("proc_name",para);
-	proc_share_data_setpointer(main_pointer);
 	return 0;
 }
 int image_policy_memdb_init()
@@ -71,16 +55,3 @@ int vm_policy_memdb_init()
 #define MBR_PCR_INDEX  4
 #define KERNEL_PCR_INDEX  10
 #define SECURE_PCR_INDEX  11
-
-int pcr_policy_memdb_init()
-{
-	return 0;
-}
-int pcr_info_memdb_init()
-{
-	return 0;
-}
-int file_policy_memdb_init()
-{
-	return 0;
-}

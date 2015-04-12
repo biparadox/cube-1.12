@@ -11,9 +11,11 @@
 #include "../include/data_type.h"
 #include "../include/struct_deal.h"
 #include "../include/crypto_func.h"
+#include "../include/valuename.h"
 #include "../include/extern_struct.h"
 #include "../include/extern_defno.h"
 #include "../include/message_struct.h"
+#include "../include/message_struct_desc.h"
 #include "../include/vmlist.h"
 #include "../include/connector.h"
 #include "../include/logic_baselib.h"
@@ -41,10 +43,11 @@ int main()
     void * main_proc; // point to the main proc's subject struct
     void * conn_proc; // point to the conn proc's subject struct
     void * router_proc; // point to the conn proc's subject struct
+    char local_uuid[DIGEST_SIZE*2];
 
     const char * audit_filename= "./message.log";
     FILE * fp;
-    char audit_text[65536];
+    char audit_text[4096];
     int fd =open(audit_filename,O_CREAT|O_RDWR|O_TRUNC);
     close(fd);
 
@@ -58,6 +61,10 @@ int main()
 
     // init the proc's main share data
     ret=proc_share_data_init(share_data_desc);
+    ret=get_local_uuid(local_uuid);
+    printf("this machine's local uuid is %s\n",local_uuid);
+    proc_share_data_setvalue("uuid",local_uuid);
+    proc_share_data_setvalue("proc_name",main_proc_name);
 
     // do the main proc's init function
     sec_subject_setinitfunc(main_proc,main_proc_initfunc);
@@ -71,26 +78,26 @@ int main()
     for(i=0;procdb_init_list[i].name!=NULL;i++)
     {
 	    PROCDB_INIT * db_init=&procdb_init_list[i];
-	    retval=register_lib(db_init->name);
-	    if(retval<0)
+	    if(db_init->record_desc!=NULL)
 	    {
-		    printf("register lib %s error!\n",db_init->name);
-		    return retval;
+		    retval=register_record_type(db_init->name,db_init->record_desc,db_init->recordlib_ops);
+		    if(retval<0)
+			    return -EINVAL;
 	    }
-		// if lib file exists, we should load this lib
-	    retval=LoadPolicy(db_init->name);
-	
-	    // else, we should init it
-//	    if((retval <=0) &&(db_init->init!=NULL))
+		
 	    if(db_init->init!=NULL)
 	    {
+	   	 retval=register_lib(db_init->name);
+	  	 if(retval<0)
+	         {
+		    printf("register lib %s error!\n",db_init->name);
+		    return retval;
+	    	 }
 	         retval=db_init->init();
 		 if(retval<0)
 			return -EINVAL;
+	    	 retval=LoadPolicy(db_init->name);
 	    }
-	  //  {
-    	  //		proc_share_data_setstate(db_init->proc_state);
-	  //  }
     }
 		
 
@@ -102,13 +109,6 @@ int main()
     sec_subject_setinitfunc(conn_proc,conn_proc_initdata.init);
     sec_subject_setstartfunc(conn_proc,conn_proc_initdata.start);
 
-
-//   struct conn_init_para * conn_init_para = malloc(sizeof(struct conn_init_para));
-//   if(conn_init_para ==NULL)
-//	return -ENOMEM;
-  
-//    sec_subject_init(conn_proc,conn_init_para);
-//   free(conn_init_para);
     sec_subject_init(conn_proc,NULL);
 
     add_sec_subject(conn_proc);

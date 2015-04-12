@@ -35,7 +35,6 @@
 #include "cloud_config.h"
 #include "local_func.h"
 #include "main_proc_func.h"
-#include "proc_config.h"
 #include "aik_casign_func.h"
 
 struct caverify_proc_pointer
