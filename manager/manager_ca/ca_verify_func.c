@@ -116,30 +116,14 @@ int ca_verify_start(void * sub_proc,void * para)
 			continue;
 		else if(strncmp(msg_head->record_type,"LOGC",4)==0)
 		{
-			proc_ca_verify(sub_proc,recv_msg,&send_msg);
+			proc_ca_verify(sub_proc,recv_msg);
 		}
-		if(msg_head->flow & MSG_FLOW_RESPONSE)
-		{
-			void * flow_expand;
-			ret=message_remove_expand(recv_msg,"FTRE",&flow_expand);
-			if(flow_expand!=NULL) 
-			{
-				message_add_expand(send_msg,flow_expand);
-			}
-			else
-			{
-				set_message_head(send_msg,"receiver_uuid",msg_head->sender_uuid);
-			}
-
-		}
-		sec_subject_sendmsg(sub_proc,send_msg);
-		printf("send message succeed!\n");
 	}
 
 	return 0;
 };
 
-int proc_ca_verify(void * sub_proc,void * message,void ** send_msg)
+int proc_ca_verify(void * sub_proc,void * message)
 {
 	printf("begin ca verify!\n");
 	struct message_box * msg_box=message;
@@ -154,11 +138,6 @@ int proc_ca_verify(void * sub_proc,void * message,void ** send_msg)
 	retval=proc_share_data_getvalue("uuid",local_uuid);
 	retval=proc_share_data_getvalue("proc_name",proc_name);
 
-
-
-	message_head=get_message_head(msg_box);
-	if(strncmp(message_head->record_type,"LOGC",4)!=0)
-		return -EINVAL;
 	retval=message_get_record(msg_box,&login_info,0);	
 	if(retval<0)
 		return -EINVAL;
@@ -173,10 +152,8 @@ int proc_ca_verify(void * sub_proc,void * message,void ** send_msg)
 
 	struct message_box * new_msg;
 	new_msg=message_create("RETC",message);
-//  	if(IS_ERR(new_msg_box))
-  //  		     return -EINVAL;
 	message_add_record(new_msg,return_data);
-	*send_msg=new_msg;
+	sec_subject_sendmsg(sub_proc,new_msg);
 
 	return retval;
 

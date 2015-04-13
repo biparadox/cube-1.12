@@ -69,11 +69,6 @@ int trust_manager_init()
 	return 0;
 }
 
-int wrapped_key_memdb_init()
-{
-	return 0;
-}
-
 int public_key_memdb_init()
 {
 	TSS_RESULT * result;

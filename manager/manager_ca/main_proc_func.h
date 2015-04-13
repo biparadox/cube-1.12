@@ -5,7 +5,6 @@
 int trust_manager_init();
 
 int public_key_memdb_init();
-int wrapped_key_memdb_init();
 int vtpm_memdb_init();
 int login_name_memdb_init();
 
