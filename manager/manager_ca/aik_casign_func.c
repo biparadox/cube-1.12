@@ -89,18 +89,9 @@ int aik_casign_init(void * sub_proc,void * para)
 int aik_casign_start(void * sub_proc,void * para)
 {
 	int ret;
-	int retval;
 	void * recv_msg;
-	void * send_msg;
-	void * context;
 	int i;
 	const char * type;
-
-	char local_uuid[DIGEST_SIZE*2+1];
-	char proc_name[DIGEST_SIZE*2+1];
-	
-	ret=proc_share_data_getvalue("uuid",local_uuid);
-	ret=proc_share_data_getvalue("proc_name",proc_name);
 
 	printf("begin aik casign start!\n");
 

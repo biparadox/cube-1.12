@@ -89,17 +89,9 @@ int ca_verify_init(void * sub_proc,void * para)
 int ca_verify_start(void * sub_proc,void * para)
 {
 	int ret;
-	int retval;
 	void * recv_msg;
-	void * send_msg;
 	int i;
-	struct tcloud_connector * temp_conn;
-
-	char local_uuid[DIGEST_SIZE*2+1];
-	char proc_name[DIGEST_SIZE*2+1];
-	
-	ret=proc_share_data_getvalue("uuid",local_uuid);
-	ret=proc_share_data_getvalue("proc_name",proc_name);
+	const char * type;
 
 
 	for(i=0;i<300*1000;i++)
@@ -110,11 +102,10 @@ int ca_verify_start(void * sub_proc,void * para)
 			continue;
 		if(recv_msg==NULL)
 			continue;
-		MESSAGE_HEAD * msg_head;
-		msg_head=get_message_head(recv_msg);
-		if(msg_head==NULL)
+		type=message_get_recordtype(recv_msg);
+		if(type==NULL)
 			continue;
-		else if(strncmp(msg_head->record_type,"LOGC",4)==0)
+		else if(strncmp(type,"LOGC",4)==0)
 		{
 			proc_ca_verify(sub_proc,recv_msg);
 		}
