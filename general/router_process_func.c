@@ -44,7 +44,7 @@ int proc_router_recv_msg(void * message,char * local_uuid,char * proc_name)
 	if(message_get_state(message) & MSG_FLOW_RESPONSE)
 	{
 		
-		ret=router_check_sitestack(message);
+		ret=router_check_sitestack(message,"FTRE");
 		if(ret<0)
 			return ret;
 		if(ret==0)
@@ -84,7 +84,7 @@ int proc_router_send_msg(void * message,char * local_uuid,char * proc_name)
 		if(message_get_flow(message) & MSG_FLOW_RESPONSE)
 		{
 			comp_proc_uuid(local_uuid,proc_name,conn_uuid);
-			router_push_site(message,conn_uuid);
+			router_push_site(message,conn_uuid,"FTRE");
 		}
 
 		ret=find_sec_subject("connector_proc",&sec_sub);	
@@ -100,7 +100,7 @@ int proc_router_send_msg(void * message,char * local_uuid,char * proc_name)
 	else if(message_get_state(message) & MSG_FLOW_RESPONSE)
 	{
 		MESSAGE_HEAD * msg_head=get_message_head(message);
-		ret=router_pop_site(message,msg_head->receiver_uuid);
+		ret=router_pop_site(message,msg_head->receiver_uuid,"FTRE");
 		if(ret<0)
 		{
 			printf("response %s message routing can't find the end!\n",msg_head->record_type); 
@@ -146,7 +146,7 @@ int proc_router_init(void * sub_proc,void * para)
 {
     int ret;
     // main proc: read router config	
-    const char * config_filename= "./main_proc_policy.cfg";
+    const char * config_filename= "./router_policy.cfg";
 
     router_policy_init();
     ret=router_read_cfg(config_filename);	
