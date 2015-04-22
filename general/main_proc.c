@@ -80,14 +80,14 @@ int main()
 	    PROCDB_INIT * db_init=&procdb_init_list[i];
 	    if(db_init->record_desc!=NULL)
 	    {
-		    retval=register_record_type(db_init->name,db_init->record_desc,db_init->recordlib_ops);
+		    retval=register_record_type(db_init->name,db_init->record_desc);
 		    if(retval<0)
 			    return -EINVAL;
 	    }
 		
-	    if(db_init->init!=NULL)
+	    if(db_init->recordlib_ops!=NULL)
 	    {
-	   	 retval=register_lib(db_init->name);
+	   	 retval=register_policy_lib(db_init->name,db_init->recordlib_ops);
 	  	 if(retval<0)
 	         {
 		    printf("register lib %s error!\n",db_init->name);

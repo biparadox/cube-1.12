@@ -547,8 +547,8 @@ int proc_conn_init(void * sub_proc,void * para)
 	struct connector_proc_pointer * sub_proc_pointer;
 	struct conn_init_para * conn_init_para = (struct conn_init_para *)para;
 
-	register_record_type("SYNI",connect_syn_desc,NULL);
-	register_record_type("ACKI",connect_ack_desc,NULL);
+	register_record_type("SYNI",connect_syn_desc);
+	register_record_type("ACKI",connect_ack_desc);
 	struct tcloud_connector_hub * conn_hub;
  	conn_hub=get_connector_hub();
 

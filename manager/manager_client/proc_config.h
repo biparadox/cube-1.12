@@ -12,9 +12,9 @@ static int  (*main_proc_initfunc)()=&client_manager_init;
 
 static PROCDB_INIT procdb_init_list[]=
 {
-	{"VM_T",&vtpm_memdb_init,NULL,NULL},
-	{"PUBK",&public_key_memdb_init,NULL,NULL},
-	{"BLBK",&null_init_func,NULL,NULL},
+	{"VM_T",&vtpm_memdb_init,NULL,&general_lib_ops},
+	{"PUBK",&public_key_memdb_init,NULL,&general_lib_ops},
+	{"BLBK",&null_init_func,NULL,&general_lib_ops},
 	{NULL,NULL,0}
 };
 

@@ -41,7 +41,7 @@ int load_policy_pubek(char *pubek_name)
         }
 	snprintf(filename,DIGEST_SIZE*2,"%s.pem",pubek_name);
         memset(pubkey,0,sizeof(struct vTPM_publickey));
-        calculate_sm3(pubek_name,digest);
+        calculate_sm3(filename,digest);
 	digest_to_uuid(digest,buffer);
 
         memcpy(pubkey->uuid,buffer,DIGEST_SIZE*2);
