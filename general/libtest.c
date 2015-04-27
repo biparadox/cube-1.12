@@ -55,8 +55,8 @@ int main(int argc,char * argv[])
 	    printf("open lib error!\n");
 	    return -EINVAL;
     }
-    ret=read(fd,&libhead,sizeof(MESSAGE_HEAD));
-    if(ret!=sizeof(MESSAGE_HEAD))
+    ret=read(fd,&libhead,sizeof(POLICY_HEAD));
+    if(ret!=sizeof(POLICY_HEAD))
     {
 	    printf("lib head error!\n");
 	    return -EINVAL;
@@ -64,7 +64,7 @@ int main(int argc,char * argv[])
     close(fd);
     openstack_trust_lib_init();
 
-    ret=register_lib(libhead.PolicyType);
+    ret=register_policy_lib(libhead.PolicyType,&general_lib_ops);
     if(ret<0)
     {
 	    printf("register lib error!\n");

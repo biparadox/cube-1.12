@@ -73,7 +73,7 @@ int json_port_init(void * sub_proc,void * para)
     if(ret<0)
 	    return ret;
     ret=proc_share_data_getvalue("proc_name",proc_name);
-    register_record_type("SYNI",connect_syn_desc,NULL);
+    register_record_type("SYNI",connect_syn_desc);
 
     // process init
     sub_context=malloc(sizeof(struct json_server_context));
