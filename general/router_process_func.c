@@ -47,8 +47,22 @@ int proc_router_recv_msg(void * message,char * local_uuid,char * proc_name)
 		ret=router_check_sitestack(message,"FTRE");
 		if(ret<0)
 			return ret;
+		// if response stack finished, set the state to FINISH 
 		if(ret==0)
 			message_set_state(message, MSG_FLOW_FINISH);
+	}
+	if(message_get_state(message) & MSG_FLOW_ASPECT)
+	{
+		
+		ret=router_check_sitestack(message,"APRE");
+		if(ret<0)
+			return ret;
+		if(ret==0)
+		{
+			// if aspect stack finished, remove the aspect flag from state 
+			int state=message_get_state(message) &(~MSG_FLOW_ASPECT);
+			message_set_state(message, state);
+		}
 	}
 	return 0;
 }
@@ -126,6 +140,9 @@ int proc_router_send_msg(void * message,char * local_uuid,char * proc_name)
 	}
 	else if(message_get_state(message) & MSG_FLOW_ASPECT)
 	{
+		comp_proc_uuid(local_uuid,proc_name,conn_uuid);
+		router_push_site(message,conn_uuid,"APRE");
+
 		ret=find_sec_subject("connector_proc",&sec_sub);	
 		if(sec_sub==NULL)
 		{
@@ -198,12 +215,16 @@ int proc_router_start(void * sub_proc,void * para)
 		char * receiver_proc;
 		char * sender_proc;
 		void * msg_policy;
+		void * aspect_policy;
+
+		// throughout all the sub_proc
 		ret=get_first_sec_subject(&sub_proc);
 		msg_policy=NULL;
 		while(sub_proc!=NULL)
 		{
 			void * message;
 			void * router_rule;
+			int state;
 			// receiver message
 			ret=recv_sec_subject_msg(sub_proc,&message);
 			if(ret<0)
@@ -217,26 +238,57 @@ int proc_router_start(void * sub_proc,void * para)
 				continue;	
 			}
 			printf("router get proc %s's message!\n",sec_subject_getname(sub_proc)); 
-			ret=router_find_match_policy(message,&msg_policy,sec_subject_getname(sub_proc));
+			
+			if(message_get_state(message) & MSG_FLOW_ASPECT)
+			{
+				if(strcmp(sec_subject_getname(sub_proc),"connector_proc")==0)
+				{
+					state=message_get_state(message) &MSG_FLOW_LOCAL;
+					message_set_state(message, state);
+				}
+			}
+			else
+			{
+				proc_router_recv_msg(message,local_uuid,proc_name);
+				state=message_get_state(message);
+			}
+
+			if((state &MSG_FLOW_INIT) || // new message
+				(state &MSG_FLOW_FINISH)||   // message reach the target
+				(state &(MSG_FLOW_LOCAL|MSG_FLOW_ASPECT)))  // aspect router should find a plugin to work
+			{
+				// find the match policy if this message is a new message or it reach the target
+				ret=router_find_match_policy(message,&msg_policy,sec_subject_getname(sub_proc));
+				if(ret<0)
+				{
+					message_free(message);
+					continue;
+				}
+				if(msg_policy==NULL)
+				{
+					message_free(message);
+					continue;
+				}
+				ret=router_set_main_flow(message,msg_policy);
+				if(ret<0)
+				{
+					message_free(message);
+					printf("set main flow failed!\n");
+					continue;
+				}
+			}
+
+			// find the sender's aspect policy
+
+			ret=router_find_aspect_policy(message,&aspect_policy,sec_subject_getname(sub_proc));
 			if(ret<0)
 			{
 				message_free(message);
 				continue;
 			}
-			if(msg_policy==NULL)
+			if(msg_policy!=NULL)
 			{
-				message_free(message);
-				continue;
-			}
-
-			proc_router_recv_msg(message,local_uuid,proc_name);
-
-			ret=router_set_main_flow(message,msg_policy);
-			if(ret<0)
-			{
-				message_free(message);
-				printf("set main flow failed!\n");
-				continue;
+				router_set_aspect_flow(message,aspect_policy);
 			}
 
 			ret=proc_router_send_msg(message,local_uuid,proc_name);
@@ -246,6 +298,7 @@ int proc_router_start(void * sub_proc,void * para)
 			}
 		
 			ret=message_2_json(message,audit_text);	
+
 			audit_text[ret]='\n';			
     			fd=open(audit_filename,O_WRONLY|O_CREAT|O_APPEND);
     			if(fd<0)
