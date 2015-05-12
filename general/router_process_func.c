@@ -73,7 +73,8 @@ int proc_router_send_msg(void * message,char * local_uuid,char * proc_name)
 	MESSAGE_HEAD * msg_head;
 	BYTE conn_uuid[DIGEST_SIZE*2];
 
-	if(message_get_state(message) & MSG_FLOW_LOCAL)
+	if((message_get_state(message) & MSG_FLOW_LOCAL)
+		|| (message_get_flow(message) & MSG_FLOW_ASPECT_LOCAL))
 	{
 		msg_head=get_message_head(message);
 		if(msg_head==NULL)
@@ -247,28 +248,11 @@ int proc_router_start(void * sub_proc,void * para)
 				}
 			}
 
-			else if (flow & MSG_FLOW_ASPECT)
-			{
-				ret=router_check_sitestack(message,"APRE");
-				if(ret<0)
+			else {
+
+				if (flow & MSG_FLOW_ASPECT)
 				{
-					message_free(message);
-					continue;
-				}
-				else if(ret==0)
-				{
-					// if aspect stack finished, remove the aspect flag from state 
-					flow = flow &(~MSG_FLOW_ASPECT);
-					message_set_flow(message, flow);
-					ret=router_pop_site(message,msg_head->receiver_uuid,"APRE");
-				}
-			}
-			else{	 //  if router receive an aspect message, it should find aspect policy immediately
-				 //  or router should check if message's flow has  response flag and it is in the 
-				 //  deliver state or response state 
-				if(state & MSG_FLOW_RESPONSE) 
-				{
-					ret=router_check_sitestack(message,"FTRE");
+					ret=router_check_sitestack(message,"APRE");
 					if(ret<0)
 					{
 						message_free(message);
@@ -276,132 +260,150 @@ int proc_router_start(void * sub_proc,void * para)
 					}
 					else if(ret==0)
 					{
-						// if FTRE stack is empty, set the state to MSG_FLOW_FINISH 
-						state=MSG_FLOW_FINISH;
-						message_set_state(message, state);
+						// if aspect stack finished, remove the aspect flag from state 
+						flow = flow &(~MSG_FLOW_ASPECT);
+						message_set_flow(message, flow);
+						ret=router_pop_site(message,msg_head->receiver_uuid,"APRE");
 					}
-					else
+				}
+				else{	 //  if router receive an aspect message, it should find aspect policy immediately
+					 //  or router should check if message's flow has  response flag and it is in the 
+					 //  deliver state or response state 
+					if(state & MSG_FLOW_RESPONSE) 
 					{
-						ret=router_pop_site(message,msg_head->receiver_uuid,"FTRE");
+						ret=router_check_sitestack(message,"FTRE");
 						if(ret<0)
 						{
 							message_free(message);
 							continue;
 						}
+						else if(ret==0)
+						{
+							// if FTRE stack is empty, set the state to MSG_FLOW_FINISH 
+							state=MSG_FLOW_FINISH;
+							message_set_state(message, state);
+						}
+						else
+						{
+							ret=router_pop_site(message,msg_head->receiver_uuid,"FTRE");
+							if(ret<0)
+							{
+								message_free(message);
+								continue;
+							}
+						}
 					}
-				}
-				else if((flow & MSG_FLOW_RESPONSE)
+					else if((flow & MSG_FLOW_RESPONSE)
 						&& (state == MSG_FLOW_LOCAL))
-				{
-					// if FTRE stack still has value, pop the value, and let information return the node value pointed 
-					ret=router_pop_site(message,msg_head->receiver_uuid,"FTRE");
-					if(ret<0)
 					{
-						message_free(message);
-						continue;
+						// if FTRE stack still has value, pop the value, and let information return the node value pointed 
+						ret=router_pop_site(message,msg_head->receiver_uuid,"FTRE");
+						if(ret<0)
+						{	
+							message_free(message);
+							continue;
+						}
+						state=MSG_FLOW_RESPONSE;
+						message_set_state(message,state);
 					}
-					state=MSG_FLOW_RESPONSE;
-					message_set_state(message,state);
-				}
-				if( (state & MSG_FLOW_INIT)
-					|| (state &MSG_FLOW_DELIVER)
-					|| (state & MSG_FLOW_FINISH)) 	// message is not the response state, 
+					if( (state & MSG_FLOW_INIT)
+						|| (state &MSG_FLOW_DELIVER)
+						|| (state & MSG_FLOW_FINISH)) 	// message is not the response state, 
 										// we should find the match policy and set the main router  
-				{
-					ret=router_find_match_policy(message,&msg_policy,sec_subject_getname(sub_proc));
-					if(ret<0)
 					{
-						message_free(message);
+						ret=router_find_match_policy(message,&msg_policy,sec_subject_getname(sub_proc));
+						if(ret<0)
+						{
+							message_free(message);
+							continue;
+						}
+						if(msg_policy==NULL)
+						{
+							message_free(message);
+							continue;
+						}
+						ret=router_set_main_flow(message,msg_policy);
+						if(ret<0)
+						{
+							message_free(message);
+							printf("set main flow failed!\n");
+							continue;
+						}
+					}
+					else if (!(state & MSG_FLOW_RESPONSE))
+					{
 						continue;
 					}
-					if(msg_policy==NULL)
-					{
-						message_free(message);
-						continue;
-					}
-					ret=router_set_main_flow(message,msg_policy);
-					if(ret<0)
-					{
-						message_free(message);
-						printf("set main flow failed!\n");
-						continue;
-					}
-				}
-				else if (!(state & MSG_FLOW_RESPONSE))
-				{
-					continue;
-				}
-			}
-
-
-			// find the sender's aspect policy
-
-			ret=router_find_aspect_policy(message,&aspect_policy,sec_subject_getname(sub_proc));
-			if(ret<0)
-			{
-				message_free(message);
-				continue;
-			}
-			if(aspect_policy!=NULL)
-			{
-				int aspect_type=router_policy_get_type(aspect_policy);
-
-				if( aspect_type ==MSG_FLOW_ASPECT_LOCAL)
-				{
-					ret=router_push_site(message,message_get_receiver(message),"APRE");
-				}
-				else 
-				{
-					if(router_check_sitestack(message,"APRE")==0)
-					{
-						ret=router_push_site(message,message_get_receiver(message),"APRE");
-					}
-					else
-					{
-						comp_proc_uuid(local_uuid,proc_name,conn_uuid);
-						router_push_site(message,conn_uuid,"APRE");
-					}
 				}
 
-				ret=router_set_aspect_flow(message,aspect_policy);// set the aspect flow policy
+
+				// find the sender's aspect policy
+	
+				ret=router_find_aspect_policy(message,&aspect_policy,sec_subject_getname(sub_proc));
 				if(ret<0)
 				{
 					message_free(message);
 					continue;
 				}
-				
-			}
-			else  if(msg_policy!=NULL)
-			{
-				router_rule=router_get_first_duprule(msg_policy);
-				while(router_rule!=NULL)
+				if(aspect_policy!=NULL)
 				{
-					void * dup_msg;
-					ret=router_set_dup_flow(message,router_rule,&dup_msg);
-					if(ret<0)
-						break;
-					if(dup_msg!=NULL)
+					int aspect_type=router_policy_get_type(aspect_policy);
+
+					if( aspect_type ==MSG_FLOW_ASPECT_LOCAL)
 					{
-						ret=message_2_json(dup_msg,audit_text);	
-						audit_text[ret]='\n';			
-    						fd=open(audit_filename,O_WRONLY|O_CREAT|O_APPEND);
-    						if(fd<0)
-	  						return -ENOENT;
-						write(fd,audit_text,ret+1);
-						close(fd);
-						proc_router_send_msg(dup_msg,local_uuid,proc_name);
+						if(!(message_get_flow(message) & MSG_FLOW_ASPECT))
+							ret=router_push_site(message,message_get_receiver(message),"APRE");
 					}
-					router_rule=router_get_next_duprule(msg_policy);
+					else 
+					{
+						if(router_check_sitestack(message,"APRE")==0)
+						{
+							ret=router_push_site(message,message_get_receiver(message),"APRE");
+						}
+						comp_proc_uuid(local_uuid,proc_name,conn_uuid);
+						router_push_site(message,conn_uuid,"APRE");
+					}
+
+					ret=router_set_aspect_flow(message,aspect_policy);// set the aspect flow policy
+					if(ret<0)
+					{
+						message_free(message);
+						continue;
+					}
+				
 				}
-
-				flow=message_get_flow(message);
-				state=message_get_state(message);
-
-				if( (flow & MSG_FLOW_RESPONSE)
-					&&( state &MSG_FLOW_DELIVER))
+				else  if(msg_policy!=NULL)
 				{
-					comp_proc_uuid(local_uuid,proc_name,conn_uuid);
-					router_push_site(message,conn_uuid,"FTRE");
+					router_rule=router_get_first_duprule(msg_policy);
+					while(router_rule!=NULL)
+					{
+						void * dup_msg;
+						ret=router_set_dup_flow(message,router_rule,&dup_msg);
+						if(ret<0)
+							break;
+						if(dup_msg!=NULL)
+						{
+							ret=message_2_json(dup_msg,audit_text);	
+							audit_text[ret]='\n';			
+    							fd=open(audit_filename,O_WRONLY|O_CREAT|O_APPEND);
+    							if(fd<0)
+	  							return -ENOENT;
+							write(fd,audit_text,ret+1);
+							close(fd);
+							proc_router_send_msg(dup_msg,local_uuid,proc_name);
+						}
+						router_rule=router_get_next_duprule(msg_policy);
+					}
+
+					flow=message_get_flow(message);
+					state=message_get_state(message);
+
+					if( (flow & MSG_FLOW_RESPONSE)
+						&&( state &MSG_FLOW_DELIVER))
+					{
+						comp_proc_uuid(local_uuid,proc_name,conn_uuid);
+						router_push_site(message,conn_uuid,"FTRE");
+					}
 				}
 			}
 			ret=message_2_json(message,audit_text);	
