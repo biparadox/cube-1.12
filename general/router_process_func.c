@@ -215,6 +215,8 @@ int proc_router_start(void * sub_proc,void * para)
 			}
 			printf("router get proc %s's message!\n",sec_subject_getname(sub_proc)); 
 			
+			router_dup_activemsg_info(message);
+
 			state=message_get_state(message);
 			flow=message_get_flow(message);
 			MESSAGE_HEAD * msg_head=get_message_head(message);
@@ -223,7 +225,9 @@ int proc_router_start(void * sub_proc,void * para)
 			if(flow & MSG_FLOW_ASPECT_LOCAL)  // local aspect message return
 			{
 
-				flow = flow & (~MSG_FLOW_LOCAL);
+				flow = flow & (~MSG_FLOW_ASPECT_LOCAL);
+				ret=router_pop_site(message,msg_head->receiver_uuid,"APRE");
+
 				message_set_flow(message, flow);
 				if(flow & MSG_FLOW_ASPECT)  //  message should return the remote aspect point
 				{
@@ -239,95 +243,96 @@ int proc_router_start(void * sub_proc,void * para)
 						flow = flow &(~MSG_FLOW_ASPECT);
 						message_set_flow(message, flow);
 					}
-					else
-					{
 						// if aspect stack still has value, pop the value, and let information return the node value pointed 
-						ret=router_pop_site(message,msg_head->receiver_uuid,"APRE");
-						if(ret<0)
-						{
-							message_free(message);
-							continue;
-						}
-					}
 				}
 			}
 
-			else 
+			else if (flow & MSG_FLOW_ASPECT)
 			{
-				if( ! (flow & MSG_FLOW_ASPECT))  //  if router receive an aspect message, it should find aspect policy immediately
-								 //  or router should check if message's flow has  response flag and it is in the 
-								 //  deliver state or response state 
+				ret=router_check_sitestack(message,"APRE");
+				if(ret<0)
 				{
-					if(state & MSG_FLOW_RESPONSE) 
+					message_free(message);
+					continue;
+				}
+				else if(ret==0)
+				{
+					// if aspect stack finished, remove the aspect flag from state 
+					flow = flow &(~MSG_FLOW_ASPECT);
+					message_set_flow(message, flow);
+					ret=router_pop_site(message,msg_head->receiver_uuid,"APRE");
+				}
+			}
+			else{	 //  if router receive an aspect message, it should find aspect policy immediately
+				 //  or router should check if message's flow has  response flag and it is in the 
+				 //  deliver state or response state 
+				if(state & MSG_FLOW_RESPONSE) 
+				{
+					ret=router_check_sitestack(message,"FTRE");
+					if(ret<0)
 					{
-						ret=router_check_sitestack(message,"FTRE");
-						if(ret<0)
-						{
-							message_free(message);
-							continue;
-						}
-						else if(ret==0)
-						{
-							// if FTRE stack is empty, set the state to MSG_FLOW_FINISH 
-							message_set_state(message, MSG_FLOW_FINISH);
-						}
-						else
-						{
-							ret=router_pop_site(message,msg_head->receiver_uuid,"FTRE");
-							if(ret<0)
-							{
-								message_free(message);
-								continue;
-							}
-
-						}
-
+						message_free(message);
+						continue;
 					}
-					else if((flow & MSG_FLOW_RESPONSE)
-							&& (state == MSG_FLOW_LOCAL))
+					else if(ret==0)
 					{
-						// if FTRE stack still has value, pop the value, and let information return the node value pointed 
+						// if FTRE stack is empty, set the state to MSG_FLOW_FINISH 
+						state=MSG_FLOW_FINISH;
+						message_set_state(message, state);
+					}
+					else
+					{
 						ret=router_pop_site(message,msg_head->receiver_uuid,"FTRE");
 						if(ret<0)
 						{
 							message_free(message);
 							continue;
 						}
-						message_set_state(message,MSG_FLOW_RESPONSE);
 					}
-					if( (state & MSG_FLOW_INIT)
-						|| (state &MSG_FLOW_DELIVER)
-						|| (state & MSG_FLOW_FINISH)) 	// message is not the response state, 
-										// we should find the match policy and set the main router  
+				}
+				else if((flow & MSG_FLOW_RESPONSE)
+						&& (state == MSG_FLOW_LOCAL))
+				{
+					// if FTRE stack still has value, pop the value, and let information return the node value pointed 
+					ret=router_pop_site(message,msg_head->receiver_uuid,"FTRE");
+					if(ret<0)
 					{
-						ret=router_find_match_policy(message,&msg_policy,sec_subject_getname(sub_proc));
-						if(ret<0)
-						{
-							message_free(message);
-							continue;
-						}
-						if(msg_policy==NULL)
-						{
-							message_free(message);
-							continue;
-						}
-						ret=router_set_main_flow(message,msg_policy);
-						if(ret<0)
-						{
-							message_free(message);
-							printf("set main flow failed!\n");
-							continue;
-						}
-
-					}
-					else
-					{
+						message_free(message);
 						continue;
 					}
-
+					state=MSG_FLOW_RESPONSE;
+					message_set_state(message,state);
 				}
-
+				if( (state & MSG_FLOW_INIT)
+					|| (state &MSG_FLOW_DELIVER)
+					|| (state & MSG_FLOW_FINISH)) 	// message is not the response state, 
+										// we should find the match policy and set the main router  
+				{
+					ret=router_find_match_policy(message,&msg_policy,sec_subject_getname(sub_proc));
+					if(ret<0)
+					{
+						message_free(message);
+						continue;
+					}
+					if(msg_policy==NULL)
+					{
+						message_free(message);
+						continue;
+					}
+					ret=router_set_main_flow(message,msg_policy);
+					if(ret<0)
+					{
+						message_free(message);
+						printf("set main flow failed!\n");
+						continue;
+					}
+				}
+				else if (!(state & MSG_FLOW_RESPONSE))
+				{
+					continue;
+				}
 			}
+
 
 			// find the sender's aspect policy
 
@@ -339,16 +344,30 @@ int proc_router_start(void * sub_proc,void * para)
 			}
 			if(aspect_policy!=NULL)
 			{
+				int aspect_type=router_policy_get_type(aspect_policy);
+
+				if( aspect_type ==MSG_FLOW_ASPECT_LOCAL)
+				{
+					ret=router_push_site(message,message_get_receiver(message),"APRE");
+				}
+				else 
+				{
+					if(router_check_sitestack(message,"APRE")==0)
+					{
+						ret=router_push_site(message,message_get_receiver(message),"APRE");
+					}
+					else
+					{
+						comp_proc_uuid(local_uuid,proc_name,conn_uuid);
+						router_push_site(message,conn_uuid,"APRE");
+					}
+				}
+
 				ret=router_set_aspect_flow(message,aspect_policy);// set the aspect flow policy
 				if(ret<0)
 				{
 					message_free(message);
 					continue;
-				}
-				if(!(message_get_flow(message) & MSG_FLOW_ASPECT_LOCAL))
-				{
-					comp_proc_uuid(local_uuid,proc_name,conn_uuid);
-					router_push_site(message,conn_uuid,"APRE");
 				}
 				
 			}
