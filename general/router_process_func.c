@@ -50,7 +50,7 @@ int proc_router_recv_msg(void * message,char * local_uuid,char * proc_name)
 		if(ret==0)
 			message_set_state(message, MSG_FLOW_FINISH);
 	}
-	if(message_get_state(message) & MSG_FLOW_ASPECT)
+	if(message_get_flow(message) & MSG_FLOW_ASPECT)
 	{
 		
 		ret=router_check_sitestack(message,"APRE");
@@ -59,8 +59,8 @@ int proc_router_recv_msg(void * message,char * local_uuid,char * proc_name)
 		if(ret==0)
 		{
 			// if aspect stack finished, remove the aspect flag from state 
-			int state=message_get_state(message) &(~MSG_FLOW_ASPECT);
-			message_set_state(message, state);
+			int flow=message_get_flow(message) &(~MSG_FLOW_ASPECT);
+			message_set_flow(message, flow);
 		}
 	}
 	return 0;
@@ -116,7 +116,7 @@ int proc_router_send_msg(void * message,char * local_uuid,char * proc_name)
 		send_sec_subject_msg(sec_sub,message);
 		printf("send message to conn process!\n");
 	}
-	else if(message_get_state(message) & MSG_FLOW_ASPECT)
+	else if(message_get_flow(message) & MSG_FLOW_ASPECT)
 	{
 		ret=find_sec_subject("connector_proc",&sec_sub);	
 		if(sec_sub==NULL)
@@ -182,6 +182,7 @@ int proc_router_start(void * sub_proc,void * para)
 //	struct timeval time_val={0,10*1000};
 	struct timeval router_val;
 	router_val.tv_usec=time_val.tv_usec;
+	comp_proc_uuid(local_uuid,proc_name,conn_uuid);
 
 	// message routing loop
 	for(i=0;i<5000*1000;i++)
@@ -263,12 +264,17 @@ int proc_router_start(void * sub_proc,void * para)
 						// if aspect stack finished, remove the aspect flag from state 
 						flow = flow &(~MSG_FLOW_ASPECT);
 						message_set_flow(message, flow);
+					}
+					else if(ret==1)
+					{
+						flow = flow &(~MSG_FLOW_ASPECT);
+						message_set_flow(message, flow);
 						ret=router_pop_site(message,msg_head->receiver_uuid,"APRE");
 					}
 				}
 				else{	 //  if router receive an aspect message, it should find aspect policy immediately
-					 //  or router should check if message's flow has  response flag and it is in the 
-					 //  deliver state or response state 
+					 			//  or router should check if message's flow has  response flag and it is in the 
+					 			//  deliver state or response state 
 					if(state & MSG_FLOW_RESPONSE) 
 					{
 						ret=router_check_sitestack(message,"FTRE");
@@ -329,6 +335,11 @@ int proc_router_start(void * sub_proc,void * para)
 							printf("set main flow failed!\n");
 							continue;
 						}
+						if( (message_get_flow(message) & MSG_FLOW_RESPONSE)
+							&&( message_get_state(message) &MSG_FLOW_DELIVER))
+						{
+							router_push_site(message,conn_uuid,"FTRE");
+						}
 					}
 					else if (!(state & MSG_FLOW_RESPONSE))
 					{
@@ -360,7 +371,6 @@ int proc_router_start(void * sub_proc,void * para)
 						{
 							ret=router_push_site(message,message_get_receiver(message),"APRE");
 						}
-						comp_proc_uuid(local_uuid,proc_name,conn_uuid);
 						router_push_site(message,conn_uuid,"APRE");
 					}
 
@@ -398,12 +408,6 @@ int proc_router_start(void * sub_proc,void * para)
 					flow=message_get_flow(message);
 					state=message_get_state(message);
 
-					if( (flow & MSG_FLOW_RESPONSE)
-						&&( state &MSG_FLOW_DELIVER))
-					{
-						comp_proc_uuid(local_uuid,proc_name,conn_uuid);
-						router_push_site(message,conn_uuid,"FTRE");
-					}
 				}
 			}
 			ret=message_2_json(message,audit_text);	
