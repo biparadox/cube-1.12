@@ -165,69 +165,6 @@ int proc_router_send_msg(void * message,char * local_uuid,char * proc_name)
 			return -EINVAL;
 
 	}
-
-
-
-/*	
-	if((message_get_state(message) & MSG_FLOW_LOCAL)
-		|| (message_get_flow(message) & MSG_FLOW_ASPECT_LOCAL))
-	{
-		msg_head=get_message_head(message);
-		if(msg_head==NULL)
-		{
-				return  -EINVAL;
-		}
-		ret=find_sec_subject(msg_head->receiver_uuid,&sec_sub);	
-		if(sec_sub!=NULL)
-		{
-			if(sec_subject_getprocstate(sec_sub)<SEC_PROC_START)
-			{	
-				printf("start process %s!\n",sec_subject_getname(sec_sub));
-    				ret=sec_subject_start(sec_sub,NULL);
-			}
-			send_sec_subject_msg(sec_sub,message);
-			printf("send message to local process %s!\n",msg_head->receiver_uuid);
-		}
-	}
-	else if(message_get_state(message) & MSG_FLOW_DELIVER)
-	{
-		ret=find_sec_subject("connector_proc",&sec_sub);	
-		if(sec_sub==NULL)
-		{
-			printf("can't find conn process!\n");
-			return -EINVAL;
-		}
-		send_sec_subject_msg(sec_sub,message);
-		printf("send message to conn process!\n");
-				
-	}
-	else if(message_get_state(message) & MSG_FLOW_RESPONSE)
-	{
-		ret=find_sec_subject("connector_proc",&sec_sub);	
-		if(sec_sub==NULL)
-		{
-			printf("can't find conn process!\n");
-			return -EINVAL;
-		}
-		send_sec_subject_msg(sec_sub,message);
-		printf("send message to conn process!\n");
-	}
-	else if(message_get_flow(message) & MSG_FLOW_ASPECT)
-	{
-		ret=find_sec_subject("connector_proc",&sec_sub);	
-		if(sec_sub==NULL)
-		{
-			printf("can't find conn process!\n");
-			return -EINVAL;
-		}
-		send_sec_subject_msg(sec_sub,message);
-		printf("send message to conn process!\n");
-	}
-	else
-	{
-		return -EINVAL;
-	}
-	*/
 	return 0;
 }
 
@@ -388,7 +325,7 @@ int proc_router_start(void * sub_proc,void * para)
 					// and set state to local to wait a local plugin to deal with the message  
 					message_set_state(message,MSG_FLOW_LOCAL);
 					flow=message_get_flow(message);
-					message_set_flow(message,(flow&(~MSG_FLOW_QUERY))|MSG_FLOW_RESPONSE);
+					message_set_flow(message,(flow&(~MSG_FLOW_QUERY))|MSG_FLOW_RECV);
 					send_state=STATE_RECV;
 					break;
 				case MSG_FLOW_RESPONSE:
@@ -401,7 +338,7 @@ int proc_router_start(void * sub_proc,void * para)
 					if(ret==0)
 					{
 						flow=message_get_flow(message);
-						message_set_flow(message,flow&~MSG_FLOW_RESPONSE);
+						message_set_flow(message,flow&(~MSG_FLOW_RESPONSE)|MSG_FLOW_RECV);
 						message_set_state(message,MSG_FLOW_LOCAL);
 						send_state=STATE_RECV;
 					}
@@ -418,6 +355,7 @@ int proc_router_start(void * sub_proc,void * para)
 					{
 						ret=router_pop_site(message,"APRE");
 						send_state=STATE_ASPECT_RETURN;
+						message_set_state(message,MSG_FLOW_ASPECT_RETURN);
 						break;
 					}
 					send_state=STATE_ASPECT;
@@ -446,6 +384,7 @@ int proc_router_start(void * sub_proc,void * para)
 					send_state=STATE_ASPECT_LOCAL;
 					break;
 				case MSG_FLOW_ASPECT_RETURN:
+					flow = message_get_flow(message);
 					ret=router_check_sitestack(message,"APRE");
 					if(ret<0)
 					{
@@ -456,26 +395,27 @@ int proc_router_start(void * sub_proc,void * para)
 					else if(ret==0)
 					{
 						// if aspect stack finished, remove the aspect flag from state 
-						flow = message_get_flow(message);
-						message_set_flow(message, flow&(~MSG_FLOW_ASPECT_RETURN));
-						message_set_state(message,MSG_FLOW_FINISH);
+//						flow = message_get_flow(message);
 						send_state=STATE_FINISH;
 						break;
 					}
 					else if(ret>1)
 					{
-						flow = message_get_flow(message);
-						message_set_flow(message, flow&(~MSG_FLOW_ASPECT_RETURN));
+//						flow = message_get_flow(message);
+//						message_set_flow(message, flow&(~MSG_FLOW_ASPECT_RETURN));
 						ret=router_pop_site(message,"APRE");
 						send_state=STATE_TRANS;
 						break;
 					}
 
+					flow &=(~MSG_FLOW_ASPECT_RETURN);
+					message_set_flow(message, flow);
 					ret=router_pop_site(message,"APRE");
 
 					if(flow&MSG_FLOW_RECV)
 					{
 						message_set_state(message,MSG_FLOW_FINISH);
+						message_set_flow(message, flow&(~MSG_FLOW_RECV)|MSG_FLOW_RESPONSE);
 						send_state=STATE_FINISH;
 					}
 					if(flow&MSG_FLOW_DELIVER)
@@ -663,6 +603,7 @@ int proc_router_start(void * sub_proc,void * para)
 								break;
 							}
 							send_state=STATE_TRANS;
+							break;
 						}
 						printf("message %s is discarded in FINISH state!\n",message_get_recordtype(message));
 						send_state=STATE_ERROR;
