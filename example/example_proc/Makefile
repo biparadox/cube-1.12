@@ -7,7 +7,7 @@ PLUGIN_PROC_OBJ=echo_plugin_func.o
 
 main: $(MAIN_PROC)
 $(MAIN_PROC):  main_proc.c $(MAIN_PROC)_func.o $(PLUGIN_PROC_OBJ)
-	$(CC) $(FLAGS) $(MAIN_PROC) main_proc.c connector_process_func.o router_process_func.o $(MAIN_PROC)_func.o $(PLUGIN_PROC_OBJ) -L../lib -lopenstacktrust -lentity -lrouter -ltesi -ltspi -lpolicy_ui -lmemdb -lconnector -lmessage -llogicdb -lstruct -lsysfunc -lcrypto_func -lcrypto -lpthread
+	$(CC) $(FLAGS) $(MAIN_PROC) main_proc.c connector_process_func.o router_process_func.o $(MAIN_PROC)_func.o $(PLUGIN_PROC_OBJ) -L../lib -lopenstacktrust -lentity -lrouter -lpolicy_ui -lmemdb -lconnector -lmessage -llogicdb -lstruct -lsysfunc -lcrypto_func -lpthread
 $(MAIN_PROC)_func.o: $(MAIN_PROC)_func.c main_proc_func.h
 	$(CC) $(CFLAGS) $(MAIN_PROC)_func.c
 echo_plugin_func.o:  echo_plugin_func.c main_proc_func.h
