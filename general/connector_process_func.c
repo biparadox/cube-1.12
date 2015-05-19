@@ -423,6 +423,7 @@ void * build_server_syn_message(char * service,char * local_uuid,char * proc_nam
 		return -EINVAL;
 	retval=message_add_record(message_box,server_syn);
 
+	message_set_state(message_box,MSG_FLOW_INIT);
 	printf("init message success!\n");
 	return message_box;
 
@@ -474,6 +475,7 @@ void * build_client_ack_message(void * message_box,char * local_uuid,char * proc
 	if(new_msg==NULL)
 		return -EINVAL;
 
+	message_set_state(new_msg,MSG_FLOW_INIT);
 	retval=message_add_record(new_msg,client_ack);
 	return new_msg;
 }

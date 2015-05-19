@@ -462,6 +462,7 @@ int proc_router_start(void * sub_proc,void * para)
 								break;
 							}
 							send_state=STATE_TRANS;
+							break;
 						}
 						send_state=STATE_SEND;
 						break;
@@ -597,6 +598,16 @@ int proc_router_start(void * sub_proc,void * para)
 						if(msg_policy!=NULL)
 						{
 							ret=router_set_main_flow(message,msg_policy);
+							if(ret<0)
+							{
+								send_state=STATE_ERROR;
+								break;
+							}
+							flow=message_get_flow(message);
+							if(flow&MSG_FLOW_RECV)
+							{
+								ret=message_set_flow(message,flow&(~MSG_FLOW_RECV)|MSG_FLOW_RESPONSE);
+							}
 							if(ret<0)
 							{
 								send_state=STATE_ERROR;

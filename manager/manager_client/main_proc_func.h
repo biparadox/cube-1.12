@@ -1,5 +1,6 @@
 #ifndef MAIN_PROC_FUNC_H
 #define MAIN_PROC_FUNC_H
+#include "../include/vtpm_desc.h"
 
 int client_manager_init();
 
