@@ -21,9 +21,9 @@
 #include "../include/connector.h"
 #include "../include/sec_entity.h"
 
-#include "../../cloud_config.h"
+#include "../cloud_config.h"
+#include "main_proc_func.h"
 
-static char local_jsonserver_addr[] = "0.0.0.0:12888";
 
 struct json_server_context
 {
