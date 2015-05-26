@@ -350,9 +350,9 @@ int proc_router_start(void * sub_proc,void * para)
 					break;
 				case MSG_FLOW_ASPECT_LOCAL:
 					flow=message_get_flow(message);
-					message_set_flow(message,flow&(~MSG_FLOW_ASPECT_LOCAL));
 					if(flow & MSG_FLOW_ASPECT_RETURN)
 					{
+						message_set_flow(message,flow&(~MSG_FLOW_ASPECT_LOCAL));
 						ret=router_pop_site(message,"APRE");
 						send_state=STATE_ASPECT_RETURN;
 						message_set_state(message,MSG_FLOW_ASPECT_RETURN);
@@ -502,7 +502,9 @@ int proc_router_start(void * sub_proc,void * para)
 							break;
 						}
 						flow=message_get_flow(message);
-						if(flow & MSG_FLOW_ASPECT_RETURN)
+						message_set_flow(message,flow | MSG_FLOW_ASPECT_LOCAL);
+						
+/*						if(flow & MSG_FLOW_ASPECT_RETURN)
 						{
 							ret=router_pop_site(message,"APRE");
 							if(ret<0)
@@ -511,13 +513,15 @@ int proc_router_start(void * sub_proc,void * para)
 								break;
 							}
 						}
+*/						
 						router_push_site(message,message_get_receiver(message),"APRE");
-						ret=router_set_aspect_flow(message,aspect_policy);
+						ret=router_set_aspect_local_flow(message,aspect_policy);
 						if(ret<0)
 						{
 							send_state=STATE_ERROR;
 							break;
 						}
+						message_set_state(message,MSG_FLOW_ASPECT_LOCAL);
 						send_state=STATE_TRANS;
 						break;
 					case STATE_ASPECT:
@@ -535,6 +539,11 @@ int proc_router_start(void * sub_proc,void * para)
 								message_set_state(message,MSG_FLOW_ASPECT_RETURN);
 								send_state=STATE_TRANS;
 								break;
+							}
+							if(flow & MSG_FLOW_ASPECT_LOCAL)
+							{
+								ret=router_pop_site(message,"APRE");
+								message_set_flow(message,flow&(~MSG_FLOW_ASPECT_LOCAL));
 							}
 							if(flow & MSG_FLOW_RECV)
 							{
