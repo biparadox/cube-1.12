@@ -93,7 +93,7 @@ int main()
 		    printf("register lib %s error!\n",db_init->name);
 		    return retval;
 	    	 }
-	         retval=db_init->init();
+	         retval=db_init->init(db_init->name,NULL);
 		 if(retval<0)
 			return -EINVAL;
 	    	 retval=LoadPolicy(db_init->name);
