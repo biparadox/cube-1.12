@@ -345,7 +345,7 @@ int proc_router_start(void * sub_proc,void * para)
 					}
 					else
 					{
-						router_push_site(message,conn_uuid,"FTRE");
+						router_pop_site(message,"FTRE");
 						send_state=STATE_ASPECT_LOCAL;
 					}
 					break;
