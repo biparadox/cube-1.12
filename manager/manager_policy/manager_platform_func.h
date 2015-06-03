@@ -1,5 +1,5 @@
-#ifndef MONITOR_PROCESS_FUNC_H
-#define MONITOR_PROCESS_FUNC_H
+#ifndef MANAGER_PLATFORM_FUNC_H
+#define MANAGER_PLATFORM_FUNC_H
 
 // init function
 int manager_platform_init(void * proc,void * para);

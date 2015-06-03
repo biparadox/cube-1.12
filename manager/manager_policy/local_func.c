@@ -120,6 +120,7 @@ void * build_glance_image_policy(char * uuid)
 	return image_policy;
 }
 
+/*
 int proc_send_reqcmd(void * sub_proc,char * receiver,void * para)
 {
 	char local_uuid[DIGEST_SIZE*2+1];
@@ -146,5 +147,5 @@ int proc_send_reqcmd(void * sub_proc,char * receiver,void * para)
         sec_subject_sendmsg(sub_proc,send_msg);
 	return 0;
 }
-
+*/
 

@@ -21,10 +21,9 @@
 #include "../include/connector.h"
 #include "../include/sec_entity.h"
 
-#include "../../cloud_config.h"
-#include "json_port_func.h"
+#include "../cloud_config.h"
+#include "main_proc_func.h"
 
-static char local_jsonserver_addr[] = "0.0.0.0:12888";
 
 struct json_server_context
 {
@@ -228,6 +227,8 @@ int json_port_start(void * sub_proc,void * para)
 	    	  		ret=json_2_message(buffer,&message);
 		   		if(ret>=0)
 		    		{
+					if(message_get_state(message)==0)
+						message_set_state(message,MSG_FLOW_INIT);
 					set_message_head(message,"sender_uuid",local_uuid);
 	    	    			sec_subject_sendmsg(sub_proc,message);	
 		    		}

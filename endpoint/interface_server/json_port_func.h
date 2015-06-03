@@ -1,19 +1,10 @@
-#ifndef MONITOR_PROCESS_FUNC_H
-#define MONITOR_PROCESS_FUNC_H
+#ifndef JSON_PORT_FUNC_H
+#define JSON_PORT_FUNC_H
 
-static struct struct_elem_attr share_data_desc[]=
-{
-    {"uuid",OS210_TYPE_STRING,64,NULL},
-    {"server_name",OS210_TYPE_ESTRING,80,NULL},
-    {"service",OS210_TYPE_ESTRING,80,NULL},
-    {"server_addr",OS210_TYPE_ESTRING,80,NULL},
-    {"flag",OS210_TYPE_INT,4,NULL},
-	{NULL,OS210_TYPE_ENDDATA,0,NULL}
-};
+static char local_jsonserver_addr[] = "0.0.0.0:12888";
 
-// init function
-int json_port_init(void * proc,void * para);
-int json_port_start(void * proc,void * para);
-
+// plugin's init func and kickstart func
+int json_port_init(void * sub_proc,void * para);
+int json_port_start(void * sub_proc,void * para);
 
 #endif

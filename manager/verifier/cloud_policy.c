@@ -41,14 +41,14 @@ static char * boot_file_list[] =
 };
 static char * trustbus_file_list[] =
 {
-	"/root/cube-1.0/proc/compute/compute_monitor/compute_monitor",
-	"/root/cube-1.0/proc/compute/compute_monitor/main_proc_policy.cfg",
+	"/root/cube-1.1/proc/compute/compute_monitor/compute_monitor",
+	"/root/cube-1.1/proc/compute/compute_monitor/main_proc_policy.cfg",
 	NULL
 };
 static char * kvm_file_list[] =
 {
-	"/etc/kvm/kvm-ifup",
-	"/etc/kvm/kvm-ifdown",
+//	"/etc/kvm/kvm-ifup",
+//	"/etc/kvm/kvm-ifdown",
 	"/usr/bin/qemu-system-x86_64",
 	"/usr/bin/nova-compute",
 	NULL
@@ -752,6 +752,48 @@ int build_glance_image_policy(char * uuid,void ** boot_pcrs, void ** running_pcr
 	*boot_pcrs=image_boot_pcrs;
 	*running_pcrs=image_running_pcrs;
 	*policy=image_policy;
+	return 0;
+}
+
+int build_nova_vm_pcrlib(char * uuid,char * image_desc,int trust_level)
+{
+
+	char cmd[512];
+	char desc[512];
+	char namebuf[512];
+	char digest[DIGEST_SIZE];
+	struct policy_file * pfile;
+	void * struct_template;
+	int ret;
+	void * sec_respool;
+	void * sec_res;
+
+
+        sprintf(namebuf,"/var/lib/nova/instances/%s/disk",uuid);
+
+	char dev[DIGEST_SIZE*2];
+	char part_dev[DIGEST_SIZE*2];
+	char mountpoint[DIGEST_SIZE*2];
+
+	/*
+
+	sprintf(dev,"/dev/nbd%d",devno);
+	sprintf(mountpoint,"./mnt%d",devno);
+	*/
+	sec_respool=find_sec_respool("image_mntpoint");
+	ret=sec_respool_getres(sec_respool,&sec_res);
+	sec_resource_getvalue(sec_res,"dev_name",dev);
+	sec_resource_getvalue(sec_res,"mount_path",mountpoint);
+
+	sprintf(cmd,"mkdir %s",mountpoint);
+	system(cmd);  
+
+	mount_image(namebuf,dev,mountpoint);
+	
+	ret=build_image_pcrlib(dev,mountpoint,image_desc,trust_level);
+	umount_image(dev,mountpoint);
+	sprintf(cmd,"rmdir %s",mountpoint);
+	system(cmd);  
 	return 0;
 }
 void ** create_verify_list(char * policy_type,char * entity_uuid,int list_num)
