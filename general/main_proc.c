@@ -154,6 +154,10 @@ int main()
     }	    
 
     usleep(time_val.tv_usec);
+    printf("prepare the conn proc\n");
+    ret=sec_subject_start(conn_proc,NULL);
+    if(ret<0)
+	    return ret;
 
     // second loop:  start all the monitor process
     for(i=0;proc_init_list[i].name!=NULL;i++)
@@ -177,10 +181,6 @@ int main()
     }	    
 
  
-    printf("prepare the conn proc\n");
-    ret=sec_subject_start(conn_proc,NULL);
-    if(ret<0)
-	    return ret;
 
     int thread_retval;
     ret=sec_subject_join(conn_proc,&thread_retval);
