@@ -308,6 +308,8 @@ int proc_router_start(void * sub_proc,void * para)
 						break;
 					}
 					message_set_state(message,MSG_FLOW_LOCAL);
+					flow=message_get_flow(message);
+					message_set_flow(message,(flow&(~MSG_FLOW_DELIVER))|MSG_FLOW_DRECV);
 					send_state=STATE_RECV;
 					break;
 				case MSG_FLOW_QUERY:
@@ -327,7 +329,7 @@ int proc_router_start(void * sub_proc,void * para)
 					// and set state to local to wait a local plugin to deal with the message  
 					message_set_state(message,MSG_FLOW_LOCAL);
 					flow=message_get_flow(message);
-					message_set_flow(message,(flow&(~MSG_FLOW_QUERY))|MSG_FLOW_RECV);
+					message_set_flow(message,(flow&(~MSG_FLOW_QUERY))|MSG_FLOW_QRECV);
 					send_state=STATE_RECV;
 					break;
 				case MSG_FLOW_RESPONSE:
@@ -340,7 +342,7 @@ int proc_router_start(void * sub_proc,void * para)
 					if(ret==0)
 					{
 						flow=message_get_flow(message);
-						message_set_flow(message,flow&(~MSG_FLOW_RESPONSE)|MSG_FLOW_RECV);
+						message_set_flow(message,flow&(~MSG_FLOW_RESPONSE)|MSG_FLOW_QRECV);
 						message_set_state(message,MSG_FLOW_LOCAL);
 						send_state=STATE_RECV;
 					}
@@ -415,10 +417,10 @@ int proc_router_start(void * sub_proc,void * para)
 					message_set_flow(message, flow);
 					ret=router_pop_aspect_site(message,aspect_proc);
 
-					if(flow&MSG_FLOW_RECV)
+					if(flow&MSG_FLOW_QRECV)
 					{
 						message_set_state(message,MSG_FLOW_FINISH);
-						message_set_flow(message, flow&(~MSG_FLOW_RECV)|MSG_FLOW_RESPONSE);
+						message_set_flow(message, flow&(~MSG_FLOW_QRECV)|MSG_FLOW_RESPONSE);
 						send_state=STATE_FINISH;
 					}
 					if(flow&MSG_FLOW_DELIVER)
@@ -548,13 +550,13 @@ int proc_router_start(void * sub_proc,void * para)
 								ret=router_pop_aspect_site(message,aspect_proc);
 								message_set_flow(message,flow&(~MSG_FLOW_ASPECT_LOCAL));
 							}
-							if(flow & MSG_FLOW_RECV)
+							if(flow & MSG_FLOW_QRECV)
 							{
 								message_set_state(message,MSG_FLOW_FINISH);
 								send_state=STATE_FINISH;
 								break;
 							}
-							if(flow & MSG_FLOW_DELIVER)
+							if(flow & MSG_FLOW_DRECV)
 							{
 								message_set_state(message,MSG_FLOW_FINISH);
 								send_state=STATE_FINISH;
@@ -628,9 +630,9 @@ int proc_router_start(void * sub_proc,void * para)
 								break;
 							}
 							flow=message_get_flow(message);
-							if(flow&MSG_FLOW_RECV)
+							if(flow&MSG_FLOW_QRECV)
 							{
-								ret=message_set_flow(message,flow&(~MSG_FLOW_RECV)|MSG_FLOW_RESPONSE);
+								ret=message_set_flow(message,flow&(~MSG_FLOW_QRECV)|MSG_FLOW_RESPONSE);
 							}
 							if(ret<0)
 							{
