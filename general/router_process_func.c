@@ -554,6 +554,12 @@ int proc_router_start(void * sub_proc,void * para)
 								send_state=STATE_FINISH;
 								break;
 							}
+							if(flow & MSG_FLOW_DELIVER)
+							{
+								message_set_state(message,MSG_FLOW_FINISH);
+								send_state=STATE_FINISH;
+								break;
+							}
 							if(flow & MSG_FLOW_RESPONSE)
 							{
 								message_set_state(message,MSG_FLOW_RESPONSE);
