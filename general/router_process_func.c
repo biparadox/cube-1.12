@@ -239,6 +239,7 @@ int proc_router_start(void * sub_proc,void * para)
 		void * msg_policy;
 		void * aspect_policy;
 		char aspect_proc[DIGEST_SIZE*2];
+		char * origin_proc;
 
 		// throughout all the sub_proc
 		ret=get_first_sec_subject(&sub_proc);
@@ -267,7 +268,10 @@ int proc_router_start(void * sub_proc,void * para)
 				get_next_sec_subject(&sub_proc);
 				continue;	
 			}
-			printf("router get proc %s's message!\n",sec_subject_getname(sub_proc)); 
+
+			origin_proc=sec_subject_getname(sub_proc);
+
+			printf("router get proc %.64s's message!\n",origin_proc); 
 			
 			router_dup_activemsg_info(message);
 
@@ -377,7 +381,7 @@ int proc_router_start(void * sub_proc,void * para)
 					{
 						// if aspect router do not reach the target, push the node's uuid and try to find the local aspect policy
 						send_state=STATE_ASPECT_LOCAL;
-						router_push_aspect_site(message,sec_subject_getname(sub_proc),conn_uuid);
+						router_push_aspect_site(message,origin_proc,conn_uuid);
 						break;
 					}
 					// if aspect router reach the target,set flow to ASPECT_RETURN, set state to ASPECT_LOCAL
@@ -452,7 +456,7 @@ int proc_router_start(void * sub_proc,void * para)
 				switch(send_state)
 				{
 					case STATE_LOCAL:
-						ret=router_find_local_policy(message,&msg_policy,sec_subject_getname(sub_proc));
+						ret=router_find_local_policy(message,&msg_policy,origin_proc);
 						if(ret<0)
 						{
 							send_state=STATE_ERROR;
@@ -472,7 +476,7 @@ int proc_router_start(void * sub_proc,void * para)
 						send_state=STATE_SEND;
 						break;
 					case STATE_SEND:
-						ret=router_find_match_policy(message,&msg_policy,sec_subject_getname(sub_proc));
+						ret=router_find_match_policy(message,&msg_policy,origin_proc);
 						if(ret<0)
 						{
 							send_state=STATE_ERROR;
@@ -495,7 +499,7 @@ int proc_router_start(void * sub_proc,void * para)
 						send_state=STATE_ASPECT_LOCAL;
 						break;
 					case STATE_ASPECT_LOCAL:
-						ret=router_find_aspect_local_policy(message,&aspect_policy,sec_subject_getname(sub_proc));
+						ret=router_find_aspect_local_policy(message,&aspect_policy,origin_proc);
 						if(ret<0)
 						{
 							send_state=STATE_ERROR;
@@ -529,7 +533,7 @@ int proc_router_start(void * sub_proc,void * para)
 						}
 						else
 						{
-							ret=router_find_aspect_policy(message,&aspect_policy,sec_subject_getname(sub_proc));
+							ret=router_find_aspect_policy(message,&aspect_policy,origin_proc);
 						}
 
 						if(ret<0)
@@ -549,6 +553,7 @@ int proc_router_start(void * sub_proc,void * para)
 							{
 								ret=router_pop_aspect_site(message,aspect_proc);
 								message_set_flow(message,flow&(~MSG_FLOW_ASPECT_LOCAL));
+								origin_proc=aspect_proc;
 							}
 							if(flow & MSG_FLOW_QRECV)
 							{
@@ -589,13 +594,13 @@ int proc_router_start(void * sub_proc,void * para)
 							if(flow &MSG_FLOW_ASPECT_LOCAL)
 								router_push_aspect_site(message,aspect_proc,message_get_receiver(message));
 							else
-								router_push_aspect_site(message,sec_subject_getname(sub_proc),message_get_receiver(message));
+								router_push_aspect_site(message,origin_proc,message_get_receiver(message));
 						}
 						// push current trust node's uuid
 						if(flow &MSG_FLOW_ASPECT_LOCAL)
 							router_push_aspect_site(message,aspect_proc,conn_uuid);
 						else
-							router_push_aspect_site(message,sec_subject_getname(sub_proc),conn_uuid);
+							router_push_aspect_site(message,origin_proc,conn_uuid);
 						// set the aspect policy 
 						ret=router_set_aspect_flow(message,aspect_policy);
 						if(ret<0)
@@ -615,7 +620,7 @@ int proc_router_start(void * sub_proc,void * para)
 					case STATE_TRANS:
 						break;
 					case STATE_FINISH:
-						ret=router_find_local_policy(message,&msg_policy,sec_subject_getname(sub_proc));
+						ret=router_find_local_policy(message,&msg_policy,origin_proc);
 						if(ret<0)
 						{
 							send_state=STATE_ERROR;
