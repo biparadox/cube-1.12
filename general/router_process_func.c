@@ -307,6 +307,7 @@ int proc_router_start(void * sub_proc,void * para)
 						send_state=STATE_ASPECT_LOCAL;
 						break;
 					}
+					message_set_state(message,MSG_FLOW_LOCAL);
 					send_state=STATE_RECV;
 					break;
 				case MSG_FLOW_QUERY:
