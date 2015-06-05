@@ -3,7 +3,7 @@ CFLAGS= -g -c -DUSER_MODE
 CC=gcc
 CCP=g++
 MAIN_PROC=manager_policy
-PLUGIN_PROC_OBJ=manager_vm_func.o manager_image_func.o manager_platform_func.o 
+PLUGIN_PROC_OBJ=manager_vm_func.o manager_image_func.o manager_platform_func.o tree_info_func.c
 INIT_DB_OBJ=
 
 main: $(MAIN_PROC)
@@ -17,6 +17,8 @@ manager_image_func.o:  manager_image_func.c manager_image_func.h
 	$(CC)  $(CFLAGS) manager_image_func.c 
 manager_platform_func.o:  manager_platform_func.c manager_platform_func.h 
 	$(CC)  $(CFLAGS) manager_platform_func.c 
+tree_info_func.o: tree_info_func.c tree_info_func.h
+	$(CC)  $(CFLAGS) tree_info_func.c 
 clean:
 	rm -f $(MAIN_PROC) *~ *.o *.a
 	ln -s ../../general/connector_process_func.o .

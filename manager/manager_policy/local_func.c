@@ -26,7 +26,7 @@
 #define MBR_PCR_INDEX  4
 #define KERNEL_PCR_INDEX  10
 #define SECURE_PCR_INDEX  11
-
+/*
 void * build_glance_image_policy(char * uuid)
 
 {
@@ -119,33 +119,4 @@ void * build_glance_image_policy(char * uuid)
 	ExportPolicy("VM_P");
 	return image_policy;
 }
-
-/*
-int proc_send_reqcmd(void * sub_proc,char * receiver,void * para)
-{
-	char local_uuid[DIGEST_SIZE*2+1];
-	char proc_name[DIGEST_SIZE*2+1];
-	char * cmd_type=para;
-	int  ret;
-	
-	ret=proc_share_data_getvalue("uuid",local_uuid);
-	if(ret<0)
-		return ret;
-	ret=proc_share_data_getvalue("proc_name",proc_name);
-
-	if(ret<0)
-		return ret;
-	printf("begin send %s reqcmd!\n",cmd_type);
-    	void * send_msg;
-    	send_msg=create_empty_message("REQC",proc_name,receiver,MSG_FLAG_REMOTE);
-    	struct request_cmd * cmd;
-    	cmd=(struct request_cmd *)malloc(sizeof(struct request_cmd));
-   	if(cmd==NULL)
-   	memset(cmd,0,sizeof(struct request_cmd));
-    	memcpy(cmd->tag,para,4);
-        ret=add_record_to_message(send_msg,cmd);
-        sec_subject_sendmsg(sub_proc,send_msg);
-	return 0;
-}
 */
-

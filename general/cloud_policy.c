@@ -41,22 +41,8 @@ static char * boot_file_list[] =
 };
 static char * trustbus_file_list[] =
 {
-	"/root/cube-1.0/proc/compute/compute_monitor/compute_monitor",
-	"/root/cube-1.0/proc/compute/compute_monitor/main_proc_policy.cfg",
-	NULL
-};
-static char * kvm_file_list[] =
-{
-	"/etc/kvm/kvm-ifup",
-	"/etc/kvm/kvm-ifdown",
-	"/usr/bin/qemu-system-x86_64",
-	"/usr/bin/nova-compute",
-	NULL
-};
-static char * os_sec_file_list[] =
-{
-	"/boot/os_safe.d/os_sec.ko",
-	"/boot/os_safe.d/whitelist",
+	"/root/cube-1.11/proc/compute/compute_monitor/compute_monitor",
+	"/root/cube-1.11/proc/compute/compute_monitor/router_policy.cfg",
 	NULL
 };
 
@@ -73,17 +59,14 @@ static struct pcr_index_filelist compute_pcr_filelist[] =
 {
 	{KERNEL_PCR_INDEX,":kernel and initrd",boot_file_list,2},
 	{TRUSTBUS_PCR_INDEX,":trustbus cube-1.0",trustbus_file_list,2},
-	{VMM_PCR_INDEX,":kvm with qemu",kvm_file_list,2},
 	{0,NULL}
 };
 static struct pcr_index_filelist image_pcr_filelist[] =
 {
-	{SECURE_PCR_INDEX,":os_sec and its whitelist",os_sec_file_list,1},
 	{0,NULL}
 };
 static struct pcr_index_filelist vm_pcr_filelist[] =
 {
-	{SECURE_PCR_INDEX,":os_sec and its whitelist",os_sec_file_list,1},
 	{0,NULL}
 };
 

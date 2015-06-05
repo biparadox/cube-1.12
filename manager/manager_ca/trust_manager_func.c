@@ -43,7 +43,7 @@ struct main_proc_pointer
 int trust_manager_init()
 {
 	int ret;
-	TSS_RESULT result;	
+//	TSS_RESULT result;	
 	char local_uuid[DIGEST_SIZE*2+1];
 	
 	struct main_proc_pointer * main_pointer;
@@ -56,19 +56,19 @@ int trust_manager_init()
 		return -ENOMEM;
 	main_pointer->hAIKey=NULL;
 
-	OpenSSL_add_all_algorithms();
-        ERR_load_crypto_strings();
-	result=TESI_Local_ReloadWithAuth("ooo","sss");
-	if(result!=TSS_SUCCESS)
-	{
-		printf("open tpm error %d!\n",result);
-		return -ENFILE;
-	}
+//	OpenSSL_add_all_algorithms();
+  //      ERR_load_crypto_strings();
+//	result=TESI_Local_ReloadWithAuth("ooo","sss");
+//	if(result!=TSS_SUCCESS)
+//	{
+//		printf("open tpm error %d!\n",result);
+//		return -ENFILE;
+//	}
         printf("open tpm success!\n");
 	proc_share_data_setpointer(main_pointer);
 	return 0;
 }
-
+/*
 int public_key_memdb_init()
 {
 	TSS_RESULT * result;
@@ -166,11 +166,7 @@ int vtpm_memdb_init()  // get the tpm information and init the vtpm database
 	TESI_Local_Fin();
 	return 0;
 }
-
-int login_name_memdb_init()
-{
-	return 0;
-}
+*/
 
 int verify_aik_cert(void * message)
 {

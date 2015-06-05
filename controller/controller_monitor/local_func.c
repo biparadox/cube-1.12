@@ -191,6 +191,8 @@ int get_vm_from_dbres(void * vm_info, void * db_res,void * sql_connection)
 	}
 	res_ptr=mysql_store_result(my_connection);
 	sqlrow=mysql_fetch_row(res_ptr);
+	if(sqlrow==NULL)
+		return -EINVAL;
 	strcpy(vm->uuid,sqlrow[0]);
 	vm->memory=atol(sqlrow[1])*1024;
 	vm->vcpu=atoi(sqlrow[2]);

@@ -68,7 +68,7 @@ int controller_monitor_init(void * proc,void * para)
 	return 0;
 }
 
-int platform_info_memdb_init()
+int platform_info_memdb_init(char * type,void * para)
 {
 	struct platform_info * platform_info;
 	MYSQL * my_connection;
@@ -117,7 +117,7 @@ int platform_info_memdb_init()
 	return 0;
 }
 
-int image_info_memdb_init()
+int image_info_memdb_init(char * type,void * para)
 {
     	MYSQL * my_connection;
    	MYSQL_RES * res_ptr;
@@ -171,7 +171,7 @@ int image_info_memdb_init()
         return ;
 }
 
-int vm_info_memdb_init()
+int vm_info_memdb_init(char * type,void * para)
 {
     	MYSQL * my_connection;
    	MYSQL_RES * res_ptr;
@@ -214,14 +214,15 @@ int vm_info_memdb_init()
 		if(vm==NULL)
 			return -ENOMEM;
         	memset(vm,0,sizeof(struct vm_info));
-		get_vm_from_dbres(vm,sqlrow,my_connection);
-		AddPolicy(vm,"VM_I");
+		int ret=get_vm_from_dbres(vm,sqlrow,my_connection);
+		if(ret>=0)
+			AddPolicy(vm,"VM_I");
 	}
 
         ExportPolicy("VM_I");
         return ;
 }
-int image_policy_memdb_init()
+int image_policy_memdb_init(char * type,void * para)
 {
 
         struct image_info * image;
@@ -249,9 +250,9 @@ int image_policy_memdb_init()
         ExportPolicy("IMGP");
         return ;
 }
-int vm_policy_memdb_init(void * conn)
+int vm_policy_memdb_init(char * type,void * para)
 {
 }
-int platform_policy_memdb_init(void * conn)
+int platform_policy_memdb_init(char * type, void * para)
 {
 }

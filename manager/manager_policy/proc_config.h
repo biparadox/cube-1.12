@@ -6,22 +6,24 @@ static int  (*main_proc_initfunc)()=&manager_policy_init;
 
 static PROCDB_INIT procdb_init_list[]=
 {
-	{"VM_I",&vm_info_memdb_init,NULL,NULL},
-	{"IMGI",&image_info_memdb_init,NULL,NULL},
-	{"PLAI",&platform_info_memdb_init,NULL,NULL},
-	{"VM_P",&vm_policy_memdb_init,NULL,NULL},
-	{"IMGP",&image_policy_memdb_init,NULL,NULL},
-	{"PLAP",&platform_policy_memdb_init,NULL,NULL},
+	{"IMGI",&null_init_func,&image_info_desc,&general_lib_ops},
+	{"VM_I",&null_init_func,&vminfo_desc,&general_lib_ops},
+	{"PLAI",&null_init_func,&platform_info_desc,&general_lib_ops},
 	{"PCRP",NULL,NULL,NULL},
+	{"IMGP",&null_init_func,&vm_policy_desc,&general_lib_ops},
+	{"VM_P",&null_init_func,&vm_policy_desc,&general_lib_ops},
+	{"PLAP",&null_init_func,&vm_policy_desc,&general_lib_ops},
+	{"TERI",NULL,&userhostvminfo_desc,NULL},
 	{"FILP",NULL,NULL,NULL},
 	{NULL,NULL,0}
 };
 
 static PROC_INIT proc_init_list[]=
 {
-	{"manager_vm",PROC_TYPE_DECIDE,&manager_vm_init,&manager_vm_start},
-	{"manager_image",PROC_TYPE_DECIDE,&manager_image_init,&manager_image_start},
-	{"manager_platform",PROC_TYPE_DECIDE,&manager_platform_init,&manager_platform_start},
+	{"tree_info",PROC_TYPE_MONITOR,&tree_info_init,&tree_info_start},
+	{"manager_vm",PROC_TYPE_MONITOR,&manager_vm_init,&manager_vm_start},
+	{"manager_image",PROC_TYPE_MONITOR,&manager_image_init,&manager_image_start},
+	{"manager_platform",PROC_TYPE_MONITOR,&manager_platform_init,&manager_platform_start},
 	{NULL,0,NULL,NULL}
 };
 

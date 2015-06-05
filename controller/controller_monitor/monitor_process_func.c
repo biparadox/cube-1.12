@@ -59,6 +59,7 @@ int monitor_process_start(void * sub_proc,void * para)
 
 	struct vm_info * vm;
 	
+	sleep(2);
 	message_box=message_create("VM_I",NULL);
 	if(message_box==NULL)
 		return -EINVAL;

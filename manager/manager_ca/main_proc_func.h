@@ -1,22 +1,15 @@
 #ifndef MAIN_PROC_FUNC_H
 #define MAIN_PROC_FUNC_H
 
+#include "login_verify_func.h"
+#include "general_lib_init.h"
 #include "../include/vtpm_desc.h"
 
 int trust_manager_init();
 
 int public_key_memdb_init();
 int vtpm_memdb_init();
-int login_name_memdb_init();
 
-
-// aik_casign plugin's init func and kickstart func
-int aik_casign_init(void * sub_proc,void * para);
-int aik_casign_start(void * sub_proc,void * para);
-
-// ca_verify plugin's init func and kickstart func
-int ca_verify_init(void * sub_proc,void * para);
-int ca_verify_start(void * sub_proc,void * para);
 
 
 #endif
