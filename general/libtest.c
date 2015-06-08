@@ -88,7 +88,7 @@ int main(int argc,char * argv[])
 	   return -EINVAL;
    }
 
-   record=GetFirstPolicy(argv[1]);
+   ret=GetFirstPolicy(&record,argv[1]);
    int offset=0;
    while(record!=NULL)
    {
@@ -96,7 +96,7 @@ int main(int argc,char * argv[])
 	   ret=struct_2_json(record,audit_text,struct_template,&offset);
 	   printf("****************************************************\n");
 	   printf("%s\n",audit_text);
-	   record=GetNextPolicy(argv[1]);
+	   ret=GetNextPolicy(&record,argv[1]);
 	   offset=0;
    } 
    printf("****************************************************\n");
