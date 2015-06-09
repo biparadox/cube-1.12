@@ -292,7 +292,7 @@ int proc_router_start(void * sub_proc,void * para)
 							break;
 						}
 						message_set_state(message,MSG_FLOW_RESPONSE);
-						message_set_flow(message,flow&(~MSG_FLOW_RESPONSE)|MSG_FLOW_FINISH);
+						message_set_flow(message,flow&(~MSG_FLOW_RESPONSE)|MSG_FLOW_INIT);
 						send_state=STATE_LOCAL;
 					}
 					else
