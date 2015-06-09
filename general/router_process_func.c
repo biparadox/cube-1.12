@@ -39,7 +39,7 @@ int proc_router_hit_target(void * message,char * local_uuid,char * proc_name)
 		return !(strncmp(receiver+1,proc_name,DIGEST_SIZE*2-1));
 
 	ret=comp_proc_uuid(local_uuid,proc_name,conn_uuid);
-	return !(strncmp(receiver,proc_name,DIGEST_SIZE*2));
+	return !(strncmp(receiver,conn_uuid,DIGEST_SIZE*2));
 
 }
 
