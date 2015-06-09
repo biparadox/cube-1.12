@@ -546,6 +546,7 @@ int proc_router_start(void * sub_proc,void * para)
 							if(flow & MSG_FLOW_ASPECT)
 							{
 								message_set_state(message,MSG_FLOW_ASPECT_RETURN);
+								message_set_flow(message,flow&(~MSG_FLOW_ASPECT)|MSG_FLOW_ASPECT_RETURN);
 								send_state=STATE_TRANS;
 								break;
 							}
