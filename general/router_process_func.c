@@ -285,15 +285,24 @@ int proc_router_start(void * sub_proc,void * para)
 				case MSG_FLOW_LOCAL:
 					if(message_get_flow(message)&MSG_FLOW_RESPONSE)
 					{	
-						ret=router_pop_site(message,"FTRE");
+						ret=router_check_sitestack(message,"FTRE");
 						if(ret<0)
 						{
 							send_state=STATE_ERROR;
 							break;
 						}
-						message_set_state(message,MSG_FLOW_INIT);
-						message_set_flow(message,MSG_FLOW_INIT);
-						send_state=STATE_LOCAL;
+						if(ret==0)
+						{
+							message_set_state(message,MSG_FLOW_INIT);
+							message_set_flow(message,MSG_FLOW_INIT);
+							send_state=STATE_LOCAL;
+						}
+						else
+						{
+							router_pop_site(message,"FTRE");
+							send_state=STATE_ASPECT_LOCAL;
+						}
+
 					}
 					else
 					{
