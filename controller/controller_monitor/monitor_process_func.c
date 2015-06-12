@@ -59,24 +59,44 @@ int monitor_process_start(void * sub_proc,void * para)
 
 	struct vm_info * vm;
 	
-	sleep(2);
+	sleep(1);
+	usleep(time_val.tv_usec);
+	struct platform_info * platform;
+	
+	// send platform message
+	GetFirstPolicy(&platform,"PLAI");
+	while( platform != NULL)
+	{
+		message_box=message_create("PLAI",NULL);
+		if(message_box==NULL)
+			return -EINVAL;
+		if(IS_ERR(message_box))
+			return -EINVAL;
+		memset(platform->uuid,0,DIGEST_SIZE*2);
+		message_add_record(message_box,platform);
+		sec_subject_sendmsg(sub_proc,message_box);
+		GetNextPolicy(&platform,"PLAI");
+	}
+
+	// send vm message
+	sleep(1);
 	message_box=message_create("VM_I",NULL);
 	if(message_box==NULL)
 		return -EINVAL;
 	if(IS_ERR(message_box))
 		return -EINVAL;
-	vm=GetFirstPolicy("VM_I");
+	GetFirstPolicy(&vm,"VM_I");
 	while( vm != NULL)
 	{
 		message_add_record(message_box,vm);
-		vm=GetNextPolicy("VM_I");
+		GetNextPolicy(&vm,"VM_I");
 	}
-	// send init message
 	sec_subject_sendmsg(sub_proc,message_box);
 	
 	usleep(time_val.tv_usec);
 
 
+	// send image message
 	struct image_info * image;
 	
 	message_box=message_create("IMGI",NULL);
@@ -84,31 +104,14 @@ int monitor_process_start(void * sub_proc,void * para)
 		return -EINVAL;
 	if(IS_ERR(message_box))
 		return -EINVAL;
-	image=GetFirstPolicy("IMGI");
+	GetFirstPolicy(&image,"IMGI");
 	while( image != NULL)
 	{
 		message_add_record(message_box,image);
-		image=GetNextPolicy("IMGI");
+		GetNextPolicy(&image,"IMGI");
 	}
-	// send init message
 	sec_subject_sendmsg(sub_proc,message_box);
 	
-	usleep(time_val.tv_usec);
-	struct platform_info * platform;
-	
-	message_box=message_create("PLAI",NULL);
-	if(message_box==NULL)
-		return -EINVAL;
-	if(IS_ERR(message_box))
-		return -EINVAL;
-	platform=GetFirstPolicy("PLAI");
-	while( platform != NULL)
-	{
-		message_add_record(message_box,platform);
-		platform=GetNextPolicy("PLAI");
-	}
-	// send init message
-	sec_subject_sendmsg(sub_proc,message_box);
 	
 
 	usleep(time_val.tv_usec);
@@ -158,7 +161,7 @@ int process_monitor_image(void * sub_proc,void * para)
 	char local_uuid[DIGEST_SIZE*2];
 
 	// send init message to 
-	image=GetFirstPolicy("IMGI");
+	GetFirstPolicy(&image,"IMGI");
 	while( image!= NULL)
 	{
 		message=message_create("IMGI",NULL);
@@ -195,7 +198,7 @@ int process_monitor_image(void * sub_proc,void * para)
 				printf("send image policy message error!\n");
 			}
 		}
-    		image=GetNextPolicy("IMGI");
+    		GetNextPolicy(&image,"IMGI");
 	}
 
 	monitor_image_from_dbres(sub_proc);

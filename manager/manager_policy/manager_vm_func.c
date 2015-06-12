@@ -107,6 +107,7 @@ int proc_store_vm(void * sub_proc,void * message)
 	int i;
 	char local_uuid[DIGEST_SIZE*2+1];
 	char proc_name[DIGEST_SIZE*2+1];
+	struct platform_info * host;
 	retval=proc_share_data_getvalue("uuid",local_uuid);
 	if(retval<0)
 		return retval;
@@ -133,7 +134,22 @@ int proc_store_vm(void * sub_proc,void * message)
 			printf("this vm already in the VM_I lib!\n");
 			continue;
 		}
-		AddPolicy(vm,"VM_I");
+		GetFirstPolicy(&host,"PLAI");
+		while(host!=NULL)
+		{
+			if(!strncmp(vm->host,host->name,DIGEST_SIZE*2))
+			{
+		 		memcpy(vm->platform_uuid,host->uuid,DIGEST_SIZE*2);	
+				AddPolicy(vm,"VM_I");
+				break;
+			}
+			GetNextPolicy(&host,"PLAI");
+		}
+		if(host==NULL)
+		{
+			printf("can't find vm %s's host!\n",vm->uuid);
+			continue;
+		}
 	}
 		// send a message to manager_trust
 	retval=ExportPolicyToFile("./lib/VM_I.lib","VM_I");
@@ -220,11 +236,11 @@ int proc_send_vm_info(void * sub_proc,void * message)
 	send_msg=message_create("VM_I",message);
 	if(send_msg==NULL)
 		return -EINVAL;
-	vm=GetFirstPolicy("VM_I");
+	GetFirstPolicy(&vm,"VM_I");
 	while( vm != NULL)
 	{
 		message_add_record(send_msg,vm);
-    		vm=GetNextPolicy("VM_I");
+    		GetNextPolicy(&vm,"VM_I");
 	}
 	sec_subject_sendmsg(sub_proc,send_msg);
 	

@@ -261,11 +261,11 @@ int proc_send_image_info(void * sub_proc,void * message)
 	send_msg=message_create("IMGI",message);
 	if(send_msg==NULL)
 		return -EINVAL;
-	image=GetFirstPolicy("IMGI");
+	GetFirstPolicy(&image,"IMGI");
 	while(image!=NULL)
 	{
 		message_add_record(send_msg,image);
-		image=GetNextPolicy("IMGI");
+		GetNextPolicy(&image,"IMGI");
 	}
 	sec_subject_sendmsg(sub_proc,send_msg);
 	

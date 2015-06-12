@@ -1,5 +1,6 @@
 #ifndef MAIN_PROC_FUNC_H
 #define MAIN_PROC_FUNC_H
+#include "tree_info_func.h"
 #include "json_port_func.h"
 
 int interface_server_init();

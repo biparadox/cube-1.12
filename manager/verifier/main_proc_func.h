@@ -1,5 +1,7 @@
 #ifndef MAIN_PROC_FUNC_H
 #define MAIN_PROC_FUNC_H
+#include "../include/vm_policy_desc.h"
+#include "../include/vmlist_desc.h"
 
 int verifier_init();
 

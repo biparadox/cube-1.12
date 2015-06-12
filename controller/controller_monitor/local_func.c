@@ -181,7 +181,7 @@ int get_vm_from_dbres(void * vm_info, void * db_res,void * sql_connection)
 	strcpy(uid,sqlrow[0]);
 	// get info from instances db and compute_nodes db
 	sprintf(sql,"select p1.uuid,p1.memory_mb,p1.vcpus,p1.root_device_name,"
-		"p2.hypervisor_type ,p1.image_ref, p1.id FROM instances AS p1,"
+		"p2.hypervisor_type ,p1.image_ref, p1.id,p1.hostname,p1.host FROM instances AS p1,"
 	  	"compute_nodes as p2 WHERE p1.uuid='%s' and p1.host=p2.hypervisor_hostname order by p1.id",uid);
 	res=mysql_query(my_connection,sql); //此处为选择语句，根据相关数据字段添加
 	if(res)
@@ -213,6 +213,8 @@ int get_vm_from_dbres(void * vm_info, void * db_res,void * sql_connection)
 	strcpy(vm->diskinfo.name,temp);
 	strcpy(key,sqlrow[5]);
 	curid=atoi(sqlrow[6]);
+	vm->hostname=dup_str(sqlrow[7],DIGEST_SIZE*2);
+	vm->host=dup_str(sqlrow[8],DIGEST_SIZE*2);
 	mysql_free_result(res_ptr);
 
 	sprintf(sql,"select address from virtual_interfaces where instance_uuid='%s' ",vm->uuid);

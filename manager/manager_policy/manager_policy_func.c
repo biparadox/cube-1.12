@@ -28,7 +28,6 @@
 
 #include "cloud_config.h"
 #include "main_proc_func.h"
-#include "proc_config.h"
 
 int manager_policy_init()
 {

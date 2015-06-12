@@ -11,7 +11,8 @@ static int  (*main_proc_initfunc)()=&interface_server_init;
 
 static PROCDB_INIT procdb_init_list[]=
 {
-	{NULL,NULL,0}
+	{"TREI",NULL,&userhostvminfo_desc,NULL},
+	{NULL,NULL,NULL,NULL}
 };
 
 

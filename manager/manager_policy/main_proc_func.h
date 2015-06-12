@@ -3,6 +3,7 @@
 #include "../include/vmlist_desc.h"
 #include "../include/vm_policy_desc.h"
 #include "tree_info_func.h"
+#include "vm_find_host.h"
 #include "manager_image_func.h"
 #include "manager_vm_func.h"
 #include "manager_platform_func.h"

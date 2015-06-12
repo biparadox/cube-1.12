@@ -83,6 +83,7 @@ int platform_info_memdb_init(char * type,void * para)
 	int blob_size;
 	int res;
 	char sql[256];
+	int i;
 
 
 	struct  main_proc_pointer * pointer=proc_share_data_getpointer();
@@ -109,6 +110,8 @@ int platform_info_memdb_init(char * type,void * para)
 		retval=get_platform_from_dbres(platform,sqlrow);
 		if(retval<0)
 			return -EINVAL;
+	
+		sprintf(platform->uuid,"EMPTY_%d",i++);	
        		AddPolicy(platform,"PLAI");
 	}
 	mysql_free_result(res_ptr);
@@ -236,13 +239,13 @@ int image_policy_memdb_init(char * type,void * para)
         void * policy_template;
 
 	int i=0;
-	image=GetFirstPolicy("IMGI");
+	GetFirstPolicy(&image,"IMGI");
 
 	
 	while(image!=NULL)
 	{
 		retval=build_glance_image_policy(image->uuid,&boot_pcrs,&runtime_pcrs,&image_policy);			
-		image=GetNextPolicy("IMGI");
+		GetNextPolicy(&image,"IMGI");
 		AddPolicy(boot_pcrs,"PCRP");
 		AddPolicy(runtime_pcrs,"PCRP");
 	}

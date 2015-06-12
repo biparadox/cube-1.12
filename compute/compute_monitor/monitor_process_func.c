@@ -58,6 +58,7 @@ int monitor_process_start(void * sub_proc,void * para)
 		return ret;
 
 	printf("begin compute monitor process!\n");
+	sleep(2);
 	proc_send_compute_localinfo(sub_proc,NULL);
 
 	for(i=0;i<3000*1000;i++)
@@ -179,7 +180,7 @@ int proc_send_vmpolicy(void * sub_proc,void * message)
 	void * send_pcr_msg;
 	void * send_msg;
 	// send compute node's pcr policy
-	send_pcr_msg=message_create("PCRP",message);
+	send_pcr_msg=message_create("PCRP",NULL);
 	message_add_record(send_pcr_msg,boot_pcrs);
 	if(running_pcrs!=NULL)
 		message_add_record(send_pcr_msg,running_pcrs);
@@ -232,7 +233,7 @@ int proc_send_computepolicy(void * sub_proc,void * message)
 	void * send_pcr_msg;
 	void * send_msg;
 	// send compute node's pcr policy
-	send_pcr_msg=message_create("PCRP",message);
+	send_pcr_msg=message_create("PCRP",NULL);
 	message_add_record(send_pcr_msg,compute_boot_pcrs);
 	if(compute_running_pcrs!=NULL)
 		message_add_record(send_pcr_msg,compute_running_pcrs);
