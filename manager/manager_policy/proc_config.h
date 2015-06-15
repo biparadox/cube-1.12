@@ -14,7 +14,7 @@ static PROCDB_INIT procdb_init_list[]=
 	{"VM_P",&null_init_func,&vm_policy_desc,&general_lib_ops},
 	{"PLAP",&null_init_func,&vm_policy_desc,&general_lib_ops},
 	{"TREI",NULL,&userhostvminfo_desc,NULL},
-	{"EEIE",NULL,&userhostvminfo_desc,NULL},
+	{"EEIE",NULL,&expand_extra_info_desc,NULL},
 	{"FILP",NULL,NULL,NULL},
 	{NULL,NULL,NULL,NULL}
 };

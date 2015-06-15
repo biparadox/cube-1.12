@@ -53,7 +53,7 @@ int monitor_process_start(void * sub_proc,void * para)
 	ret=proc_share_data_getvalue("proc_name",proc_name);
 	if(ret<0)
 		return ret;
-	ret=proc_share_data_getvalue("hostname",hostname);
+	ret=proc_share_data_getvalue("host_name",hostname);
 	if(ret<0)
 		return ret;
 
@@ -186,6 +186,7 @@ int proc_send_vmpolicy(void * sub_proc,void * message)
 		message_add_record(send_pcr_msg,running_pcrs);
 		
 	sec_subject_sendmsg(sub_proc,send_pcr_msg);
+	usleep(time_val.tv_usec*3);
 
 	send_msg=message_create("VM_P",message);
 	message_add_record(send_msg,policy);
@@ -214,7 +215,7 @@ int proc_send_computepolicy(void * sub_proc,void * message)
 	ret=proc_share_data_getvalue("proc_name",proc_name);
 	if(ret<0)
 		return ret;
-	ret=proc_share_data_getvalue("hostname",hostname);
+	ret=proc_share_data_getvalue("host_name",hostname);
 	if(ret<0)
 		return ret;
 

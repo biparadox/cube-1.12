@@ -530,6 +530,8 @@ int build_image_running_pcrs(char * dev,char * mountpoint,char * image_desc,void
 
 	// build this image's MBR policy  
 	*pcrs=NULL;
+	if(image_pcr_filelist[0].filelist==NULL)
+		return -EINVAL;
 	running_pcrs=build_filelist_policy(mountpoint,image_pcr_filelist[0].filelist,
 			image_pcr_filelist[0].pcr_index,image_desc);
 	if(running_pcrs==NULL)

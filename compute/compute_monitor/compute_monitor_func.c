@@ -54,7 +54,7 @@ int compute_monitor_init(void * proc,void * para)
 	if(ret<0)
 		return ret;
 	proc_share_data_setvalue("uuid",local_uuid);
-	proc_share_data_setvalue("hostname",hostname);
+	proc_share_data_setvalue("host_name",hostname);
 	proc_share_data_setvalue("proc_name",para);
 	proc_share_data_setpointer(main_pointer);
 	build_image_mount_respool(8,16,"image_mntpoint");
@@ -93,7 +93,7 @@ int platform_info_memdb_init()
 	ret=proc_share_data_getvalue("proc_name",proc_name);
 	if(ret<0)
 		return ret;
-	ret=proc_share_data_getvalue("hostname",hostname);
+	ret=proc_share_data_getvalue("host_name",hostname);
 	if(ret<0)
 		return ret;
 
@@ -121,7 +121,7 @@ int pcr_policy_memdb_init()
 	ret=proc_share_data_getvalue("proc_name",proc_name);
 	if(ret<0)
 		return ret;
-	ret=proc_share_data_getvalue("hostname",hostname);
+	ret=proc_share_data_getvalue("host_name",hostname);
 	if(ret<0)
 		return ret;
 
