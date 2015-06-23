@@ -250,3 +250,32 @@ int proc_send_computepolicy(void * sub_proc,void * message)
 
 	return 0;
 }
+int proc_send_compute_localinfo(void * sub_proc,void * message)
+{
+	char local_uuid[DIGEST_SIZE*2+1];
+	char proc_name[DIGEST_SIZE*2+1];
+	char hostname[DIGEST_SIZE*2+1];
+	int  ret;
+	MESSAGE_HEAD * message_head;
+    	struct platform_info * platform;
+	
+	ret=proc_share_data_getvalue("uuid",local_uuid);
+	if(ret<0)
+		return ret;
+
+	printf("begin send %s localinfo!\n",hostname);
+
+	ret=FindPolicy(local_uuid,"PLAI",&platform);
+	if(ret<0)
+		return ret;
+	if(platform==NULL)
+		return -EINVAL;
+
+	void * send_msg;
+	send_msg=message_create("PLAI",message);
+	message_add_record(send_msg,platform);
+        sec_subject_sendmsg(sub_proc,send_msg);
+	return 0;
+}
+
+
