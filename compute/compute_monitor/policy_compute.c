@@ -25,16 +25,14 @@
 #include "../include/connector.h"
 #include "../include/logic_baselib.h"
 #include "../include/policy_ui.h"
-#include "../include/vm_policy.h"
-#include "../include/vm_policy_desc.h"
-#include "../include/vmlist.h"
-#include "../include/vtpm_struct.h"
 #include "../include/tesi.h"
 #include "../include/openstack_trust_lib.h"
 #include "../include/sec_entity.h"
 //#include "./verifier_func.h"
 #include "readconfig.h"
 
+#include "trust_policy.h"
+#include "trust_policy_desc.h"
 #include "cloud_config.h"
 #include "local_func.h"
 #include "cloud_policy.h"
@@ -61,61 +59,60 @@ static struct struct_elem_attr image_mount_res_desc[]=
 	{NULL,OS210_TYPE_ENDDATA,0,NULL}
 };
 
-int read_cfg_buffer(FILE * stream, char * buf, int size)
-    /*  Read text data from config file,
-     *  ignore the ^# line and remove the \n character
-     *  stream: the config file stream
-     *  buf: the buffer to store the cfg data
-     *  size: read data size
-     *
-     *  return value: read data size,
-     *  negative value if it has special error
-     *  */
+int read_json_policy(void ** root, FILE * file)
 {
-    long offset=0;
-    long curr_offset;
-    char buffer[MAX_LINE_LEN];
-    char * retptr;
-    int len;
+	char filename[12];
+	int datalen;
+	int offset;
+	int curr_offset;
+	char * buffer;
+	void * record_data;
+	void * struct_template;
+	int ret;
 
-    while(offset<size)
-    {
-        curr_offset=ftell(stream);
-        retptr=fgets(buffer,MAX_LINE_LEN,stream);
+	if(root==NULL)
+		return -EINVAL;
 
-        // end of the file
-        if(retptr==NULL)
-            break;
-        len=strlen(buffer);
-        if(len==0)
-            break;
-        // commet line
-        if(buffer[0]=='#')
-            continue;
-        while((buffer[len-1]=='\r')||(buffer[len-1]=='\n'))
-        {
-            len--;
-            if(len==0)
-                continue;
-            buffer[len]==0;
-        }
-        // this line is too long to read
-        if(len>size)
-            return -EINVAL;
+	offset=ftell(file);
 
-        // out of the bound
-        if(len+offset>size)
-        {
-            fseek(stream,curr_offset,SEEK_SET);
-            break;
-        }
-        memcpy(buf+offset,buffer,len);
-        offset+=len;
-	buf[offset]=0;
-    }
-    return offset;
+	fseek(file,0,SEEK_END);
+	
+	datalen=ftell(file)-offset;
+	fseek(file,offset,SEEK_SET);
+
+	if(datalen>4096)
+		datalen=4096;
+	if(datalen==0)
+	{
+		fclose(file);
+		return 0;
+	}
+	
+	buffer=malloc(4096);
+	if(buffer==NULL)
+		return -ENOMEM;
+	ret=fread(buffer,datalen,1,file);
+	if(ret!=1)
+	{
+		fclose(file);
+	  	free(buffer);
+       		printf("I/O Error reading file");
+ 		return -EINVAL;
+	}
+
+	curr_offset=offset;
+	offset=json_solve_str(root,buffer);
+	if(offset<0)
+	{
+		free(buffer);
+		return offset;
+	}
+	fseek(file,offset,SEEK_CUR);
+	return offset;
 }
 
+
+/*
 int make_TF_I_policy(void * node,void ** policy)
 {
 	void * elem_node;
@@ -245,7 +242,7 @@ int make_TFLI_policy(void * node,void ** policy)
 	ret=AddPolicy(file_list,"TFLI");
 	return ret;
 }
-
+*/
 int main(int argc,char ** argv)
 {
 	char cmd[512];
@@ -264,7 +261,6 @@ int main(int argc,char ** argv)
 	int i;
 	struct trust_file_list * file_list;
 
-	char out_policy[32768];
 	if(argc!=2)
 	{
 		printf("error usage: should be %s <list config file >",argv[0]);
@@ -281,7 +277,38 @@ int main(int argc,char ** argv)
 
     	openstack_trust_lib_init();
       	sec_respool_list_init();
+
+	retval=read_json_policy(&root,fp);	
+	if(retval<0)
+	{
+		printf("read file %s error %d!\n",argv[1],retval);
+		return retval;
+	}
+
     	usleep(time_val.tv_usec);
+
+	retval=register_record_type("TP_H",&trust_policy_head_desc);
+	
+	void * json_head;
+	json_head=find_json_elem("head",root);
+	if(json_head==NULL)
+		return -EINVAL;  
+	void * head_template;
+	TP_HEAD policy_head;
+	
+	head_template=load_record_template("TP_H");
+	if(head_template==NULL)
+		return -EINVAL;
+
+	memset(&policy_head,0,sizeof(TP_HEAD));
+
+	retval=json_2_struct(json_head,&policy_head,head_template);
+	
+	int offset=0;
+	struct_2_json(&policy_head,buffer,head_template,&offset);
+
+	printf("%s\n",buffer);
+
 
     	for(i=0;procdb_init_list[i].name!=NULL;i++)
   	{
@@ -308,46 +335,7 @@ int main(int argc,char ** argv)
 	    	}
     	}
 
-    	do {
-
-        	// when the file reading is not finished, we should read new data to the buffer
-        	if(fp != NULL)
-        	{
-            		read_offset=read_cfg_buffer(fp,buffer+buffer_left,bufsize-buffer_left);
-        		if(read_offset<0)
-                		return -EINVAL;
-            		else if(read_offset==0)
-            		{
-              			fclose(fp);
-                		fp=NULL;
-            		}
-        	}
-		buffer_left+=read_offset;
-		if(buffer==0)
-			break;
-		
-
-        	printf("policy %d is %s\n",policy_num+1,buffer);
-
-        	solve_offset=json_solve_str(&root,buffer);
-        	if(solve_offset<=0)
-			break;
-		retval=make_TFLI_policy(root,&file_list);
-
-        	if(retval<0)
-			break;
-
-        	policy_num++;
-        	buffer_left-=solve_offset;
-        	if(buffer_left>0)
-		{
-          		Memcpy(buffer,buffer+solve_offset,buffer_left);
-	    		buffer[buffer_left]=0;
-		}
-		else if(buffer_left==0)
-			break;
-	}while(1);
-
+/*
 	ExportPolicy("TF_I");
 	ExportPolicy("TFLI");
 
@@ -384,7 +372,7 @@ int main(int argc,char ** argv)
 			continue;
 		printf ("%s  trust level: %d uuid: %.64s\n",verify_list[i]->info,verify_list[i]->trust_level,verify_list[i]->verify_data_uuid);
 	}
-
+*/
 	return 0;
 }
 		
