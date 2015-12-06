@@ -21,6 +21,7 @@ static PROC_INIT proc_init_list[]=
 	{"echo_plugin",PROC_TYPE_DECIDE,&echo_plugin_init,&echo_plugin_start},
 	{"json_port",PROC_TYPE_MONITOR,&json_port_init,&json_port_start},
 	{"trust_bind",PROC_TYPE_MONITOR,&trust_bind_init,&trust_bind_start},
+	{"trust_unbind",PROC_TYPE_MONITOR,&trust_unbind_init,&trust_unbind_start},
 	{NULL,0,NULL,NULL}
 };
 

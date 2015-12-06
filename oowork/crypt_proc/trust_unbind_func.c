@@ -30,13 +30,7 @@
 #include "../cloud_config.h"
 #include "main_proc_func.h"
 
-struct bind_proc_pointer
-{
-    struct vTPM_publickey * bind_key;
-	TSS_HKEY hBindKey;
-};
-
-int trust_bind_init(void * sub_proc,void * para)
+int trust_unbind_init(void * sub_proc,void * para)
 {
 	int ret;
 	// add youself's plugin init func here
@@ -47,35 +41,10 @@ int trust_bind_init(void * sub_proc,void * para)
 		printf("open tpm error %d!\n",result);
 		return -ENFILE;
 	}
-	struct bind_proc_pointer * bind_pointer;
-	bind_pointer= malloc(sizeof(struct bind_proc_pointer));
-	if(bind_pointer==NULL)
-		return -ENOMEM;
-	memset(bind_pointer,0,sizeof(struct bind_proc_pointer));
-
-/*
-	ret=GetFirstPolicy(&(bind_pointer->bind_key),"PUBK");
-	if(bind_pointer->bind_key==NULL)
-		return -EINVAL;
-	
-	result=TESI_Local_ReadPubKey(&(bind_pointer->hBindKey),bind_pointer->bind_key->key_filename);
-	if(result!=TSS_SUCCESS)
-	{
-		printf("load bindkey error %d!\n",result);
-		return -ENFILE;
-	}
-	void * context;
-	ret=sec_subject_getcontext(sub_proc,&context);
-	if(ret<0)
-		return ret;
-	ret=sec_object_setpointer(context,bind_pointer);
-	if(ret<0)
-		return ret;
-*/
 	return 0;
 }
 
-int trust_bind_start(void * sub_proc,void * para)
+int trust_unbind_start(void * sub_proc,void * para)
 {
 	int ret;
 	void * recv_msg;
@@ -98,21 +67,20 @@ int trust_bind_start(void * sub_proc,void * para)
 			printf("message format error!\n");
 			continue;
 		}
-		proc_bind_message(sub_proc,recv_msg);
+		proc_unbind_message(sub_proc,recv_msg);
 	}
 
 	return 0;
 }
 
-int proc_bind_message(void * sub_proc,void * message)
+int proc_unbind_message(void * sub_proc,void * message)
 {
 	TSS_RESULT result;
-	struct bind_proc_pointer * bind_pointer;
 	int i;
 	int ret;
 	struct keyid_expand * key_expand;
-	struct vTPM_publickey * pubkey;
-	TSS_HKEY hBindKey;
+	struct vTPM_wrappedkey * privkey;
+	TSS_HKEY hUnBindKey;
 
 	ret=message_get_define_expand(message,&key_expand,"KEYE");	
 	if(ret<0)
@@ -120,20 +88,33 @@ int proc_bind_message(void * sub_proc,void * message)
 	if(key_expand==NULL)
 		return -EINVAL;
 
-	ret=FindPolicy(key_expand->keyid,"PUBK",&pubkey);
+	ret=FindPolicy(key_expand->keyid,"BLBK",&privkey);
 	if(ret<0)
 		return ret;
-	if(pubkey==NULL)
+	if(privkey==NULL)
 		return -EINVAL;
-	
-	result=TESI_Local_ReadPubKey(&hBindKey,pubkey->key_filename);
+
+	result=TESI_Local_ReloadWithAuth("ooo","sss");
 	if(result!=TSS_SUCCESS)
 	{
-		printf("load bindkey error %d!\n",result);
+		printf("open tpm error %d!\n",result);
 		return -ENFILE;
 	}
 
-		
+	
+	result=TESI_Local_ReadKeyBlob(&hUnBindKey,privkey->key_filename);
+	if(result!=TSS_SUCCESS)
+	{
+		printf("read unbindkey error %d!\n",result);
+		return -ENFILE;
+	}
+	result=TESI_Local_LoadKey(hUnBindKey,NULL,privkey->keypass);
+	if(result!=TSS_SUCCESS)
+	{
+		printf("load unbindkey error %d!\n",result);
+		return -ENFILE;
+	}
+
 	void * blob;
 	int blob_size;
 
@@ -144,25 +125,22 @@ int proc_bind_message(void * sub_proc,void * message)
 	if(blob_size<=0)
 		return -EINVAL;
 
-//	int fd = open("plain.txt",O_WRONLY|O_CREAT|O_TRUNC);
-//	write(fd,blob,blob_size);
-//	close(fd);
 
-	result=TESI_Local_BindBuffer(blob,blob_size,hBindKey,&bind_blob,&bind_blob_size);
+	result=TESI_Local_UnBindBuffer(blob,blob_size,hUnBindKey,&bind_blob,&bind_blob_size);
 	if ( result != TSS_SUCCESS )
 	{
 		return -EINVAL;
 	}
 	
 
-//	fd = open("cipher.txt",O_WRONLY|O_CREAT|O_TRUNC);
-//	write(fd,bind_blob,bind_blob_size);
-//	close(fd);
-
 	message_set_blob(message,bind_blob,bind_blob_size);
 	int flag=message_get_flag(message);
-	message_set_flag(message,flag|MSG_FLAG_CRYPT);
-
+	message_set_flag(message,flag&(~MSG_FLAG_CRYPT));
+	ret=message_load_record(message);
+	if(ret<0)
+		return ret;
+	void * expand;
+	message_remove_expand(message,"KEYE",&expand);
 	sec_subject_sendmsg(sub_proc,message);
 	return ret;
 }

@@ -3,7 +3,7 @@ CFLAGS= -g -c -DUSER_MODE
 CC=gcc
 CCP=g++
 MAIN_PROC=crypt_proc
-PLUGIN_PROC_OBJ=echo_plugin_func.o json_port_func.o  trust_bind_func.o
+PLUGIN_PROC_OBJ=echo_plugin_func.o json_port_func.o  trust_bind_func.o trust_unbind_func.o
 INIT_DB_OBJ=
 
 main: $(MAIN_PROC)
@@ -17,6 +17,8 @@ json_port_func.o:  json_port_func.c main_proc_func.h
 	$(CC)  $(CFLAGS) json_port_func.c 
 trust_bind_func.o:  trust_bind_func.c trust_bind_func.h
 	$(CC)  $(CFLAGS) trust_bind_func.c 
+trust_unbind_func.o:  trust_unbind_func.c trust_unbind_func.h
+	$(CC)  $(CFLAGS) trust_unbind_func.c 
 clean:
 	rm -f $(MAIN_PROC) *~ *.o *.a
 	ln -s ../../general/connector_process_func.o .

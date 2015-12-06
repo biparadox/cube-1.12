@@ -6,6 +6,7 @@
 #include "json_port_func.h"
 #include "message_record.h"
 #include "trust_bind_func.h"
+#include "trust_unbind_func.h"
 
 
 int crypt_proc_init();
