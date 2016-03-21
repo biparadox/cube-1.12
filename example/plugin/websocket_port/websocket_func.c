@@ -81,6 +81,19 @@ static int callback_cube_wsport(	struct libwebsocket_context * this,
 			ws_context->callback_interface=wsi;
 			ws_context->callback_context=this;
 			printf("connection established\n");
+			BYTE * buf= (unsigned char *)malloc(
+				LWS_SEND_BUFFER_PRE_PADDING+
+				ws_context->message_len+
+				LWS_SEND_BUFFER_POST_PADDING);
+			if(buf==NULL)
+				return -EINVAL;			
+			memcpy(&buf[LWS_SEND_BUFFER_PRE_PADDING],
+				ws_context->websocket_message,
+				ws_context->message_len);
+			libwebsocket_write(wsi,
+				&buf[LWS_SEND_BUFFER_PRE_PADDING],
+				ws_context->message_len,LWS_WRITE_TEXT);
+			free(buf);
 			break;
 		case LWS_CALLBACK_RECEIVE:
 		{
@@ -133,7 +146,6 @@ int websocket_port_init(void * sub_proc,void * para)
 {
 
     int ret;
-    struct websocket_server_context * sub_context;
     struct libwebsocket_context * context;
     struct lws_context_creation_info info;
 		
@@ -167,14 +179,6 @@ int websocket_port_init(void * sub_proc,void * para)
     info.gid=-1;
     info.uid=-1;
     info.options=0;
-    context = libwebsocket_create_context(&info);
-    if(context==NULL)
-    {
-	printf(" wsport context create error!\n");
-	return -EINVAL;
-    }
-    ws_context->server_context=context;
-		
 
     // parameter deal with
     char * server_name="websocket_server";
@@ -203,8 +207,16 @@ int websocket_port_init(void * sub_proc,void * para)
     if(ret<0)
         return -EINVAL;
 
-    sub_context->websocket_message=dup_str(buffer,0);
-    sub_context->message_len=strlen(buffer);
+    ws_context->websocket_message=dup_str(buffer,0);
+    ws_context->message_len=strlen(buffer);
+
+    context = libwebsocket_create_context(&info);
+    if(context==NULL)
+    {
+	printf(" wsport context create error!\n");
+	return -EINVAL;
+    }
+    ws_context->server_context=context;
 
     return 0;
 }
