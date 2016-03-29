@@ -104,22 +104,6 @@ static int callback_cube_wsport(	struct libwebsocket_context * this,
 			memcpy(ws_context->read_buf,in,len);
 			break;
 		}
-		case LWS_CALLBACK_SERVER_WRITEABLE:
-		{
-			BYTE * buf= (unsigned char *)malloc(
-				LWS_SEND_BUFFER_PRE_PADDING+ws_context->writelen+
-				LWS_SEND_BUFFER_POST_PADDING);
-			if(buf==NULL)
-				return -EINVAL;			
-			memcpy(&buf[LWS_SEND_BUFFER_PRE_PADDING],
-				ws_context->write_buf,
-				ws_context->writelen);
-			libwebsocket_write(wsi,
-				&buf[LWS_SEND_BUFFER_PRE_PADDING],
-				ws_context->writelen,LWS_WRITE_TEXT);
-			free(buf);
-			break;
-		}
 		default:
 			break;
 	}
@@ -133,7 +117,7 @@ static struct libwebsocket_protocols protocols[] = {
 		0	
 	},
 	{
-		"cube_wsport",
+		"cube-wsport",
 		callback_cube_wsport,
 		0
 	},
@@ -170,7 +154,7 @@ int websocket_port_init(void * sub_proc,void * para)
     memset(ws_context,0,sizeof(struct websocket_server_context));
 
     memset(&info,0,sizeof(info));
-    info.port=13888;
+    info.port=12888;
     info.iface=NULL;
     info.protocols=protocols;
     info.extensions=libwebsocket_get_internal_extensions();
@@ -272,12 +256,11 @@ int websocket_port_start(void * sub_proc,void * para)
 	{
 		if(message_box==NULL)
 			break;
-    		stroffset=message_2_json(message_box,buffer);
+    		stroffset=message_2_json(message_box,buffer+LWS_SEND_BUFFER_PRE_PADDING);
 		if(stroffset>0)
-			memcpy(ws_context->write_buf,buffer,stroffset);
-			ws_context->writelen=stroffset;
-		libwebsocket_callback_on_writable(ws_context->callback_context	
-,ws_context->callback_interface);
+			libwebsocket_write(ws_context->callback_interface,
+				&buffer[LWS_SEND_BUFFER_PRE_PADDING],
+				stroffset,LWS_WRITE_TEXT);
 
 	}
 
