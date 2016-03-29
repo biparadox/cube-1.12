@@ -238,17 +238,29 @@ int websocket_port_start(void * sub_proc,void * para)
 	 // check if there is something to read
 	 if(ws_context->readlen>0)
 	{
+		int offset=0;
 		do {
 	    	 	void * message;
-			ret=json_2_message(ws_context->read_buf,&message);
+			ret=json_2_message(ws_context->read_buf+offset,&message);
 		   	if(ret>=0)
 		    	{
 				if(message_get_state(message)==0)
 					message_set_state(message,MSG_FLOW_INIT);
 				set_message_head(message,"sender_uuid",local_uuid);
 	    	    		sec_subject_sendmsg(sub_proc,message);	
+				offset+=ret;
+				if(ws_context->readlen-offset<sizeof(MESSAGE_HEAD))
+				{
+					ws_context->readlen=0;
+					break;
+				}
 		    	}
-			break;
+			else
+			{
+				printf("resolve websocket message failed!\n");
+				ws_context->readlen=0;
+				break;
+			}
 		}while(1);
 	}
 	// send message to the remote
