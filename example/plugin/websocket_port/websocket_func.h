@@ -1,7 +1,8 @@
 #ifndef WEBSOCKET_PORT_FUNC_H
 #define WEBSOCKET_PORT_FUNC_H
 
-static char local_websocketserver_addr[] = "0.0.0.0:12888";
+static char websocketserver_addr[] = "0.0.0.0";
+static int websocket_port=12888;
 
 // plugin's init func and kickstart func
 int websocket_port_init(void * sub_proc,void * para);

@@ -154,8 +154,9 @@ int websocket_port_init(void * sub_proc,void * para)
     memset(ws_context,0,sizeof(struct websocket_server_context));
 
     memset(&info,0,sizeof(info));
-    info.port=12888;
-    info.iface=NULL;
+    info.port=websocket_port;
+//    info.iface=NULL;
+    info.iface=websocketserver_addr;
     info.protocols=protocols;
     info.extensions=libwebsocket_get_internal_extensions();
     info.ssl_cert_filepath=NULL;
@@ -168,7 +169,7 @@ int websocket_port_init(void * sub_proc,void * para)
     char * server_name="websocket_server";
     char * server_uuid=local_uuid;
     char * service=sec_subject_getname(sub_proc);
-    char * server_addr=local_websocketserver_addr;
+    char * server_addr=websocketserver_addr;
     char * nonce="AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
 
     struct connect_syn * syn_info;
@@ -238,17 +239,29 @@ int websocket_port_start(void * sub_proc,void * para)
 	 // check if there is something to read
 	 if(ws_context->readlen>0)
 	{
+		int offset=0;
 		do {
 	    	 	void * message;
-			ret=json_2_message(ws_context->read_buf,&message);
+			ret=json_2_message(ws_context->read_buf+offset,&message);
 		   	if(ret>=0)
 		    	{
 				if(message_get_state(message)==0)
 					message_set_state(message,MSG_FLOW_INIT);
 				set_message_head(message,"sender_uuid",local_uuid);
 	    	    		sec_subject_sendmsg(sub_proc,message);	
+				offset+=ret;
+				if(ws_context->readlen-offset<sizeof(MESSAGE_HEAD))
+				{
+					ws_context->readlen=0;
+					break;
+				}
 		    	}
-			break;
+			else
+			{
+				printf("resolve websocket message failed!\n");
+				ws_context->readlen=0;
+				break;
+			}
 		}while(1);
 	}
 	// send message to the remote
