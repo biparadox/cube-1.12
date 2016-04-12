@@ -103,34 +103,40 @@ int trust_bind_init(void * sub_proc,void * para)
 		return -ENOMEM;
 	memset(bind_pointer,0,sizeof(struct bind_proc_pointer));
 
-	bind_pointer->bind_pubkey=GetFirstPolicy("PUBK");
+	ret=GetFirstPi=olicy(&bind_pointer->bind_pubkey,"PUBK");
 	if(bind_pointer->bind_pubkey==NULL)
 	{
 		printf("There is no bind_pubkey!\n");
 	}
-	
-	result=TESI_Local_ReadPubKey(&(bind_pointer->hBindPubKey),bind_pointer->bind_pubkey->key_filename);
-	if(result!=TSS_SUCCESS)
+	else
 	{
-		printf("load bindpubkey error %d!\n",result);
+	
+		result=TESI_Local_ReadPubKey(&(bind_pointer->hBindPubKey),bind_pointer->bind_pubkey->key_filename);
+		if(result!=TSS_SUCCESS)
+		{
+			printf("load bindpubkey error %d!\n",result);
+		}
 	}
 
-	bind_pointer->bind_key=GetFirstPolicy("BLBK");
+	ret=GetFirstPolicy(&bind_pointer->bind_key,"BLBK");
 	if(bind_pointer->bind_key==NULL)
 	{
 		printf("There is no bindkey!\n");
 	}
+	else
+	{
 	
-	result=TESI_Local_ReadKeyBlob(&(bind_pointer->hBindKey),bind_pointer->bind_key->key_filename);
-	if(result!=TSS_SUCCESS)
-	{
-		printf("load bindkey error %d!\n",result);
-	}
-	result=TESI_Local_LoadKey(bind_pointer->hBindKey,NULL,bind_pointer->bind_key->keypass);
-	if(result!=TSS_SUCCESS)
-	{
-		printf("load bindkey error %d!\n",result);
-		return -ENFILE;
+		result=TESI_Local_ReadKeyBlob(&(bind_pointer->hBindKey),bind_pointer->bind_key->key_filename);
+		if(result!=TSS_SUCCESS)
+		{
+			printf("load bindkey error %d!\n",result);
+		}
+		result=TESI_Local_LoadKey(bind_pointer->hBindKey,NULL,bind_pointer->bind_key->keypass);
+		if(result!=TSS_SUCCESS)
+		{
+			printf("load bindkey error %d!\n",result);
+			return -ENFILE;
+		}
 	}
 
 
@@ -167,7 +173,7 @@ int trust_bind_start(void * sub_proc,void * para)
 			printf("message format error!\n");
 			continue;
 		}
-		if(message_get_recordflag(recv_msg) & MSG_FLAG_CRYPT)
+		if(message_get_flag(recv_msg) & MSG_FLAG_CRYPT)
 			proc_unbind_message(sub_proc,recv_msg);
 		else
 			proc_bind_message(sub_proc,recv_msg);
