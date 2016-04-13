@@ -3,15 +3,12 @@
 #include "../include/vtpm_struct.h"
 #include "../include/vtpm_desc.h"
 #include "trust_bind_func.h"
-#include "aik_process_func.h"
+//#include "aik_process_func.h"
 
 int test_bind_init();
 
-int bind_pubkey_memdb_init();
-int vtpm_memdb_init();
-
 // aik_casign plugin's init func and kickstart func
-
+/*
 struct expand_bind_info
 {
 	UINT32 data_size;
@@ -32,6 +29,6 @@ static struct struct_elem_attr expand_bind_info_desc[]=
 	{"pubkey_uuid",OS210_TYPE_STRING,DIGEST_SIZE*2,NULL},
 	{NULL,OS210_TYPE_ENDDATA,0,NULL}
 };
-
+*/
 
 #endif

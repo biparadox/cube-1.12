@@ -103,7 +103,7 @@ int trust_bind_init(void * sub_proc,void * para)
 		return -ENOMEM;
 	memset(bind_pointer,0,sizeof(struct bind_proc_pointer));
 
-	ret=GetFirstPi=olicy(&bind_pointer->bind_pubkey,"PUBK");
+	ret=GetFirstPolicy(&bind_pointer->bind_pubkey,"PUBK");
 	if(bind_pointer->bind_pubkey==NULL)
 	{
 		printf("There is no bind_pubkey!\n");

@@ -194,9 +194,6 @@ int proc_aik_casign(void * sub_proc,void * recv_msg)
 	}
 	printf("create active.req succeed!\n");
 	free(pubek_name);
-	
-
-//	sec_subject_setstate(sub_proc,PROC_AIK_CREATEKEY);
 
 	void * send_msg;
 	ret=build_filedata_struct(&reqdata,"cert/active.req");

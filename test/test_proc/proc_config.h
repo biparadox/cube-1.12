@@ -16,7 +16,7 @@ static PROCDB_INIT procdb_init_list[]=
 static PROC_INIT proc_init_list[]=
 {
 	{"echo_plugin",PROC_TYPE_DECIDE,&echo_plugin_init,&echo_plugin_start},
-	{"json_port",PROC_TYPE_MONITOR,&json_port_init,&json_port_start},
+	{"websocket_port",PROC_TYPE_MONITOR,&websocket_port_init,&websocket_port_start},
 	{"time_stamp",PROC_TYPE_MONITOR,&time_stamp_init,&time_stamp_start},
 	{NULL,0,NULL,NULL}
 };

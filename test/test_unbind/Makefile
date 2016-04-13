@@ -3,8 +3,9 @@ CFLAGS= -g -c -DUSER_MODE
 CC=gcc
 CCP=g++
 MAIN_PROC=test_unbind
-PLUGIN_PROC_OBJ=trust_bind_func.o aik_process_func.o
-INIT_DB_OBJ= load_vtpm_key.o
+PLUGIN_PROC_OBJ=trust_bind_func.o 
+#INIT_DB_OBJ= load_vtpm_key.o
+INIT_DB_OBJ= 
 
 main: $(MAIN_PROC)
 $(MAIN_PROC):  main_proc.c $(MAIN_PROC)_func.o $(PLUGIN_PROC_OBJ) $(INIT_DB_OBJ)
@@ -13,10 +14,10 @@ $(MAIN_PROC)_func.o: $(MAIN_PROC)_func.c main_proc_func.h
 	$(CC) $(CFLAGS) $(MAIN_PROC)_func.c
 trust_bind_func.o:  trust_bind_func.c main_proc_func.h
 	$(CC)  $(CFLAGS) trust_bind_func.c 
-load_vtpm_key.o:  load_vtpm_key.c load_vtpm_key.h
-	$(CC)  $(CFLAGS) load_vtpm_key.c 
-aik_process_func.o:  aik_process_func.c main_proc_func.h
-	$(CC)  $(CFLAGS) aik_process_func.c 
+#load_vtpm_key.o:  load_vtpm_key.c load_vtpm_key.h
+#	$(CC)  $(CFLAGS) load_vtpm_key.c 
+#aik_process_func.o:  aik_process_func.c main_proc_func.h
+#	$(CC)  $(CFLAGS) aik_process_func.c 
 clean:
 	rm -f $(MAIN_PROC) *~ *.o *.a
 	ln -s ../../general/connector_process_func.o .
