@@ -32,6 +32,7 @@
 #include "../include/expand_define.h"
 
 #include "main_proc_func.h"
+#include "cloud_config.h"
 
 struct aik_proc_pointer
 {

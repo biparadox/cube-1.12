@@ -29,10 +29,9 @@
 #include <openssl/rand.h>
 #include <openssl/pem.h>
 #include "../../include/tesi.h"
+#include "cube_cafunc.h"
 #define DIGEST_SIZE 32
 #define PADDING_MODE RSA_PKCS1_PADDING
-
-static char * password="my ca center";
 
 int linux_get_random(void * buf,int num)
 {
@@ -274,11 +273,6 @@ int Verify_RSA_file(char * filename, void * rsa_data,char * signfile)
 }
 
 #define ENTRY_COUNT 6
-struct entry
-{
-	char *key;
-	char *value;
-};
 
 struct entry entries[ENTRY_COUNT] =
 {
