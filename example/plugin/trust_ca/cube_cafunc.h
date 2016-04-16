@@ -15,7 +15,7 @@ int Pubcrypt_RSA_file(char * filename, void * rsa_data,char * cipherfile);
 int Privdecrypt_RSA_file(char * filename, void * rsa_data,char * plainfile);
 int Verify_RSA_file(char * filename, void * rsa_data,char * signfile);
 
-int Create_X509_RSA_Cert(char * cert_name,void * entry,void * pubkey,void * signkey);
+int Create_X509_RSA_Cert(char * cert_name,int entry_count,void * entry,void * pubkey,void * signkey);
 
 #endif
 

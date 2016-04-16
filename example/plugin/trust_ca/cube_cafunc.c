@@ -272,18 +272,6 @@ int Verify_RSA_file(char * filename, void * rsa_data,char * signfile)
 	return TSS_SUCCESS;
 }
 
-#define ENTRY_COUNT 6
-
-struct entry entries[ENTRY_COUNT] =
-{
-	{"countryName","CN"},
-	{"stateOrProvinceName","BeiJing"},
-	{"localityName","Chaoyang"},
-	{"organizationName","bjut.edu.cn"},
-	{"organizationalUnitName","CS Academy"},
-	{"commonName","Test CA"},
-};
-
 int print_openssl_err()
 {
 	char errstring[120];
@@ -292,91 +280,16 @@ int print_openssl_err()
 	ERR_error_string(ERR_get_error(),errstring);
         printf("openssl %s\n",errstring);
 	return err;
-};
+}
 
-int main( void )
+int Create_X509_RSA_Cert(char * cert_name,int entry_count,void * entry, void * pubrsa,void * signrsa)
 {
 	int ret;
-	char			*function = "Tspi_TESI_Init";
-	TSS_RESULT		result = 0;
-	TSS_HKEY 		hCAKey;
-	TSS_HKEY 		hSignKey;
-	TSS_HKEY 		hReloadKey;
-	TSS_HKEY 		hReloadPubKey;
-
 	X509_REQ * cert_req;
 	X509 * cert;
-	
-	char uuid[DIGEST_SIZE*2];
-	char buf[4096];
 
-	RSA * rsa;
-	RSA * rsa1;
-	RSA * rsa2;
-
-
-	OpenSSL_add_all_algorithms();
-	ERR_load_crypto_strings();
-
-	result=TESI_Local_ReloadWithAuth("ooo","sss");
-
-	if ( result != TSS_SUCCESS )
-	{
-		printf("TESI_Local_Load Err!\n");
-		return result;
-	}
-
-	int num=1024;
-	result=TESI_Local_GetRandom(buf,num);
-	if(result == TSS_SUCCESS)
-		printf("Get %d Random num SUCCEED!\n",num);
-	else
-		return -EINVAL;
-	
-	RAND_seed(buf,num);
-	
-	rsa=Generate_RSA_Key();
-	if(rsa==NULL)
-	{
-		printf("Generate RSA Key Failed!\n");
-		return -EINVAL;
-	}
-
-	ret=Sign_RSA_file("hello.txt",rsa,"hello.sig");
-	ret=Pubcrypt_RSA_file("hello.txt",rsa,"hello.crypt");
-
-	WritePrivKey(rsa,"CA",password);
-	WritePubKey(rsa,"CA");
-
-	
-	
-//	RSA_free(rsa);
-
-	result=ReadPubKey(&rsa1,"CA");
-	if(result == TSS_SUCCESS)
-		printf("read pubKey SUCCEED!\n");
-	else
-		return -EINVAL;
-	
-	result=Verify_RSA_file("hello.txt",rsa1,"hello.sig");
-
-	if(result==TSS_SUCCESS)
-	{
-		printf("verify file succeed!\n");
-	}
-	else
-	{
-		printf("Verify file failed!\n");
-	} 
-
-//	RSA_free(rsa1);
-	result=ReadPrivKey(&rsa2,"CA",password);
-	if(result == TSS_SUCCESS)
-		printf("read privkey  SUCCEED!\n");
-	else
-		return -EINVAL;
-	ret=Privdecrypt_RSA_file("hello.crypt",rsa2,"hello1.txt");
-
+	EVP_PKEY * pubkey = EVP_PKEY_new();
+	EVP_PKEY * privkey = EVP_PKEY_new();
 
 	cert_req=X509_REQ_new();
 	if(cert_req==NULL)
@@ -390,7 +303,8 @@ int main( void )
 		printf("create X509 NAME error!\n");
 	}
 	int i;
-	for(i=0;i <ENTRY_COUNT;i++)
+	struct entry * entries = (struct entry *)entry;
+	for(i=0;i <entry_count;i++)
 	{
 		int nid;
 		X509_NAME_ENTRY *ent;
@@ -411,15 +325,8 @@ int main( void )
 	ret=X509_REQ_set_subject_name(cert_req,subject);
 	if(ret!=1)
 		return -EINVAL;
-	EVP_PKEY * pubkey = EVP_PKEY_new();
-	EVP_PKEY * privkey = EVP_PKEY_new();
-	if(pubkey==NULL)
-	{
-		ret=print_openssl_err();
-		return -EINVAL;
-	}
 	
-	ret=EVP_PKEY_set1_RSA(pubkey,rsa1);
+	ret=EVP_PKEY_set1_RSA(pubkey,pubrsa);
 	if(ret!=1)
 	{
 		ret=print_openssl_err();
@@ -433,7 +340,7 @@ int main( void )
 		return -EINVAL;
 	}
 	
-	ret=EVP_PKEY_set1_RSA(privkey,rsa2);
+	ret=EVP_PKEY_set1_RSA(privkey,signrsa);
 	if(ret!=1)
 	{
 		ret=print_openssl_err();
@@ -481,29 +388,6 @@ int main( void )
 
 	X509_REQ_free(cert_req);
 	X509_free(cert);
-
 	return 0;
-
-/*
-	TESI_Local_GetPubEKWithUUID(uuid,"ooo");
-	TESI_Local_GetPubEK("pubek","ooo");
-
-	result=TESI_Local_GetPubKeyFromCA(&hCAKey,"CA");
-
-
-	result=TESI_Local_CreateSignKey(&hSignKey,(TSS_HKEY)NULL,"sss","kkk");
-	if(result == TSS_SUCCESS)
-		printf("Create SignKey SUCCEED!\n");
-
-	TESI_Local_WriteKeyBlob(hSignKey,"localsignkey");
-	TESI_Local_WritePubKey(hSignKey,"localsignkey");
-	
-	TESI_Local_ReadKeyBlob(&hReloadKey,"localsignkey");
-	TESI_Local_SignFile("test.txt",hReloadKey,"testsign","kkk");
-	TESI_Local_ReadPubKey(&hReloadPubKey,"localsignkey");
-	TESI_Local_VerifyFile("test.txt",hReloadPubKey,"testsign");
-
-	TESI_Local_Fin();
-*/
-	return result;
 }
+
