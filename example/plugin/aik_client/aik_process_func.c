@@ -52,6 +52,7 @@ int proc_aikclient_init(void * sub_proc,void * para)
 	char local_uuid[DIGEST_SIZE*2+1];
 	
 	struct aik_proc_pointer * aik_pointer;
+	void * context;
 //	main_pointer= kmalloc(sizeof(struct main_proc_pointer),GFP_KERNEL);
 	aik_pointer= malloc(sizeof(struct aik_proc_pointer));
 	if(aik_pointer==NULL)
@@ -65,7 +66,12 @@ int proc_aikclient_init(void * sub_proc,void * para)
 		printf("open tpm error %d!\n",result);
 		return -ENFILE;
 	}
-	void * context;
+	result= TESI_Local_GetPubEK("pubkey/pubek","ooo");
+	if(result!=TSS_SUCCESS)
+	{
+		printf("get pubek error %d!\n",result);
+		return -EIO;
+	}
 	ret=sec_subject_getcontext(sub_proc,&context);
 	if(ret<0)
 		return ret;
@@ -281,7 +287,7 @@ int proc_aik_activate(void * sub_proc,void * message)
 	if(blobsize!=signdata.datalen)
 		return -EINVAL;
 
-	WriteSignDataToFile(&signdata,"AIK");
+	WriteSignDataToFile(&signdata,"cert/AIK");
 
 	free_struct_template(struct_template);
 
