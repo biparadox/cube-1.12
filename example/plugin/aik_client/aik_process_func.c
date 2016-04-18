@@ -146,6 +146,7 @@ int proc_aik_request(void * sub_proc,void * message)
 	int fd;
 	// create a signkey and write its key in localsignkey.key, write its pubkey in localsignkey.pem
 	result=TESI_Local_ReloadWithAuth("ooo","sss");
+/*
 	result=TESI_Local_CreateSignKey(&hSignKey,(TSS_HKEY)NULL,"sss","kkk");
 	if(result == TSS_SUCCESS)
 		printf("Create SignKey SUCCEED!\n");
@@ -156,6 +157,7 @@ int proc_aik_request(void * sub_proc,void * message)
 	// fill the reqinfo struct
 	calculate_sm3("pubkey/localsignkey.pem",digest);
 	digest_to_uuid(digest,reqinfo.signpubkey_uuid);
+*/
 	calculate_sm3("pubkey/pubek.pem",digest);
 	digest_to_uuid(digest,reqinfo.pubek_uuid);
 	reqinfo.user_name=labelString;
@@ -278,6 +280,8 @@ int proc_aik_activate(void * sub_proc,void * message)
 	blobsize=blob_2_struct(signdata.data,&usercert,struct_template);
 	if(blobsize!=signdata.datalen)
 		return -EINVAL;
+
+	WriteSignDataToFile(&signdata,"AIK");
 
 	free_struct_template(struct_template);
 
