@@ -2,7 +2,7 @@ FLAGS= -g -o
 CFLAGS= -g -c -DUSER_MODE 
 CC=gcc
 CCP=g++
-MAIN_PROC=test_bind
+MAIN_PROC=test_aikclient
 PLUGIN_PROC_OBJ=  aik_process_func.o
 INIT_DB_OBJ=
 

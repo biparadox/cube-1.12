@@ -2,8 +2,8 @@
 #define PROC_CONFIG_H
 
 
-static char * main_proc_name="test_bind";
-static int  (*main_proc_initfunc)()=&test_bind_init;
+static char * main_proc_name="test_aikclient";
+static int  (*main_proc_initfunc)()=&test_aikclient_init;
 
 static PROCDB_INIT procdb_init_list[]=
 {

@@ -4,7 +4,7 @@
 #include "../include/vtpm_desc.h"
 #include "aik_process_func.h"
 
-int test_bind_init();
+int test_aikclient_init();
 
 // aik_casign plugin's init func and kickstart func
 
