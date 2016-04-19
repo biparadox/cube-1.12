@@ -48,7 +48,7 @@ int main()
     const char * audit_filename= "./message.log";
     FILE * fp;
     char audit_text[4096];
-    int fd =open(audit_filename,O_CREAT|O_RDWR|O_TRUNC);
+    int fd =open(audit_filename,O_CREAT|O_RDWR|O_TRUNC,0666);
     close(fd);
 
     system("mkdir lib");
