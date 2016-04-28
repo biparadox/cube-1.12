@@ -2,6 +2,8 @@
 #define MAIN_PROC_FUNC_H
 #include "../include/vtpm_struct.h"
 #include "../include/vtpm_desc.h"
+#include "../include/tesi_key.h"
+#include "../include/tesi_key_desc.h"
 #include "aik_casign_func.h"
 
 int test_ca_init();

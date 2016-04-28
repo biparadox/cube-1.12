@@ -25,6 +25,8 @@
 #include "../include/valuename.h"
 #include "../include/expand_define.h"
 #include "../include/tesi.h"
+#include "../include/tesi_key.h"
+
 
 #include "../cloud_config.h"
 #include "main_proc_func.h"

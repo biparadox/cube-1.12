@@ -28,6 +28,7 @@
 #include "../include/sec_entity.h"
 #include "../include/tesi.h"
 #include "../include/main_proc_init.h"
+#include "../include/tesi_key.h"
 #include "../include/tesi_aik_struct.h"
 
 #include "cloud_config.h"
