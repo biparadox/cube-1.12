@@ -3,5 +3,6 @@
 
 
 int general_lib_init(char * type, void * para);
+int general_uuid_lib_init(char * type, void * para);
 
 #endif

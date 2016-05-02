@@ -117,7 +117,7 @@ int proc_aik_casign(void * sub_proc,void * recv_msg)
 	TSS_RESULT result;
 	TSS_HKEY 	hSignKey;
 	TSS_HKEY	hAIKey, hCAKey;
-	struct aik_request_info reqinfo;
+	struct aik_cert_info certinfo;
 	struct policyfile_data * reqdata;
 	TCPA_IDENTITY_PROOF	identityProof;
 	int ret;
@@ -152,31 +152,16 @@ int proc_aik_casign(void * sub_proc,void * recv_msg)
 	struct ca_cert usercert;
 
 	// read the req info from aik request package
-	void * struct_template=create_struct_template(req_info_desc);
+	void * struct_template=create_struct_template(&aik_cert_info_desc);
 	if(struct_template==NULL)
 		return -EINVAL;
-	blobsize=blob_2_struct(identityProof.labelArea,&usercert.reqinfo,struct_template);
+	blobsize=blob_2_struct(identityProof.labelArea,&certinfo,struct_template);
 	if(blobsize!=identityProof.labelSize)
 		return -EINVAL;
 
-	free_struct_template(struct_template);
-
-	// get the uuid of identity key and write it to user cert
-	TESI_Local_WritePubKey(hAIKey,"identkey");
-
-	calculate_sm3("identkey.pem",digest);
-	digest_to_uuid(digest,usercert.AIPubKey_uuid);
-
-	struct_template=create_struct_template(ca_cert_desc);
-	if(struct_template==NULL)
-		return -EINVAL;
-	// get the usercert's blob 
-	blobsize=struct_2_blob(&usercert,buffer,struct_template);
-	free_struct_template(struct_template);	
-	printf("create usercert succeed!\n");
-	
+	// get the pubek
 	struct vTPM_publickey * pubek;
-	FindPolicy(usercert.reqinfo.pubek_uuid,"PUBK",&pubek);
+	FindPolicy(certinfo.pubkey_uuid,"PUBK",&pubek);
 	if(pubek==NULL)
 	{
 		printf("can't find pubek!\n");
@@ -187,6 +172,24 @@ int proc_aik_casign(void * sub_proc,void * recv_msg)
 	pubek_name[strlen(pubek_name)-4]=0;
 	printf("find pubek %s\n!",pubek_name);
 
+//	free_struct_template(struct_template);
+
+	// get the uuid of identity key and write it to user cert
+	TESI_Local_WritePubKey(hAIKey,"identkey");
+
+	calculate_sm3("identkey.pem",digest);
+	digest_to_uuid(digest,certinfo.pubkey_uuid);
+
+	printf(" get aik pubkey uuid %64s!\n",certinfo.pubkey_uuid);
+
+//	struct_template=create_struct_template(ca_cert_desc);
+	if(struct_template==NULL)
+		return -EINVAL;
+	// get the usercert's blob 
+	blobsize=struct_2_blob(&certinfo,buffer,struct_template);
+	free_struct_template(struct_template);	
+	printf("create usercert succeed!\n");
+	
 		
 	if (result = TESI_AIK_CreateAIKCert(hAIKey,aik_pointer->cakey,buffer,blobsize,pubek_name,"cert/active")) {
 		printf("ca_create_credential %s", tss_err_string(result));

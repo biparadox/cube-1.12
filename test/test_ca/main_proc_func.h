@@ -4,6 +4,7 @@
 #include "../include/vtpm_desc.h"
 #include "../include/tesi_key.h"
 #include "../include/tesi_key_desc.h"
+#include "../include/tesi_aik_struct.h"
 #include "aik_casign_func.h"
 
 int test_ca_init();

@@ -134,12 +134,22 @@ int proc_aik_request(void * sub_proc,void * message)
 	TSS_RESULT result;
 	TSS_HKEY 	hSignKey;
 	TSS_HKEY	hAIKey, hCAKey;
-	struct aik_request_info reqinfo;
+	struct aik_cert_info reqinfo;
 	struct policyfile_data * reqdata;
 	int ret;
+	struct aik_user_info * user_info;
+	BYTE buf[1024];
 
+	ret=GetFirstPolicy(&user_info,"USRI");
+	if(ret<0)
+		return -EINVAL;
+
+	memcpy(&reqinfo.user_info,user_info,sizeof(struct aik_user_info));
+
+/*
 	BYTE		*labelString = "UserA";
 	UINT32		labelLen = strlen(labelString) + 1;
+*/
 	char local_uuid[DIGEST_SIZE*2+1];
 	char proc_name[DIGEST_SIZE*2+1];
 	
@@ -153,29 +163,16 @@ int proc_aik_request(void * sub_proc,void * message)
 	int fd;
 	// create a signkey and write its key in localsignkey.key, write its pubkey in localsignkey.pem
 	result=TESI_Local_ReloadWithAuth("ooo","sss");
-/*
-	result=TESI_Local_CreateSignKey(&hSignKey,(TSS_HKEY)NULL,"sss","kkk");
-	if(result == TSS_SUCCESS)
-		printf("Create SignKey SUCCEED!\n");
 
-	TESI_Local_WriteKeyBlob(hSignKey,"privkey/localsignkey");
-	TESI_Local_WritePubKey(hSignKey,"pubkey/localsignkey");
-	
-	// fill the reqinfo struct
-	calculate_sm3("pubkey/localsignkey.pem",digest);
-	digest_to_uuid(digest,reqinfo.signpubkey_uuid);
-*/
 	calculate_sm3("pubkey/pubek.pem",digest);
-	digest_to_uuid(digest,reqinfo.pubek_uuid);
-	reqinfo.user_name=labelString;
-	get_local_uuid(reqinfo.user_uuid);
+	digest_to_uuid(digest,reqinfo.pubkey_uuid);
+	get_local_uuid(reqinfo.machine_uuid);
 	
 	// create info blob
-	void * struct_template=create_struct_template(req_info_desc);
+	void * struct_template=create_struct_template(&aik_cert_info_desc);
 	if(struct_template==NULL)
 		return -EINVAL;
 	blobsize=struct_2_blob(&reqinfo,buffer,struct_template);
-
 
 	// Load the CA Key
 	result=TESI_Local_GetPubKeyFromCA(&hCAKey,"cert/CA");
@@ -189,8 +186,6 @@ int proc_aik_request(void * sub_proc,void * message)
 		printf("Create AIK error %s!\n", tss_err_string(result));
 		exit(result);
 	}
-
-	labelLen=strlen(labelString);
 
 	result = TESI_AIK_GenerateReq(hCAKey,blobsize,buffer,hAIKey,"cert/aik");
 	if (result != TSS_SUCCESS){
@@ -223,6 +218,7 @@ int proc_aik_activate(void * sub_proc,void * message)
 	int retval;
 	int blobsize=0;
 	struct policyfile_data * reqdata;
+	struct aik_cert_info cert_info;
 
 
 	result=TESI_Local_ReadKeyBlob(&hAIKey,"privkey/AIK");
@@ -278,13 +274,11 @@ int proc_aik_activate(void * sub_proc,void * message)
 
 	// get the content of the CA signed cert
 
-	struct ca_cert usercert;
-
 	// read the req info from aik request package
-	void * struct_template=create_struct_template(ca_cert_desc);
+	void * struct_template=create_struct_template(&aik_cert_info_desc);
 	if(struct_template==NULL)
 		return -EINVAL;
-	blobsize=blob_2_struct(signdata.data,&usercert,struct_template);
+	blobsize=blob_2_struct(signdata.data,&cert_info,struct_template);
 	if(blobsize!=signdata.datalen)
 		return -EINVAL;
 
@@ -293,5 +287,4 @@ int proc_aik_activate(void * sub_proc,void * message)
 	free_struct_template(struct_template);
 
 	return 0;
-
 }

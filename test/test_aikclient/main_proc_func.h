@@ -4,6 +4,8 @@
 #include "../include/vtpm_desc.h"
 #include "../include/tesi_key.h"
 #include "../include/tesi_key_desc.h"
+#include "../include/tesi_aik_struct.h"
+#include "general_lib_init.h"
 #include "aik_process_func.h"
 
 int test_aikclient_init();

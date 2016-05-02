@@ -10,6 +10,8 @@ static PROCDB_INIT procdb_init_list[]=
 	{"VM_T",&vtpm_memdb_init,&vtpm_info_desc,&general_lib_ops},
 	{"PUBK",&public_key_memdb_init,&publickey_desc,&general_lib_ops},
 	{"BLBK",&null_init_func,&wrappedkey_desc,&general_lib_ops},
+	{"USRI",&null_init_func,&aik_user_info_desc,&general_lib_ops},
+	{"CERI",&null_init_func,&aik_cert_info_desc,&general_lib_ops},
 	{NULL,NULL,NULL,NULL}
 };
 
