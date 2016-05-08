@@ -4,6 +4,7 @@
 #include "../include/tesi_key_desc.h"
 #include "trust_bind_func.h"
 #include "key_request_func.h"
+#include "file_receiver_func.h"
 
 int test_bind_init();
 

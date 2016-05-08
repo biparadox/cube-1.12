@@ -3,7 +3,7 @@ CFLAGS= -g -c -DUSER_MODE
 CC=gcc
 CCP=g++
 MAIN_PROC=bind_server
-PLUGIN_PROC_OBJ=  aik_process_func.o general_lib_init.o
+PLUGIN_PROC_OBJ=  aik_process_func.o general_lib_init.o key_response_func.o
 INIT_DB_OBJ=
 
 main: $(MAIN_PROC)
@@ -15,6 +15,8 @@ aik_process_func.o:  aik_process_func.c main_proc_func.h
 	$(CC)  $(CFLAGS) aik_process_func.c 
 general_lib_init.o:  general_lib_init.c general_lib_init.h
 	$(CC)  $(CFLAGS) general_lib_init.c 
+key_response_func.o:  key_response_func.c main_proc_func.h
+	$(CC)  $(CFLAGS) key_response_func.c 
 clean:
 	rm -f $(MAIN_PROC) *~ *.o *.a
 	ln -s ../../general/connector_process_func.o .

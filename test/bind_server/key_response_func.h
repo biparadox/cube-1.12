@@ -1,5 +1,5 @@
-#ifndef KEY_REQUEST_FUNC_H
-#define KEY_REQUEST_FUNC_H
+#ifndef KEY_RESPONSE_FUNC_H
+#define KEY_RESPONSE_FUNC_H
 
 
 struct key_request_cmd
@@ -20,7 +20,7 @@ static struct struct_elem_attr key_request_cmd_desc[]=
 };
 
 // plugin's init func and kickstart func
-int key_request_init(void * sub_proc,void * para);
-int key_request_start(void * sub_proc,void * para);
+int key_response_init(void * sub_proc,void * para);
+int key_response_start(void * sub_proc,void * para);
 
 #endif

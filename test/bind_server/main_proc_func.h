@@ -7,6 +7,7 @@
 #include "../include/tesi_aik_struct.h"
 #include "general_lib_init.h"
 #include "aik_process_func.h"
+#include "key_response_func.h"
 
 int bind_server_init();
 

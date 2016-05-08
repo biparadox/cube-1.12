@@ -3,7 +3,7 @@ CFLAGS= -g -c -DUSER_MODE
 CC=gcc
 CCP=g++
 MAIN_PROC=bind_client
-PLUGIN_PROC_OBJ=trust_bind_func.o  key_request_func.o
+PLUGIN_PROC_OBJ=trust_bind_func.o  key_request_func.o file_receiver_func.o
 INIT_DB_OBJ=
 
 main: $(MAIN_PROC)
@@ -15,6 +15,8 @@ trust_bind_func.o:  trust_bind_func.c main_proc_func.h
 	$(CC)  $(CFLAGS) trust_bind_func.c 
 key_request_func.o:  key_request_func.c key_request_func.h
 	$(CC)  $(CFLAGS) key_request_func.c 
+file_receiver_func.o:  file_receiver_func.c file_receiver_func.h
+	$(CC)  $(CFLAGS) file_receiver_func.c 
 #aik_process_func.o:  aik_process_func.c main_proc_func.h
 #	$(CC)  $(CFLAGS) aik_process_func.c 
 clean:
