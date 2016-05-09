@@ -18,7 +18,7 @@ static PROCDB_INIT procdb_init_list[]=
 
 static PROC_INIT proc_init_list[]=
 {
-	{"trust_bind",PROC_TYPE_MONITOR,&trust_bind_init,&trust_bind_start},
+	{"client_bind",PROC_TYPE_MONITOR,&client_bind_init,&client_bind_start},
 	{"key_request",PROC_TYPE_MONITOR,&key_request_init,&key_request_start},
 	{"file_receiver",PROC_TYPE_MONITOR,&file_receiver_init,&file_receiver_start},
 //	{"aik_client",PROC_TYPE_MONITOR,&proc_aikclient_init,&proc_aikclient_start},

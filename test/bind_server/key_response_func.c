@@ -34,10 +34,18 @@
 #include "cloud_config.h"
 #include "main_proc_func.h"
 
+int bind_key_generate();
 int proc_key_response(void * sub_proc,void * message);
 int key_response_init(void * sub_proc,void * para)
 {
 	int ret;
+	TSS_RESULT result;
+	result=TESI_Local_ReloadWithAuth("ooo","sss");
+	if ( result != TSS_SUCCESS )
+	{
+		printf( "TPM auth error!", result );
+		exit( result );
+	}
 	return 0;
 }
 
@@ -83,6 +91,7 @@ int proc_key_response(void * sub_proc,void * message)
 	struct policyfile_data * response_data;
 	struct policyfile_data * response_cert;
 	int ret;
+	TSS_RESULT result;
 	BYTE buf[2048];
 	void * send_msg;
 	void * send_msg2;
@@ -123,7 +132,95 @@ int proc_key_response(void * sub_proc,void * message)
 		}
 
 	}
+	else if(key_req->keyusage == TPM_KEY_BIND)
+	{
+		// bind_client request bindkey			
+
+		// generate bindkey and bindkey cert
+		result=bind_key_generate();
+		if(result!=TSS_SUCCESS)
+		{
+			return -EINVAL;
+		}
+		//  send bindkey file
+		ret=build_filedata_struct(&response_data,"pubkey/bindpubkey.pem");
+		if(ret<0)
+			return -EINVAL;
+		send_msg=message_create("FILD",message);
+		if(send_msg!=NULL)
+		{
+			message_add_record(send_msg,response_data);
+			sec_subject_sendmsg(sub_proc,send_msg);
+		}
+		
+		//  send bindkey cert file
+		ret=build_filedata_struct(&response_cert,"cert/bindkey.val");
+		if(ret<0)
+			return -EINVAL;
+		send_msg2=message_create("FILD",message);
+		if(send_msg2!=NULL)
+		{
+			message_add_record(send_msg2,response_cert);
+			sec_subject_sendmsg(sub_proc,send_msg2);
+		}
+
+			
+	}
 	else
 		return -EINVAL;
 	return 0;
+}
+
+int bind_key_generate()
+{
+	TSS_HKEY	hKey;
+	TSS_HKEY	hAIKey;
+	TSS_RESULT	result;
+
+	result=TESI_Local_CreateBindKey(&hKey,NULL,"sss","kkk");
+	if ( result != TSS_SUCCESS )
+	{
+		printf( "Create bind_key error!\n" );
+		return result ;
+	}
+
+	TESI_Local_WriteKeyBlob(hKey,"privkey/bindkey");
+	if ( result != TSS_SUCCESS )
+	{
+		printf( "Write bind key error!\n");
+		return result;
+	}
+	TESI_Local_WritePubKey(hKey,"pubkey/bindpubkey");
+	if ( result != TSS_SUCCESS )
+	{
+		printf( "Write bind pubkey error!\n");
+		return result;
+	}
+	result=TESI_Local_ReadKeyBlob(&hAIKey,"privkey/AIK");
+	if ( result != TSS_SUCCESS )
+	{
+		printf( "Read AIK failed!\n");
+		return result;
+	}
+	
+	result=TESI_Local_LoadKey(hKey,NULL,"kkk");
+	if ( result != TSS_SUCCESS )
+	{
+		printf( "Load AIK failed!\n");
+		return result;
+	}
+	result=TESI_Local_LoadKey(hAIKey,NULL,"kkk");
+	if ( result != TSS_SUCCESS )
+	{
+		printf( "Load AIK failed!\n");
+		return result;
+	}
+	result=TESI_Report_CertifyKey(hKey,hAIKey,"cert/bindkey");	
+	if ( result != TSS_SUCCESS )
+	{
+		printf( "Certify bindkey failed!\n");
+		return result;
+	}
+	
+	return result;
 }

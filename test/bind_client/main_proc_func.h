@@ -2,7 +2,7 @@
 #define MAIN_PROC_FUNC_H
 #include "../include/tesi_key.h"
 #include "../include/tesi_key_desc.h"
-#include "trust_bind_func.h"
+#include "client_bind_func.h"
 #include "key_request_func.h"
 #include "file_receiver_func.h"
 

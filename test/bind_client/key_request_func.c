@@ -34,6 +34,51 @@
 #include "../cloud_config.h"
 #include "main_proc_func.h"
 
+int bindkey_verify()
+{
+	TSS_VALIDATION valdata;
+	TSS_RESULT result;
+	TSS_HKEY hAIKey;
+	TSS_HKEY hBindPubKey;
+	KEY_CERT * cert;
+	BYTE digest[DIGEST_SIZE];
+
+	result=TESI_Local_ReadPubKey(&hAIKey,"pubkey/AIK");
+	if(result!=TSS_SUCCESS)
+	{
+		printf("Read AIK failed!\n");
+		return result;
+	}
+
+	result=TESI_Local_VerifyValData(hAIKey,"cert/bindkey");
+	if(result!=TSS_SUCCESS)
+	{
+		printf("verify bindkey failed!\n");
+		return result;
+	}
+	cert=create_key_certify_struct("cert/bindkey",NULL,NULL);
+	if(cert==NULL)	
+		return -EINVAL;
+	result=TESI_Local_ReadPubKey(&hBindPubKey,"pubkey/bindpubkey");
+	if(result!=TSS_SUCCESS)
+	{
+		printf("Read bindkey failed!\n");
+		return result;
+	}
+	
+	result=TESI_Report_GetKeyDigest(hBindPubKey,digest);
+	if ( result != TSS_SUCCESS )
+	{
+		printf( "TESI_Report_GetKeyDigest failed!\n");
+		return result;
+	}
+
+	if(memcmp(digest,cert->pubkeydigest,20)!=0)
+		return -EINVAL;
+
+	return 0;
+}
+
 int aik_verify()
 {
 	int ret;
@@ -109,6 +154,7 @@ int key_request_start(void * sub_proc,void * para)
 		AIK_READY,
 		BINDKEY_REQUEST,
 		BINDKEY_READY,
+		BINDKEY_VERIFIED,
 		KEY_ERROR
 	}; 
 
@@ -139,6 +185,7 @@ int key_request_start(void * sub_proc,void * para)
 				}
 				else
 				{
+					close(fd);
 					key_req=malloc(sizeof(struct key_request_cmd));
 					if(key_req==NULL)
 						return -EINVAL;		
@@ -161,6 +208,7 @@ int key_request_start(void * sub_proc,void * para)
 					key_state=AIK_READY;
 				else
 				{
+					close(fd);
 					count++;
 					if(count>1000)
 					{
@@ -179,7 +227,7 @@ int key_request_start(void * sub_proc,void * para)
 				}
 				else
 				{
-						
+					close(fd);
 					ret=aik_verify();
 					if(ret<0)
 					{
@@ -188,6 +236,8 @@ int key_request_start(void * sub_proc,void * para)
 						key_state=NO_KEY;
 						break;
 					}
+					remove("cert/bindkey.val");
+					remove("pubkey/bindpubkey.pem");
 					count=0;
 					key_req=malloc(sizeof(struct key_request_cmd));
 					if(key_req==NULL)
@@ -204,7 +254,6 @@ int key_request_start(void * sub_proc,void * para)
 					message_add_record(sendmsg,key_req);
 					sec_subject_sendmsg(sub_proc,sendmsg);	
 				}
-				key_state=BINDKEY_READY;
 				break;
 			case BINDKEY_REQUEST:
 				fd=open("pubkey/bindpubkey.pem",O_RDONLY);
@@ -212,8 +261,9 @@ int key_request_start(void * sub_proc,void * para)
 					key_state=BINDKEY_READY;
 				else
 				{
+					close(fd);
 					count++;
-					if(count>1000)
+					if(count>5000)
 					{
 						printf("do not get Bind key");
 						key_state=AIK_READY;
@@ -221,8 +271,42 @@ int key_request_start(void * sub_proc,void * para)
 				}
 				break;
 			case BINDKEY_READY:
-				return 0;
+				fd=open("cert/bindkey.val",O_RDONLY);
+				if(fd<0)
+				{
+					count++;
+					if(count>5000)
+					{
+						printf("do not get Bind key valdata");
+						key_state=AIK_READY;
+					}	
+					break;
+				}
+				else
+				{
+					close(fd);
+					ret=bindkey_verify();
+					if(ret!=0)
+					{
+						remove("cert/bindkey.val");
+						remove("pubkey/bindpubkey.pem");
+						key_state=AIK_READY;
+						break;
+					}	
+					
+					key_state=BINDKEY_VERIFIED;
+				}
+
+				break;
 			
+			case BINDKEY_VERIFIED:
+				ret=bind_pubkey_memdb_init();
+				if(ret<0)
+				{
+					printf("load bindpubkey error %d!\n",ret);
+				}
+				
+				return 0;
 			default:
 				return -EINVAL;	
 		
