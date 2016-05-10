@@ -76,7 +76,7 @@ int bind_key_memdb_init()
        	ExportPolicy("BLBK");
 	return 0;
 }
-int trust_bind_init(void * sub_proc,void * para)
+int server_unbind_init(void * sub_proc,void * para)
 {
 	int ret;
 	// add youself's plugin init func here
@@ -87,7 +87,7 @@ int trust_bind_init(void * sub_proc,void * para)
 		printf("open tpm error %d!\n",result);
 		return -ENFILE;
 	}
-
+/*
 	ret=bind_key_memdb_init();
 	if(ret<0)
 	{
@@ -149,21 +149,69 @@ int trust_bind_init(void * sub_proc,void * para)
 	ret=sec_object_setpointer(context,bind_pointer);
 	if(ret<0)
 		return ret;
-
+*/
 	return 0;
 }
 
-int trust_bind_start(void * sub_proc,void * para)
+int server_unbind_start(void * sub_proc,void * para)
 {
 	int ret;
 	void * recv_msg;
 	int i;
 	const char * type;
+	TSS_RESULT result;
 
+
+	enum bindkey_state
+	{
+		BINDKEY_NOKEY,
+		BINDKEY_READY,
+	};
+	enum bindkey_state key_state = BINDKEY_NOKEY;
+	struct bind_proc_pointer * bind_pointer;
+	bind_pointer= malloc(sizeof(struct bind_proc_pointer));
+	if(bind_pointer==NULL)
+		return -ENOMEM;
+	memset(bind_pointer,0,sizeof(struct bind_proc_pointer));
 
 	for(i=0;i<3000*1000;i++)
 	{
 		usleep(time_val.tv_usec);
+
+		if(key_state==BINDKEY_NOKEY)
+		{
+			ret=GetFirstPolicy(&bind_pointer->bind_key,"BLBK");
+			if(bind_pointer->bind_key==NULL)
+			{
+				printf("There is no bindkey!\n");
+				continue;
+			}
+			else
+			{
+	
+				result=TESI_Local_ReadKeyBlob(&(bind_pointer->hBindKey),bind_pointer->bind_key->key_filename);
+				if(result!=TSS_SUCCESS)
+				{
+					printf("load bindkey error %d!\n",result);
+				}
+				result=TESI_Local_LoadKey(bind_pointer->hBindKey,NULL,bind_pointer->bind_key->keypass);
+				if(result!=TSS_SUCCESS)
+				{
+					printf("load bindkey error %d!\n",result);
+					return -ENFILE;
+				}
+				void * context;
+				ret=sec_subject_getcontext(sub_proc,&context);
+				if(ret<0)
+					return ret;
+				ret=sec_object_setpointer(context,bind_pointer);
+				if(ret<0)
+					return ret;
+				key_state=BINDKEY_READY;
+			}		
+
+		}
+		
 		ret=sec_subject_recvmsg(sub_proc,&recv_msg);
 		if(ret<0)
 			continue;

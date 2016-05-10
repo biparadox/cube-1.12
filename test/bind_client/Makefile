@@ -19,6 +19,8 @@ file_receiver_func.o:  file_receiver_func.c file_receiver_func.h
 	$(CC)  $(CFLAGS) file_receiver_func.c 
 #aik_process_func.o:  aik_process_func.c main_proc_func.h
 #	$(CC)  $(CFLAGS) aik_process_func.c 
+cleankey:
+	rm -f cert/AIK.sda cert/bindkey.val lib/* pubkey/*
 clean:
 	rm -f $(MAIN_PROC) *~ *.o *.a
 	ln -s ../../general/connector_process_func.o .

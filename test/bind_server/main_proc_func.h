@@ -8,6 +8,7 @@
 #include "general_lib_init.h"
 #include "aik_process_func.h"
 #include "key_response_func.h"
+#include "server_unbind_func.h"
 
 int bind_server_init();
 

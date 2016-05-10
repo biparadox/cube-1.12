@@ -21,6 +21,7 @@ static PROC_INIT proc_init_list[]=
 {
 	{"aik_client",PROC_TYPE_MONITOR,&proc_aikclient_init,&proc_aikclient_start},
 	{"key_response",PROC_TYPE_MONITOR,&key_response_init,&key_response_start},
+	{"server_unbind",PROC_TYPE_MONITOR,&server_unbind_init,&server_unbind_start},
 	{NULL,0,NULL,NULL}
 };
 

@@ -164,7 +164,12 @@ int proc_key_response(void * sub_proc,void * message)
 			sec_subject_sendmsg(sub_proc,send_msg2);
 		}
 
-			
+		ret=bind_key_memdb_init();
+		if(ret<0)
+		{
+			printf("load bindkey error %d!\n",ret);
+		}
+		return ret;
 	}
 	else
 		return -EINVAL;

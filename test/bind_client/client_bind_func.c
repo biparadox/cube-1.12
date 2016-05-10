@@ -168,6 +168,11 @@ int client_bind_start(void * sub_proc,void * para)
 	};
 
 	enum bindkey_state key_state = BINDKEY_NOKEY;
+	struct bind_proc_pointer * bind_pointer;
+	bind_pointer= malloc(sizeof(struct bind_proc_pointer));
+	if(bind_pointer==NULL)
+		return -ENOMEM;
+	memset(bind_pointer,0,sizeof(struct bind_proc_pointer));
 
 
 	for(i=0;i<3000*1000;i++)
@@ -176,11 +181,6 @@ int client_bind_start(void * sub_proc,void * para)
 
 		if(key_state==BINDKEY_NOKEY)
 		{
-			struct bind_proc_pointer * bind_pointer;
-			bind_pointer= malloc(sizeof(struct bind_proc_pointer));
-			if(bind_pointer==NULL)
-				return -ENOMEM;
-			memset(bind_pointer,0,sizeof(struct bind_proc_pointer));
 
 			ret=GetFirstPolicy(&bind_pointer->bind_pubkey,"PUBK");
 			if(bind_pointer->bind_pubkey==NULL)
@@ -201,10 +201,9 @@ int client_bind_start(void * sub_proc,void * para)
 			ret=sec_object_setpointer(context,bind_pointer);
 			if(ret<0)
 				return ret;
+			key_state=BINDKEY_READY;
 
 		}
-		
-
 
 		ret=sec_subject_recvmsg(sub_proc,&recv_msg);
 		if(ret<0)
@@ -252,7 +251,7 @@ int proc_bind_message(void * sub_proc,void * message)
 	if(blob_size<=0)
 		return -EINVAL;
 
-	result=TESI_Local_BindBuffer(blob,blob_size,bind_pointer->hBindKey,&bind_blob,&bind_blob_size);
+	result=TESI_Local_BindBuffer(blob,blob_size,bind_pointer->hBindPubKey,&bind_blob,&bind_blob_size);
 	if ( result != TSS_SUCCESS )
 	{
 		return -EINVAL;
