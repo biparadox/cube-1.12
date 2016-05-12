@@ -1,0 +1,1 @@
+a02c5416-37cb-4266-9e17-2e45a3db6e79	524288	1	hvm	hd	qemu	qcow2	none	/var/lib/nova/instances/a02c5416-37cb-4266-9e17-2e45a3db6e79/disk	virtio	vda	bridge	fa:16:3e:9d:f4:31	virtio	qbrc5783fa4-8e	tapc5783fa4-8e	/var/lib/nova/instances/a02c5416-37cb-4266-9e17-2e45a3db6e79/console.log
