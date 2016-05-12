@@ -28,7 +28,7 @@
 #include "../include/sec_entity.h"
 #include "../include/main_proc_init.h"
 
-#include "cloud_config.h"
+#include "../cloud_config.h"
 #include "main_proc_func.h"
 
 int file_receiver_init(void * sub_proc,void * para)
