@@ -183,7 +183,6 @@ int server_unbind_start(void * sub_proc,void * para)
 			ret=GetFirstPolicy(&bind_pointer->bind_key,"BLBK");
 			if(bind_pointer->bind_key==NULL)
 			{
-				printf("There is no bindkey!\n");
 				continue;
 			}
 			else
