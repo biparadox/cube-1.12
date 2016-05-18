@@ -865,7 +865,7 @@ int json_2_struct_write_elem(void * node,void * addr,TEMPLATE_ELEM * elem_templa
 		break;
 		
 	case OS210_TYPE_DEFSTRARRAY:
-		if(json_node->elem_type != JSON_ELEM_STRING)
+		if(json_node->elem_type != JSON_ELEM_ARRAY)
 			return -EINVAL;
 		elem_define=(TEMPLATE_ELEM *)(elem_template->elem_var);
 		define_value=*(int *)elem_define->elem_var;
@@ -874,23 +874,30 @@ int json_2_struct_write_elem(void * node,void * addr,TEMPLATE_ELEM * elem_templa
 		if(define_value>32768)
 			return -EINVAL;
 		retval=elem_attr->size*define_value;
+
 		{
-			memset(addr,0,retval);
+			char * estring;
+			estring=kmalloc(retval,GFP_KERNEL);
+			if(estring==NULL)
+			return -ENOMEM;
+			memset(estring,0,retval);
 		
-			JSON_VALUE * curr_value;
+			JSON_NODE * curr_node;
+//			JSON_VALUE * curr_value;
 			for(i=0;i<define_value;i++) 
 			{
 				if(i==0)
-					curr_value=get_first_json_child(json_node);
+					curr_node=get_first_json_child(json_node);
 				else
-					curr_value=get_next_json_child(json_node);
-				if(curr_value==NULL)
+					curr_node=get_next_json_child(json_node);
+				if(curr_node==NULL)
 					break;
-				if(curr_value->value_type!=JSON_ELEM_STRING)
+				if(curr_node->elem_type!=JSON_ELEM_STRING)
 					return -EINVAL;
-				radix64_to_bin(addr+i*elem_attr->size,bin_to_radix64_len(elem_attr->size),json_node->value_str);
+//				radix64_to_bin(addr+i*elem_attr->size,bin_to_radix64_len(elem_attr->size),json_node->value_str);
+				strncpy(estring+i*elem_attr->size,curr_node->value_str,elem_attr->size);
 			}
-				
+			*(char **)addr=estring;	
 		}
 		break;
 	case OS210_TYPE_ORGCHAIN:
