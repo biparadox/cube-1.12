@@ -100,6 +100,7 @@ int sec_resource_setvalue(void * sec_res,char * valuename,void * value);
 int sec_resource_destroy(void * sec_res);
 
 
+/*
 struct verify_info  
 {
 	char verify_data_uuid[DIGEST_SIZE*2];
@@ -109,6 +110,7 @@ struct verify_info
 	int info_len;
 	char * info;
 }__attribute__((packed));
+*/
 
 // sec subject manage function
 int sec_subject_list_init();

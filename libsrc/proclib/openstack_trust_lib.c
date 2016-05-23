@@ -43,6 +43,7 @@
 #include "../include/vmlist_desc.h"
 #pragma comment(lib, "\\lib\\libstruct.a")
 //the descriptiong struct of keyfile
+/*
 static struct struct_elem_attr verify_info_desc[]=
 {
         {"verify_data_uuid",OS210_TYPE_STRING,DIGEST_SIZE*2,NULL},
@@ -53,7 +54,7 @@ static struct struct_elem_attr verify_info_desc[]=
         {"info",OS210_TYPE_ESTRING,0,NULL},
 	{NULL,OS210_TYPE_ENDDATA,0,NULL}
 };
-
+*/
 struct proc_share_data
 {
 	pthread_rwlock_t rwlock;
@@ -208,7 +209,7 @@ static NAME2POINTER record_type_struct[] =
 //	{"VM_P",vm_policy_desc},
 //	{"IMGP",vm_policy_desc},
 //	{"PLAP",vm_policy_desc},
-	{"PCRP",tcm_pcr_set_desc},
+//	{"PCRP",tcm_pcr_set_desc},
 //	{"FILP",policy_file_desc},
 
 //	{"USRT",vtpm_info_desc},
@@ -226,11 +227,11 @@ static NAME2POINTER record_type_struct[] =
 
 //	{"LOGC",connect_login_desc},
 //	{"RETC",connect_return_desc},
-	{"REQC",request_cmd_desc},
+//	{"REQC",request_cmd_desc},
 
 //	{"OUSI",openstack_user_desc},
 //	{"OPRI",openstack_project_desc},
-	{"VERI",verify_info_desc},
+//	{"VERI",verify_info_desc},
 	{NULL,NULL}
 };
 

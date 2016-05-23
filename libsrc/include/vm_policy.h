@@ -58,6 +58,19 @@ struct policyfile_data
 	int data_size;
 	char * policy_data; //the file data
 }__attribute__((packed));
+
+struct verify_info  
+{
+	char verify_data_uuid[DIGEST_SIZE*2];
+	char entity_uuid[DIGEST_SIZE*2];
+	char policy_type[4];
+	int trust_level;
+	int info_len;
+	char * info;
+}__attribute__((packed));
+
+
+
 void * build_empty_pcr_set();
 int add_pcr_to_set(void * pcrs,int index,BYTE * value);
 void * get_single_pcr_from_set(void * pcrs,int index);

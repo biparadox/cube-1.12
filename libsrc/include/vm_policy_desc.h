@@ -31,7 +31,7 @@ static struct struct_elem_attr tcm_pcr_set_desc[]=
 {
 	{"uuid",OS210_TYPE_STRING,DIGEST_SIZE*2,NULL},
 	{"trust_level",OS210_TYPE_INT,sizeof(UINT32),NULL},
-	{"pcr_select",OS210_TYPE_ORGCHAIN,0,tcm_pcr_selection_desc},
+	{"pcr_select",OS210_TYPE_ORGCHAIN,0,&tcm_pcr_selection_desc},
 	{"value_size",OS210_TYPE_INT,sizeof(UINT32),NULL},
 	{"pcr_value",OS210_TYPE_DEFINE,sizeof(BYTE),"value_size"},
 	{"policy_describe",OS210_TYPE_ESTRING,0,NULL},
@@ -65,6 +65,16 @@ static struct struct_elem_attr policyfile_data_desc[]=
 	{NULL,OS210_TYPE_ENDDATA,0,NULL}
 };
 
+static struct struct_elem_attr verify_info_desc[]=
+{
+        {"verify_data_uuid",OS210_TYPE_STRING,DIGEST_SIZE*2,NULL},
+        {"entity_uuid",OS210_TYPE_STRING,DIGEST_SIZE*2,NULL},
+        {"policy_type",OS210_TYPE_STRING,4,NULL},
+        {"trust_level",OS210_TYPE_INT,sizeof(int),NULL},
+        {"info_len",OS210_TYPE_INT,sizeof(int),NULL},
+        {"info",OS210_TYPE_ESTRING,0,NULL},
+	{NULL,OS210_TYPE_ENDDATA,0,NULL}
+};
 
 //extern struct trust_policy_ops vm_policy_lib_ops; 
 //extern struct trust_policy_ops policy_file_lib_ops; 
