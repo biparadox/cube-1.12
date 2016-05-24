@@ -8,7 +8,7 @@ LOGICOBJ= logic_baselib.o logic_compare.o logic_audit.o
 main: test_main ../lib/liblogicdb.a
 	rm -f *~ *.a *.o
 test_main: test_main.c ../lib/liblogicdb.a
-	$(CC) $(FLAGS) test_main test_main.c -L../lib -lstruct -llogicdb
+	$(CC) $(FLAGS) test_main test_main.c -L../lib -llogicdb -lstruct -lcrypto_func
 ../lib/liblogicdb.a:  $(LOGICOBJ)
 	ar rs liblogicdb.a $(LOGICOBJ) 
 	mv    liblogicdb.a ../lib

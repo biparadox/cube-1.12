@@ -775,6 +775,32 @@ void * entity_get_uuid(void * lib,void * policy)
 	return ((struct entity_struct_head *)policy)->uuid;
 
 }
+int entity_hash_uuid(char * type, void * policy)
+{
+	void * struct_template;
+	int curr_offset;
+	BYTE buffer[2048];
+	BYTE digest[DIGEST_SIZE];
+	int ret;
+	struct_template=load_record_template(type);
+	if(struct_template==NULL)
+		return -EINVAL;
+		
+	ret=struct_2_blob(policy,buffer,struct_template);
+	if(ret<0)
+		return ret;
+	if(ret<DIGEST_SIZE*2)
+		return -EINVAL;
+
+	ret=calculate_context_sm3(buffer+DIGEST_SIZE*2,ret-DIGEST_SIZE*2,digest);
+	if(ret<0)
+		return -EINVAL;
+	digest_to_uuid(digest,policy);
+	memset(buffer,0,ret);
+	
+	return 0;
+}
+
 
 int entity_comp_uuid(void * list_head, void * name) 
 {                                                             

@@ -1,3 +1,5 @@
+#ifndef MESSAGE_STRUCT_DESC_H
+#define MESSAGE_STRUCT_DESC_H
 #include "../include/data_type.h"
 #include "../include/struct_deal.h"
 #define DIGEST_SIZE 32
@@ -108,3 +110,4 @@ static struct struct_elem_attr request_cmd_desc[]=
 	{"uuid",OS210_TYPE_STRING,DIGEST_SIZE*2,NULL},
 	{NULL,OS210_TYPE_ENDDATA,0,NULL}
 };
+#endif

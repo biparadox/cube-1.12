@@ -82,6 +82,7 @@ void * general_destroyelem(void * lib,void * policy);
 void * general_destroylib(void * lib);
 void * entity_get_uuid(void * lib,void * policy);
 int  entity_comp_uuid(void * head, void * uuid);
+int entity_hash_uuid(char * type, void * policy);
 extern struct trust_policy_ops general_lib_ops;
 struct trust_policy_ops *  get_entity_lib_ops(char * policy_type);
 #endif

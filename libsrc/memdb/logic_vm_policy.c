@@ -38,29 +38,6 @@
 #define PCR_SELECT_NUM 24
 #define PCR_SIZE  20
 
-/*
-void * entity_get_uuid(void * lib,void * policy)
-{
-	return ((struct vm_policy *)policy)->uuid;
-
-}
-
-int entity_comp_uuid(struct list_head * head, void * name) 
-{                                                             
-	struct vm_policy * vm_policy;                                    
-	Record_List * record;                             
-	char * string;
-	string=(char *)name;
-	record = list_entry(head,Record_List,list);              
-	vm_policy = (struct vm_policy *) record->record;                      
-	if(vm_policy == NULL)
-		return -EINVAL;
-	if(vm_policy->uuid==NULL)
-		return -EINVAL;
-	return strncmp(vm_policy->uuid,string,DIGEST_SIZE*2);        
-}
-*/
-
 int compute_pcr_set_uuid(void * pcrs)
 {
 	BYTE * buffer;
