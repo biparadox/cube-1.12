@@ -45,7 +45,8 @@ int extend_pcr_sm3digest(BYTE * pcr_value,BYTE * sm3digest)
 	BYTE digest[DIGEST_SIZE];
 	memcpy(buffer,pcr_value,PCR_SIZE);
 	memcpy(buffer+PCR_SIZE,sm3digest,DIGEST_SIZE);
-	calculate_context_sha1(buffer,PCR_SIZE+DIGEST_SIZE,digest);
+	calculate_context_sha1(buffer,PCR_SIZE+PCR_SIZE,digest);
+//	calculate_context_sha1(buffer,PCR_SIZE+DIGEST_SIZE,digest);
 	memcpy(pcr_value,digest,PCR_SIZE);
 	return 0;
 }

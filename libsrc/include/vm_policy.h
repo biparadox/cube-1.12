@@ -69,8 +69,6 @@ struct verify_info
 	char * info;
 }__attribute__((packed));
 
-
-
 void * build_empty_pcr_set();
 int add_pcr_to_set(void * pcrs,int index,BYTE * value);
 void * get_single_pcr_from_set(void * pcrs,int index);

@@ -68,6 +68,8 @@ TSS_RESULT TESI_Local_ClearOwner(char * pwdo);
 TSS_RESULT TESI_Local_CreatePcr(TSS_HPCRS * hPcr);
 TSS_RESULT TESI_Local_SetCurrPCRValue(TSS_HPCRS hPcr,UINT32 Index);
 TSS_RESULT TESI_Local_SelectPcr(TSS_HPCRS hPcr,UINT32 Index);
+TSS_RESULT TESI_Local_PcrExtend(UINT32 index, BYTE * value);
+TSS_RESULT TESI_Local_PcrRead(UINT32 index, BYTE * value);
 TSS_RESULT TESI_Local_Quote(TSS_HKEY hIdentKey,TSS_HPCRS hPcr,char *name);
 TSS_RESULT TESI_Local_VerifyValData(TSS_HKEY hIdentKey,char * name);
 
