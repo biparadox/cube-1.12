@@ -38,6 +38,29 @@
 #define PCR_SELECT_NUM 24
 #define PCR_SIZE  20
 
+/*
+void * entity_get_uuid(void * lib,void * policy)
+{
+	return ((struct vm_policy *)policy)->uuid;
+
+}
+
+int entity_comp_uuid(struct list_head * head, void * name) 
+{                                                             
+	struct vm_policy * vm_policy;                                    
+	Record_List * record;                             
+	char * string;
+	string=(char *)name;
+	record = list_entry(head,Record_List,list);              
+	vm_policy = (struct vm_policy *) record->record;                      
+	if(vm_policy == NULL)
+		return -EINVAL;
+	if(vm_policy->uuid==NULL)
+		return -EINVAL;
+	return strncmp(vm_policy->uuid,string,DIGEST_SIZE*2);        
+}
+*/
+/*
 int compute_pcr_set_uuid(void * pcrs)
 {
 	BYTE * buffer;
@@ -114,7 +137,7 @@ void * build_empty_pcr_set()
 	}
 	memset(pcr_set->pcr_select.pcr_select,0,pcr_set->pcr_select.size_of_select);
 	compute_pcr_set_uuid(pcr_set);
-	return pcr_set;
+	return (void *)pcr_set;
 }	
 
 int add_pcr_to_set(void * pcrs,int index,BYTE * value)
@@ -245,7 +268,7 @@ void * get_single_pcr_from_set(void * pcrs,int index)
 	compute_pcr_set_uuid(single_pcr);
 	return single_pcr;
 }
-
+*/
 void * build_policy_file(char * creater,char *policy_type,BYTE * key_uuid,char * filename)
 {
 	struct policy_file * policy;
