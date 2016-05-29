@@ -91,7 +91,8 @@ int message_2_json(void * message,char * json_str)
     	for(i=0;i<msg_head->record_num;i++)
     	{
         	seg_offset=struct_2_json(msg_box->precord[i],json_str,msg_box->record_template,&offset);
-        	json_str[offset++]=',';
+		if(i<msg_head->record_num-1)
+        		json_str[offset++]=',';
     	}
     	json_str[offset++]=']';
     }
@@ -111,7 +112,8 @@ int message_2_json(void * message,char * json_str)
    		if(expand_template!=NULL)
 		{
         		seg_offset=struct_2_json(expand,json_str,expand_template,&offset);
-        		json_str[offset++]=',';
+			if(i<msg_head->expand_num-1)
+        			json_str[offset++]=',';
 		}	
 	}
 	else
