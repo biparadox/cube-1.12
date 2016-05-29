@@ -1283,8 +1283,11 @@ int struct_2_json_write_elem(void * addr,char * json_str,TEMPLATE_ELEM * elem_te
 			string+=strlen(string+*stroffset);
 			*(string+*stroffset)='\"';
 			(*stroffset)++;
-			*(string+*stroffset)=',';
-			(*stroffset)++;
+			if(i<elem_attr->size-1)
+			{
+				*(string+*stroffset)=',';
+				(*stroffset)++;
+			}
 		}
 		break;
 	case OS210_TYPE_VSTRING:
@@ -1383,8 +1386,11 @@ int struct_2_json_write_elem(void * addr,char * json_str,TEMPLATE_ELEM * elem_te
 			*stroffset+=int_value+1;
 			*(string+*stroffset)='\"';
 			(*stroffset)++;
-			*(string+*stroffset)=',';
-			(*stroffset)++;
+			if(i<define_value-1)
+			{
+				*(string+*stroffset)=',';
+				(*stroffset)++;
+			}
 		}
 		free(strbuf);	
 		break;
@@ -1404,13 +1410,13 @@ int struct_2_json( void * addr,char * json_str,void * template,int * stroffset)
 	struct struct_template * curr_struct;
 	void * stack;
 	int addroffset=0;
-    int offset=0;
+        int offset=0;
 	int i;
 	int value;
 	int * define_value;
 	int retval;
 	char * string=json_str;
-    int namelen;
+        int namelen;
 
 	TEMPLATE_ELEM * struct_elem;
 	// use a pointer stack to finish the throughout of the template
@@ -1477,31 +1483,34 @@ int struct_2_json( void * addr,char * json_str,void * template,int * stroffset)
 				break;
 		}
 		//  write struct value to addr
-        namelen=strlen(struct_elem->elem_desc->name);
-        if(namelen<=0)
-            return -EINVAL;
-        if(namelen>128)
-            return -EINVAL;
-        char buffer[132];
-        sprintf(buffer,"\"%s\":",struct_elem->elem_desc->name);
-        namelen=strlen(buffer);
-        memcpy(string+*stroffset,buffer,namelen+1);
-        *stroffset+=namelen;
+        	namelen=strlen(struct_elem->elem_desc->name);
+        	if(namelen<=0)
+            		return -EINVAL;
+        	if(namelen>128)
+            		return -EINVAL;
+        	char buffer[132];
+        	sprintf(buffer,"\"%s\":",struct_elem->elem_desc->name);
+        	namelen=strlen(buffer);
+        	memcpy(string+*stroffset,buffer,namelen+1);
+       		*stroffset+=namelen;
 		retval = struct_2_json_write_elem(addr+addroffset,string,struct_elem,stroffset);
 		if(retval<0)
 		{
 			free_pointer_stack(stack);
 			return retval;
 		}
-        if((offset=struct_get_elem_size(struct_elem))<0)
-        {
-            free_pointer_stack(stack);
-            return offset;
-        }
-        addroffset+=offset;
-        *(string+*stroffset)=',';
-		(*stroffset)++;
+        	if((offset=struct_get_elem_size(struct_elem))<0)
+        	{
+            		free_pointer_stack(stack);
+            		return offset;
+        	}
+        	addroffset+=offset;
 		struct_elem++;
+		if(struct_elem < curr_struct->elem_list+curr_struct->elem_num-1)
+		{
+       			*(string+*stroffset)=',';
+			(*stroffset)++;
+		}
 	}
 	free_pointer_stack(stack);
 	*(string+*stroffset)='}';

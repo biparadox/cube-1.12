@@ -1,4 +1,5 @@
-/*************************************************
+/*
+************************************************
 *       project:        973 trust demo, zhongan secure os 
 *                       and trust standard verify
 *	name:		message_struct.h
