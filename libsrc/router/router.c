@@ -840,6 +840,32 @@ int rule_get_target(void * router_rule,void * message,void **result)
 				return -EINVAL;
 			break;
 		   }
+	    case MSG_TARGET_EXPAND:
+		   {
+			char expand_type[5];
+			void * struct_template;
+			void * expand;
+			if(rule->target_name[4]!=':')
+				return -EINVAL;
+			memcpy(expand_type,rule->target_name,4);
+		        ret = message_get_define_expand(message,&expand,expand_type);
+			if(ret<0)
+				return -EINVAL;
+			if(expand==NULL)
+				return -EINVAL;
+			struct_template=load_record_template(expand_type);
+			if(struct_template==NULL)
+				return -EINVAL;
+			target=malloc(DIGEST_SIZE*2+1);
+			ret=struct_read_elem(target,rule->target_name+5,expand,struct_template);		
+			free_struct_template(struct_template);
+			if(ret<0)
+				return ret;
+		   	if(target==NULL)
+				return -EINVAL;
+		   	break;
+		   }
+
 
 	    case MSG_TARGET_SPLIT:
 		    return -EINVAL;
