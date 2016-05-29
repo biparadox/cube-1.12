@@ -693,7 +693,8 @@ int AddPolicy(void * policy,char * policytype)
 	}
 	templabel=ops->insert(lib,policy);
 		
-	return templabel;
+//	return templabel;
+	return 1;
 }
 int ModPolicy(void * policy,char * name,char * newvalue,char * policytype)
 {
