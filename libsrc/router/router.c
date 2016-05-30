@@ -857,7 +857,7 @@ int rule_get_target(void * router_rule,void * message,void **result)
 			if(struct_template==NULL)
 				return -EINVAL;
 			target=malloc(DIGEST_SIZE*2+1);
-			ret=struct_read_elem(target,rule->target_name+5,expand,struct_template);		
+			ret=struct_read_elem(rule->target_name+5,expand,target,struct_template);		
 			free_struct_template(struct_template);
 			if(ret<0)
 				return ret;
@@ -1115,6 +1115,10 @@ int router_set_main_flow(void * message,void * msg_policy)
   {
    	message_set_flow(message,rule->type);
   }
+  else if (flow==MSG_FLOW_DRECV)
+  {
+	message_set_flow(message,rule->type);
+  }
   else
   {
 	message_set_flow(message,flow|rule->type);
@@ -1149,7 +1153,10 @@ int router_set_main_flow(void * message,void * msg_policy)
 				buffer[0]=':';
 				strncpy(buffer+1,target,DIGEST_SIZE*2-1);
 				set_message_head(message,"receiver_uuid",buffer);  
-    				break;
+			    case MSG_TARGET_EXPAND:
+				strncpy(buffer,target,DIGEST_SIZE*2);
+				set_message_head(message,"receiver_uuid",buffer);  
+				break;
 		    }
 		    break;
 

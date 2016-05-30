@@ -731,6 +731,7 @@ int FindPolicy(void * tag,char * policytype,void ** policy)
 	POLICY_LIB * lib;
 	void * templabel;
 	struct trust_policy_ops * ops;
+	*policy=NULL;
 
 	lib=find_policy_lib(policytype);
 	if(lib==NULL)
