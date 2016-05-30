@@ -31,7 +31,7 @@
 #include "../include/tesi_key.h"
 #include "../include/tesi_aik_struct.h"
 
-#include "cloud_config.h"
+#include "../cloud_config.h"
 #include "main_proc_func.h"
 
 int print_error(char * str, int result)
@@ -61,12 +61,12 @@ int proc_aikclient_init(void * sub_proc,void * para)
 	memset(aik_pointer,0,sizeof(struct aik_proc_pointer));
 
 
-	result=TESI_Local_ReloadWithAuth("ooo","sss");
-	if(result!=TSS_SUCCESS)
-	{
-		printf("open tpm error %d!\n",result);
-		return -ENFILE;
-	}
+//	result=TESI_Local_ReloadWithAuth("ooo","sss");
+//	if(result!=TSS_SUCCESS)
+//	{
+//		printf("open tpm error %d!\n",result);
+//		return -ENFILE;
+//	}
 	result= TESI_Local_GetPubEK("pubkey/pubek","ooo");
 	if(result!=TSS_SUCCESS)
 	{
@@ -116,6 +116,10 @@ int proc_aikclient_start(void * sub_proc,void * para)
 			continue;
 		}
 		if(strncmp(type,"SYNI",4)==0)
+		{
+			proc_aik_request(sub_proc,recv_msg);
+		}
+		else if(strncmp(type,"KREC",4)==0)
 		{
 			proc_aik_request(sub_proc,recv_msg);
 		}

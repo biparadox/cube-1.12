@@ -150,16 +150,20 @@ int general_uuid_lib_init(char * type,void * para)
 		if(ret<0)
 			break;
 
-		ret=struct_2_blob(record_data,blob,struct_template);
+		ret=entity_hash_uuid(type,record_data);
 		if(ret<0)
-			return -EINVAL;
-		if(ret<DIGEST_SIZE*2)
-			return -EINVAL;
-
-		ret=calculate_context_sm3(blob+DIGEST_SIZE*2,ret-DIGEST_SIZE*2,digest);
-		if(ret<0)
-			return -EINVAL;
-		digest_to_uuid(digest,record_data);
+			return ret;
+		
+//		ret=struct_2_blob(record_data,blob,struct_template);
+//		if(ret<0)
+//			return -EINVAL;
+//		if(ret<DIGEST_SIZE*2)
+//			return -EINVAL;
+//
+///		ret=calculate_context_sm3(blob+DIGEST_SIZE*2,ret-DIGEST_SIZE*2,digest);
+//		if(ret<0)
+//			return -EINVAL;
+//		digest_to_uuid(digest,record_data);
 					
 		AddPolicy(record_data,type);
 		offset=json_solve_str(&root,buffer+curr_offset);
