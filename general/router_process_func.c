@@ -683,7 +683,7 @@ int proc_router_start(void * sub_proc,void * para)
 						break;
 					if(dup_msg!=NULL)
 					{
-						proc_audit_log(message);
+						proc_audit_log(dup_msg);
 						proc_router_send_msg(dup_msg,local_uuid,proc_name);
 					}
 					router_rule=router_get_next_duprule(msg_policy);
