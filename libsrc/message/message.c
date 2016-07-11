@@ -421,8 +421,6 @@ void * message_clone(void * message)
 	memcpy(&(new_msg->head),&(src_msg->head),sizeof(MESSAGE_HEAD));
 
    	new_msg->box_state=MSG_BOX_INIT;
-	new_msg->head.record_num=0;
-	new_msg->head.record_size=0;
 	new_msg->head.expand_num=0;
 	new_msg->head.expand_size=0;
 
@@ -433,23 +431,41 @@ void * message_clone(void * message)
 		return NULL;	
 	}
 
-	for(i=0;i<src_msg->head.record_num;i++)
+	
+	int flag=message_get_flag(src_msg);
+	if(flag &MSG_FLAG_CRYPT)
 	{
-		if(src_msg->precord[i]!=NULL)
-		{
-			void * record=clone_struct(src_msg->precord[i],src_msg->record_template);
-			if(record==NULL)
-			{
-				printf("duplicate message's record error!\n");
-				message_free(new_msg);
-				return NULL;	
-			}
-			message_add_record(new_msg,record);
-		}
-		else
-		{
-			message_free(new_msg);
+		if(src_msg->blob == NULL)
 			return NULL;
+		void * blob = malloc(src_msg->head.record_size);
+		if(blob==NULL)
+			return NULL;
+		memcpy(blob,src_msg->blob,src_msg->head.record_size);
+		new_msg->blob=blob;
+	}
+	else
+	{
+		new_msg->head.record_num=0;
+		new_msg->head.record_size=0;
+
+		for(i=0;i<src_msg->head.record_num;i++)
+		{
+			if(src_msg->precord[i]!=NULL)
+			{
+				void * record=clone_struct(src_msg->precord[i],src_msg->record_template);
+				if(record==NULL)
+				{
+					printf("duplicate message's record error!\n");
+					message_free(new_msg);
+					return NULL;	
+				}
+				message_add_record(new_msg,record);
+			}
+			else
+			{
+				message_free(new_msg);
+				return NULL;
+			}
 		}
 	}
 	for(i=0;i<src_msg->head.expand_num;i++)

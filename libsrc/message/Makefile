@@ -7,7 +7,7 @@ MESSAGEOBJ = message.o load_message.o json_message.o
 
 main: ../lib/libmessage.a test_main
 test_main:  test_main.c ../lib/libmessage.a ../lib/liblogicdb.a ../lib/libstruct.a
-	$(CC) $(FLAGS) test_main test_main.c -L../lib -lmessage -llogicdb -lstruct
+	$(CC) $(FLAGS) test_main test_main.c -L../lib -lmessage -llogicdb -lstruct -lcrypto_func
 ../lib/libmessage.a: $(MESSAGEOBJ) 	
 	ar rs libmessage.a $(MESSAGEOBJ)
 	mv libmessage.a ../lib
