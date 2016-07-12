@@ -1,10 +1,10 @@
 FLAGS= -g -o 
-CFLAGS= -g -c -DUSER_MODE 
+CFLAGS= -g -c -fPIC -DUSER_MODE 
 CC=gcc
 CCP=g++
 FUNCOBJ= policy_ui.o
 
-main: ../lib/libpolicy_ui.a
+main: ../lib/libpolicy_ui.a ../lib/libpolicy_ui.so
 #policy_test: policy_test.c ../lib/libpolicy_ui.a ../lib/liblogicdb.a ../lib/libstruct.a 
 #	$(CC) $(FLAGS) policy_test policy_test.c libpolicy_ui.a -L../lib -llogicdb -lmemdb -lcrypto_func -lstruct
 test_main:  test_main.c ../lib/libpolicy_ui.a ../lib/liblogicdb.a ../lib/libstruct.a
@@ -15,6 +15,9 @@ test_main2:  test_main2.c ../lib/libpolicy_ui.a ../lib/liblogicdb.a ../lib/libst
 	$(CC) $(FLAGS) test_main2 test_main2.c libpolicy_ui.a -L../lib -llogicdb -lmemdb -lcrypto_func -lstruct
 test_vmstruct:  test_vmstruct.c vmlist.h vmlist_desc.h ../lib/libstruct.a
 	$(CC) $(FLAGS) test_vmstruct test_vmstruct.c -L../lib -lstruct
+../lib/libpolicy_ui.so: $(FUNCOBJ) 	
+	$(CC) -shared -o libpolicy_ui.so $(FUNCOBJ) 
+	mv libpolicy_ui.so  ../lib/libpolicy_ui.so
 ../lib/libpolicy_ui.a: $(FUNCOBJ) 	
 	ar cr libpolicy_ui.a $(FUNCOBJ) 
 	mv libpolicy_ui.a  ../lib/libpolicy_ui.a
@@ -27,4 +30,4 @@ policy_ui.o: policy_ui.c policy_ui.h
 #audit_ui.o: audit_ui.c policy_ui.h valuename.h
 #	$(CC) $(CFLAGS) audit_ui.c
 clean:
-	rm -f test_main *~ *.o *.a
+	rm -f test_main *~ *.o *.a ../lib/libpolicy_ui.a ../lib/libpolicy_ui.so
