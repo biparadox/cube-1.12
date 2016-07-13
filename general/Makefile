@@ -1,12 +1,18 @@
-FLAGS= -g -o 
-CFLAGS= -g -c -DUSER_MODE 
+FLAGS= -g -shared -o 
+CFLAGS= -g -c -fPIC -DUSER_MODE 
 CC=gcc
 CCP=g++
+TEST_LIB= -L../lib -lopenstacktrust -lentity -lrouter -lpolicy_ui -lmemdb -lconnector -lmessage -llogicdb -lstruct -lsysfunc -lcrypto_func -lpthread
 
-main: connector_process_func.o router_process_func.o libtest
+
+main: connector_process_func.so router_process_func.so libtest
+connector_process_func.so: connector_process_func.o connector_process_func.h
+	$(CC) $(FLAGS) libconnector_process_func.so connector_process_func.o $(TEST_LIB)
+router_process_func.so: router_process_funo.o router_process_func.h
+	$(CC) $(FLAGS) librouter_process_func.so router_process_func.o $(TEST_LIB)
 connector_process_func.o: connector_process_func.c connector_process_func.h
-	$(CC) $(CFLAGS) connector_process_func.c
-router_process_func.o: router_process_func.c router_process_func.h
+	$(CC) $(CFLAGS) connector_process_func.c 
+router_process_func.o: router_process_funo.c router_process_func.h
 	$(CC) $(CFLAGS) router_process_func.c
 libtest: libtest.c
 	$(CC)  $(FLAGS) libtest libtest.c -L../lib -lopenstacktrust -lentity -lmessage -lpolicy_ui -lmemdb -llogicdb -lconnector -lcrypto_func -lstruct  -lpthread
