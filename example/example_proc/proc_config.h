@@ -2,8 +2,8 @@
 #define PROC_CONFIG_H
 
 
-static char * main_proc_name="example_proc";
-static int  (*main_proc_initfunc)()=&example_proc_init;
+//static char * main_proc_name="example_proc";
+//static int  (*main_proc_initfunc)()=&example_proc_init;
 
 static PROCDB_INIT procdb_init_list[]=
 {
@@ -12,7 +12,7 @@ static PROCDB_INIT procdb_init_list[]=
 
 static PROC_INIT proc_init_list[]=
 {
-	{"echo_plugin",PROC_TYPE_DECIDE,&echo_plugin_init,&echo_plugin_start},
+//	{"echo_plugin",PROC_TYPE_DECIDE,&echo_plugin_init,&echo_plugin_start},
 	{NULL,0,NULL,NULL}
 };
 

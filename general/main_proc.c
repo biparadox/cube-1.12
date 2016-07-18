@@ -29,6 +29,26 @@
 #include "../cloud_config.h"
 #include "main_proc_func.h"
 #include "proc_config.h"
+void * main_read_func(char * libname,char * sym)
+{
+    void * handle;	
+    int (*func)(void *,void *);
+    char * error;
+    handle=dlopen(libname,RTLD_NOW);
+     if(handle == NULL)		
+     {
+    	fprintf(stderr, "Failed to open library %s error:%s\n", libname, dlerror());
+    	return NULL;
+     }
+     func=dlsym(handle,sym);
+     if(func == NULL)		
+     {
+    	fprintf(stderr, "Failed to open func %s error:%s\n", sym, dlerror());
+    	return NULL;
+     }
+     return func;
+}     	
+
 
 static char connector_config_file[DIGEST_SIZE*2]="./connector_config.cfg";
 static char router_config_file[DIGEST_SIZE*2]="./router_config.cfg";
@@ -57,6 +77,10 @@ int main(int argc,char **argv)
 
     FILE * fp;
     char audit_text[4096];
+    char buffer[4096];
+    void * root_node;
+    void * temp_node;
+    int json_offset;
 
     // process the command argument
     if(argc>=2)
@@ -118,11 +142,43 @@ int main(int argc,char **argv)
     int fd =open(audit_file,O_CREAT|O_RDWR|O_TRUNC,0666);
     close(fd);
 
+    // init system
     system("mkdir lib");
     openstack_trust_lib_init();
     sec_respool_list_init();
     // init the main proc struct
-    ret=sec_subject_create(main_proc_name,PROC_TYPE_MAIN,NULL,&main_proc);
+    struct main_config main_initpara;
+    fd=open(main_config_file,O_RDONLY);
+    if(fd<0)
+	return -EINVAL;
+
+    json_offset=read(fd,buffer,4096);
+    if(json_offset<0)
+	return ret;
+    if(json_offset>4096)
+    {
+	printf("main config file is too long!\n");
+	return -EINVAL;
+    }
+    close(fd);
+    ret=json_solve_str(&root_node,buffer);
+    if(ret<0)
+	return ret;	
+    void * struct_template=create_struct_template(&main_config_desc);
+    if(struct_template==NULL)
+    {
+	printf("Fatal error!\n");
+	return -EINVAL;
+    }
+    ret=json_2_struct(root_node,&main_initpara,struct_template);
+    if(ret<0)
+    {
+	printf("main config file format error!\n");
+	return -EINVAL;
+     }
+     free_struct_template(struct_template); 
+    
+    ret=sec_subject_create(main_initpara.proc_name,PROC_TYPE_MAIN,NULL,&main_proc);
     if(ret<0)
     	return ret;
 
@@ -131,12 +187,14 @@ int main(int argc,char **argv)
     ret=get_local_uuid(local_uuid);
     printf("this machine's local uuid is %s\n",local_uuid);
     proc_share_data_setvalue("uuid",local_uuid);
-    proc_share_data_setvalue("proc_name",main_proc_name);
+    proc_share_data_setvalue("proc_name",main_initpara.proc_name);
 
     // do the main proc's init function
-    sec_subject_setinitfunc(main_proc,main_proc_initfunc);
+    void * initfunc =main_read_func(main_initpara.init_dlib,main_initpara.init_func);
+    if(initfunc==NULL)
+	return -EINVAL;
+    sec_subject_setinitfunc(main_proc,initfunc);
     sec_subject_setstartfunc(main_proc,NULL);
-    sec_subject_init(main_proc,main_proc_name);
 	
     // init all the proc database
 
@@ -166,6 +224,8 @@ int main(int argc,char **argv)
 	    	 retval=LoadPolicy(db_init->name);
 	    }
     }
+
+    sec_subject_init(main_proc,main_initpara.proc_name);
 		
     PROC_INIT plugin_proc; 
 
