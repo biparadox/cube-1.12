@@ -7,6 +7,7 @@
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <dlfcn.h>
 
 #include "../include/data_type.h"
 #include "../include/struct_deal.h"
@@ -29,8 +30,16 @@
 #include "main_proc_func.h"
 #include "proc_config.h"
 
+static char connector_config_file[DIGEST_SIZE*2]="./connector_config.cfg";
+static char router_config_file[DIGEST_SIZE*2]="./router_config.cfg";
+static char plugin_config_file[DIGEST_SIZE*2]="./plugin_config.cfg";
+static char main_config_file[DIGEST_SIZE*2]="./main_config.cfg";
+static char audit_file[DIGEST_SIZE*2]="./message.log";
+static char connector_plugin_file[DIGEST_SIZE*2]="./libconnector_process_func.so";
+static char router_plugin_file[DIGEST_SIZE*2]="./librouter_process_func.so";
 
-int main()
+
+int main(int argc,char **argv)
 {
 
     struct tcloud_connector_hub * hub;
@@ -39,16 +48,74 @@ int main()
     int retval;
     void * message_box;
     int i,j;
+    int argv_offset;	
 
     void * main_proc; // point to the main proc's subject struct
     void * conn_proc; // point to the conn proc's subject struct
     void * router_proc; // point to the conn proc's subject struct
     char local_uuid[DIGEST_SIZE*2];
 
-    const char * audit_filename= "./message.log";
     FILE * fp;
     char audit_text[4096];
-    int fd =open(audit_filename,O_CREAT|O_RDWR|O_TRUNC,0666);
+
+    // process the command argument
+    if(argc>=2)
+    {
+	argv_offset=1;
+	if(argc%2!=1)
+	{
+		printf("error format! should be %s [-m main_cfgfile] [-p plugin_cfgfile]"
+			"[-c connect_cfgfile] [-r router_cfgfile] [-a audit_file]!\n",argv[0]);
+		return -EINVAL;
+	}
+    }
+      
+    for(argv_offset=1;argv_offset<argc;argv_offset+=2)
+    {
+	if((argv[argv_offset][0]!='-')
+		&&(strlen(argv[argv_offset])!=2))
+	{
+		printf("error format! should be %s [-m main_cfgfile] [-p plugin_cfgfile]"
+			"[-c connect_cfgfile] [-r router_cfgfile] [-a audit_file]!\n",argv[0]);
+		return -EINVAL;
+	}
+	switch(argv[argv_offset][1])
+	{
+		case 'm':
+			if(strlen(argv[argv_offset+1])>=DIGEST_SIZE*2)
+				return -EINVAL;
+			strncpy(main_config_file,argv[argv_offset+1],DIGEST_SIZE*2);
+			break;			
+		case 'p':
+			if(strlen(argv[argv_offset+1])>=DIGEST_SIZE*2)
+				return -EINVAL;
+			strncpy(plugin_config_file,argv[argv_offset+1],DIGEST_SIZE*2);
+			break;			
+		case 'c':
+			if(strlen(argv[argv_offset+1])>=DIGEST_SIZE*2)
+				return -EINVAL;
+			strncpy(connector_config_file,argv[argv_offset+1],DIGEST_SIZE*2);
+			break;			
+		case 'r':
+			if(strlen(argv[argv_offset+1])>=DIGEST_SIZE*2)
+				return -EINVAL;
+			strncpy(router_config_file,argv[argv_offset+1],DIGEST_SIZE*2);
+			break;			
+		case 'a':
+			if(strlen(argv[argv_offset+1])>=DIGEST_SIZE*2)
+				return -EINVAL;
+			strncpy(audit_file,argv[argv_offset+1],DIGEST_SIZE*2);
+			break;			
+		default:
+			printf("error format! should be %s [-m main_cfgfile] [-p plugin_cfgfile]"
+				"[-c connect_cfgfile] [-r router_cfgfile] [-a audit_file]!\n",argv[0]);
+			return -EINVAL;
+	
+	}
+    }	
+
+
+    int fd =open(audit_file,O_CREAT|O_RDWR|O_TRUNC,0666);
     close(fd);
 
     system("mkdir lib");
@@ -100,29 +167,63 @@ int main()
 	    }
     }
 		
+    PROC_INIT plugin_proc; 
 
     // init the connect proc	
-    ret=sec_subject_create("connector_proc",PROC_TYPE_CONN,NULL,&conn_proc);
+    void * handle;	
+    int (*func)(void *,void *);
+    char * error;
+     handle=dlopen(connector_plugin_file,RTLD_NOW);
+     if(handle == NULL)		
+     {
+    	fprintf(stderr, "Failed to open library %s error:%s\n", connector_plugin_file, dlerror());
+    	return -1;
+     }
+     plugin_proc.name=dup_str("connector_proc",0);	
+     plugin_proc.type=PROC_TYPE_CONN;
+     plugin_proc.init=dlsym(handle,"proc_conn_init");
+     if(plugin_proc.init==NULL)
+	return -EINVAL;
+     plugin_proc.start=dlsym(handle,"proc_conn_start");
+     if(plugin_proc.init==NULL)
+	return -EINVAL;
+	
+     ret=sec_subject_create("connector_proc",PROC_TYPE_CONN,NULL,&conn_proc);
     if(ret<0)
 	    return ret;
 
-    sec_subject_setinitfunc(conn_proc,conn_proc_initdata.init);
-    sec_subject_setstartfunc(conn_proc,conn_proc_initdata.start);
+    sec_subject_setinitfunc(conn_proc,plugin_proc.init);
+    sec_subject_setstartfunc(conn_proc,plugin_proc.start);
 
     sec_subject_init(conn_proc,NULL);
 
     add_sec_subject(conn_proc);
 
     // init the router proc	
+     handle=dlopen(router_plugin_file,RTLD_NOW);
+     if(handle == NULL)		
+     {
+    	fprintf(stderr, "Failed to open library %s error:%s\n", router_plugin_file, dlerror());
+    	return -1;
+     }
+     plugin_proc.name=dup_str("router_proc",0);	
+     plugin_proc.type=PROC_TYPE_ROUTER;
+     plugin_proc.init=dlsym(handle,"proc_router_init");
+     if(plugin_proc.init==NULL)
+	return -EINVAL;
+     plugin_proc.start=dlsym(handle,"proc_router_start");
+     if(plugin_proc.init==NULL)
+	return -EINVAL;
+	
     ret=sec_subject_create("router_proc",PROC_TYPE_MONITOR,NULL,&router_proc);
     if(ret<0)
 	    return ret;
 
-    sec_subject_setinitfunc(router_proc,router_proc_initdata.init);
-    sec_subject_setstartfunc(router_proc,router_proc_initdata.start);
+    sec_subject_setinitfunc(router_proc,plugin_proc.init);
+    sec_subject_setstartfunc(router_proc,plugin_proc.start);
 
     sec_subject_init(router_proc,NULL);
-	
+/*	
     printf("prepare the router proc\n");
     ret=sec_subject_start(router_proc,NULL);
     if(ret<0)
@@ -185,7 +286,6 @@ int main()
     int thread_retval;
     ret=sec_subject_join(conn_proc,&thread_retval);
     printf("thread return value %d!\n",thread_retval);
-
-    if(ret<0)
-	return ret;
+*/
+    return ret;
 }
