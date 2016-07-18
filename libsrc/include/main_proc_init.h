@@ -32,9 +32,9 @@ typedef struct proc_init_parameter
    // IMGI:  the image list of this cloud
    // VM_I:  all th vm created by the cloud
    // PLAI:  this cloud's platform information
-extern int proc_conn_start(void * sub_proc, void * para);
-extern int proc_conn_init(void * sub_proc,void * para);
-
+//extern int proc_conn_start(void * sub_proc, void * para);
+//extern int proc_conn_init(void * sub_proc,void * para);
+/*
 static PROC_INIT conn_proc_initdata=
 	{"connector_proc",PROC_TYPE_CONN, &proc_conn_init,&proc_conn_start};
 
@@ -42,7 +42,7 @@ extern int proc_router_start(void * sub_proc, void * para);
 extern int proc_router_init(void * sub_proc,void * para);
 static PROC_INIT router_proc_initdata=
 	{"router_proc",PROC_TYPE_ROUTER, &proc_router_init,&proc_router_start};
-
+*/
 struct conn_init_para
 {
 	void * hub;
