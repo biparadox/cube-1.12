@@ -546,8 +546,12 @@ struct connector_proc_pointer
 int proc_conn_init(void * sub_proc,void * para)
 {
 	int ret;
+        char * config_file ="./connector_config.cfg";
 	struct connector_proc_pointer * sub_proc_pointer;
 	struct conn_init_para * conn_init_para = (struct conn_init_para *)para;
+
+        if(para!=NULL)
+		config_file=para;
 
 	register_record_type("SYNI",connect_syn_desc);
 	register_record_type("ACKI",connect_ack_desc);
@@ -567,7 +571,7 @@ int proc_conn_init(void * sub_proc,void * para)
 	ret=sec_object_setpointer(context,sub_proc_pointer);
 	if(ret<0)
 		return ret;
-	ret=connector_read_cfg("connector_config.cfg",conn_hub);
+	ret=connector_read_cfg(config_file,conn_hub);
 	if(ret<0)
 		return ret;
 	printf("read %d connector!\n",ret);

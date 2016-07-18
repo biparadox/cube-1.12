@@ -51,7 +51,7 @@ void * main_read_func(char * libname,char * sym)
 
 
 static char connector_config_file[DIGEST_SIZE*2]="./connector_config.cfg";
-static char router_config_file[DIGEST_SIZE*2]="./router_config.cfg";
+static char router_config_file[DIGEST_SIZE*2]="./router_policy.cfg";
 static char plugin_config_file[DIGEST_SIZE*2]="./plugin_config.cfg";
 static char main_config_file[DIGEST_SIZE*2]="./main_config.cfg";
 static char audit_file[DIGEST_SIZE*2]="./message.log";
@@ -230,23 +230,14 @@ int main(int argc,char **argv)
     PROC_INIT plugin_proc; 
 
     // init the connect proc	
-    void * handle;	
-    int (*func)(void *,void *);
-    char * error;
-     handle=dlopen(connector_plugin_file,RTLD_NOW);
-     if(handle == NULL)		
-     {
-    	fprintf(stderr, "Failed to open library %s error:%s\n", connector_plugin_file, dlerror());
-    	return -1;
-     }
+    plugin_proc.init =main_read_func(connector_plugin_file,"proc_conn_init");
+    if(plugin_proc.init==NULL)
+	return -EINVAL;
+    plugin_proc.start =main_read_func(connector_plugin_file,"proc_conn_start");
+    if(plugin_proc.start==NULL)
+	return -EINVAL;
      plugin_proc.name=dup_str("connector_proc",0);	
      plugin_proc.type=PROC_TYPE_CONN;
-     plugin_proc.init=dlsym(handle,"proc_conn_init");
-     if(plugin_proc.init==NULL)
-	return -EINVAL;
-     plugin_proc.start=dlsym(handle,"proc_conn_start");
-     if(plugin_proc.init==NULL)
-	return -EINVAL;
 	
      ret=sec_subject_create("connector_proc",PROC_TYPE_CONN,NULL,&conn_proc);
     if(ret<0)
@@ -255,25 +246,19 @@ int main(int argc,char **argv)
     sec_subject_setinitfunc(conn_proc,plugin_proc.init);
     sec_subject_setstartfunc(conn_proc,plugin_proc.start);
 
-    sec_subject_init(conn_proc,NULL);
+    sec_subject_init(conn_proc,connector_config_file);
 
     add_sec_subject(conn_proc);
 
     // init the router proc	
-     handle=dlopen(router_plugin_file,RTLD_NOW);
-     if(handle == NULL)		
-     {
-    	fprintf(stderr, "Failed to open library %s error:%s\n", router_plugin_file, dlerror());
-    	return -1;
-     }
+    plugin_proc.init =main_read_func(router_plugin_file,"proc_router_init");
+    if(plugin_proc.init==NULL)
+	return -EINVAL;
+    plugin_proc.start =main_read_func(router_plugin_file,"proc_router_start");
+    if(plugin_proc.start==NULL)
+	return -EINVAL;
      plugin_proc.name=dup_str("router_proc",0);	
      plugin_proc.type=PROC_TYPE_ROUTER;
-     plugin_proc.init=dlsym(handle,"proc_router_init");
-     if(plugin_proc.init==NULL)
-	return -EINVAL;
-     plugin_proc.start=dlsym(handle,"proc_router_start");
-     if(plugin_proc.init==NULL)
-	return -EINVAL;
 	
     ret=sec_subject_create("router_proc",PROC_TYPE_MONITOR,NULL,&router_proc);
     if(ret<0)
@@ -282,12 +267,13 @@ int main(int argc,char **argv)
     sec_subject_setinitfunc(router_proc,plugin_proc.init);
     sec_subject_setstartfunc(router_proc,plugin_proc.start);
 
-    sec_subject_init(router_proc,NULL);
-/*	
+    sec_subject_init(router_proc,router_config_file);
+	
     printf("prepare the router proc\n");
     ret=sec_subject_start(router_proc,NULL);
     if(ret<0)
 	    return ret;
+/*
    // first loop: init all the subject
     for(i=0;proc_init_list[i].name!=NULL;i++)
     {

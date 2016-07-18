@@ -172,7 +172,9 @@ int proc_router_init(void * sub_proc,void * para)
 {
     int ret;
     // main proc: read router config	
-    const char * config_filename= "./router_policy.cfg";
+    char * config_filename= "./router_policy.cfg";
+   if(para!=NULL)
+        config_filename= para;
 
     router_policy_init();
     ret=router_read_cfg(config_filename);	
