@@ -1,0 +1,18 @@
+{
+	"pcr_index":10,
+	"filelist":[
+		{"name":"/boot/grub/menu.lst","info":"ubuntu 12.02 grub2 config"},
+		{"name":"/boot/vmlinuz-3.5.0-18-generic","info":"ubuntu kernel 3.5.0-18"},
+		{"name":"/boot/initrd.img-3.5.0-18-generic","info":"ubuntu initrd 3.5.0-18"},
+	],
+	"info":"ubuntu 12.02 kernel policy"	
+}
+{
+	"pcr_index":13,
+	"filelist":[
+		{"name":"/root/cube-1.11/proc/compute/compute_monitor/compute_monitor","info":"computer_monitor main program"},
+		{"name":"/root/cube-1.11/proc/compute/compute_monitor/router_policy.cfg","info":"computer_monitor router policy"},
+		{"name":"/root/cube-1.11/proc/compute/compute_monitor/connector_config.cfg","info":"computer_monitor connect config"}
+	],
+	"info":"cube 1.11 openstack trust system's computer monitor"
+}
