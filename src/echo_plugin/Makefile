@@ -11,6 +11,7 @@ test_main: test_main.c lib$(PLUGIN).so
 	$(CC) -g -o test_main test_main.c -ldl 
 lib$(PLUGIN).so:  $(PLUGIN).o $(PLUGIN_PROC_OBJ) $(INIT_DB_OBJ)
 	$(CC) $(FLAGS) lib$(PLUGIN).so $(PLUGIN).o $(PLUGIN_OBJ) $(TEST_LIB)
+	mv lib$(PLUGIN).so ../../plugin
 $(PLUGIN).o: $(PLUGIN).c $(PLUGIN).h
 	$(CC) $(CFLAGS) $(PLUGIN).c
 clean:
