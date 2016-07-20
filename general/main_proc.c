@@ -273,33 +273,60 @@ int main(int argc,char **argv)
     ret=sec_subject_start(router_proc,NULL);
     if(ret<0)
 	    return ret;
-/*
-   // first loop: init all the subject
-    for(i=0;proc_init_list[i].name!=NULL;i++)
+
+    // loop to init all the plugin's 
+    fd=open(plugin_config_file,O_RDONLY);
+    if(fd<0)
+	return -EINVAL;
+
+    json_offset=read(fd,buffer,4096);
+    char * json_str=buffer;
+    int json_left=json_offset;
+    struct plugin_config plugin_initpara; 
+    void * sub_proc;
+    struct_template=create_struct_template(&plugin_config_desc);
+    if(struct_template == NULL)
     {
-	  void * sub_proc;
-       	  ret=sec_subject_create(proc_init_list[i].name,proc_init_list[i].type,NULL,&sub_proc);
-   	  if(ret<0)
-		    return ret;
+	printf("fatal error!\n");
+	return -EINVAL;
+    }
+    
+    while(json_left>DIGEST_SIZE/2)
+    {
+	ret=json_solve_str(&root_node,json_str);
+	if(ret<0)
+	{
+		printf("read plugin config failed!\n");
+		break;		
+	}	
+	json_offset+=ret;
+	json_str=buffer+json_offset;
+	json_left-=ret;
+        ret=json_2_struct(root_node,&plugin_initpara,struct_template);
+	if(ret<0)
+	{
+		printf("plugin config format error!\n");
+		break;		
+	}		
+       	ret=sec_subject_create(plugin_initpara.name,plugin_initpara.type,NULL,&sub_proc);
+   	if(ret<0)
+		return ret;
 
-    	  ret=add_sec_subject(sub_proc);
-	  void * sub_proc1;
-	  ret=find_sec_subject(proc_init_list[i].name,&sub_proc1);
-	  if(ret<0)
-		  return ret;
-	  if(sub_proc1==NULL)
-	  {
-		  printf("create sub_proc %s failed!\n",proc_init_list[i].name);
-		  return -EINVAL;
-	  }
-    	  sec_subject_setinitfunc(sub_proc,proc_init_list[i].init);
-   	  sec_subject_setstartfunc(sub_proc,proc_init_list[i].start);
-  	  sec_subject_init(sub_proc,NULL);
+    	plugin_initpara.init =main_read_func(plugin_initpara.plugin_dlib,plugin_initpara.init);
+    	if(plugin_initpara.init==NULL)
+		return -EINVAL;
+    	plugin_initpara.start =main_read_func(plugin_initpara.plugin_dlib,plugin_initpara.start);
+    	if(plugin_initpara.start==NULL)
+		return -EINVAL;
 
-	  if(ret<0)
+    	sec_subject_setinitfunc(sub_proc,plugin_initpara.init);
+   	sec_subject_setstartfunc(sub_proc,plugin_initpara.start);
+  	ret= sec_subject_init(sub_proc,NULL);
+	if(ret<0)
   		return ret;
-    }	    
-
+        add_sec_subject(sub_proc);
+    }
+     
     usleep(time_val.tv_usec);
     printf("prepare the conn proc\n");
     ret=sec_subject_start(conn_proc,NULL);
@@ -307,31 +334,30 @@ int main(int argc,char **argv)
 	    return ret;
 
     // second loop:  start all the monitor process
-    for(i=0;proc_init_list[i].name!=NULL;i++)
+       	
+    ret=get_first_sec_subject(&sub_proc);
+
+    if(ret<0)
+	return ret;
+    while(sub_proc!=NULL)
     {
-	  void * sub_proc;
-	  ret=find_sec_subject(proc_init_list[i].name,&sub_proc);
-	  if(ret<0)
-		  return ret;
-	  if(sub_proc==NULL)
-	  {
-		  printf("create sub_proc %s failed!\n",proc_init_list[i].name);
-		  return -EINVAL;
-	  }
 	  if(sec_subject_gettype(sub_proc) == PROC_TYPE_MONITOR)
 	  {
   		ret=sec_subject_start(sub_proc,NULL);
 	  	if(ret<0)
   			return ret;
 		printf("monitor sub_proc %s started successfully!\n",sec_subject_getname(sub_proc));
-	 }
-    }	    
+	  }
+    	  ret=get_next_sec_subject(&sub_proc);
 
- 
+    	  if(ret<0)
+		return ret;
+    }
+
 
     int thread_retval;
     ret=sec_subject_join(conn_proc,&thread_retval);
     printf("thread return value %d!\n",thread_retval);
-*/
+
     return ret;
 }

@@ -18,10 +18,24 @@ static struct struct_elem_attr main_config_desc[]=
 	{NULL,OS210_TYPE_ENDDATA,0,NULL}
 };
 
-//#include "echo_plugin_func.h"
+struct plugin_config
+{
+	char name[DIGEST_SIZE];
+	enum proc_type type;
+	char * plugin_dlib;
+	char * init;
+	char * start;	
+	void * init_para;
+}__attribute__((packed));
 
-
-//int example_proc_init();
-
+static struct struct_elem_attr plugin_config_desc[]=
+{
+        {"name",OS210_TYPE_STRING,DIGEST_SIZE,NULL},
+        {"type",OS210_TYPE_ENUM,sizeof(int),&sec_subject_type_valuelist},
+        {"plugin_dlib",OS210_TYPE_ESTRING,DIGEST_SIZE*4,NULL},
+        {"init",OS210_TYPE_ESTRING,DIGEST_SIZE*2,NULL},
+        {"start",OS210_TYPE_ESTRING,DIGEST_SIZE*2,NULL},
+	{NULL,OS210_TYPE_ENDDATA,0,NULL}
+};
 
 #endif
