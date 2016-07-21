@@ -25,7 +25,7 @@
 #include "../include/main_proc_init.h"
 #include "../include/expand_define.h"
 
-#include "../cloud_config.h"
+#include "cloud_config.h"
 #include "connector_process_func.h"
 
 enum  conn_config_attr

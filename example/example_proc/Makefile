@@ -15,6 +15,8 @@ $(MAIN_PROC)_func.o: $(MAIN_PROC)_func.c main_proc_func.h
 	$(CC) $(CFLAGS) $(MAIN_PROC)_func.c
 clean:
 	rm -f $(MAIN_PROC) *~ *.o *.a
-	ln -s ../../general/libconnector_process_func.so .
-	ln -s ../../general/librouter_process_func.so .
-	ln -s ../../general/main_proc.c .
+	rm main_proc.c main_proc_func.h
+	ln -s ../../proc/src/main/main_proc.c .
+	ln -s ../../proc/src/main/main_proc_func.h
+	export LD_LIBRARY_PATH=../lib
+	sudo ldconfig

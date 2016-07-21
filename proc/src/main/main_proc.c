@@ -26,7 +26,7 @@
 #include "../include/openstack_trust_lib.h"
 #include "../include/main_proc_init.h"
 
-#include "../cloud_config.h"
+#include "cloud_config.h"
 #include "main_proc_func.h"
 #include "proc_config.h"
 void * main_read_func(char * libname,char * sym)
@@ -55,8 +55,8 @@ static char router_config_file[DIGEST_SIZE*2]="./router_policy.cfg";
 static char plugin_config_file[DIGEST_SIZE*2]="./plugin_config.cfg";
 static char main_config_file[DIGEST_SIZE*2]="./main_config.cfg";
 static char audit_file[DIGEST_SIZE*2]="./message.log";
-static char connector_plugin_file[DIGEST_SIZE*2]="./libconnector_process_func.so";
-static char router_plugin_file[DIGEST_SIZE*2]="./librouter_process_func.so";
+static char connector_plugin_file[DIGEST_SIZE*2]="plugin/libconnector_process_func.so";
+static char router_plugin_file[DIGEST_SIZE*2]="plugin/librouter_process_func.so";
 
 
 int main(int argc,char **argv)

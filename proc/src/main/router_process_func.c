@@ -23,7 +23,7 @@
 #include "../include/main_proc_init.h"
 #include "../include/expand_define.h"
 
-#include "../cloud_config.h"
+#include "cloud_config.h"
 #include "router_process_func.h"
 
 int proc_router_hit_target(void * message,char * local_uuid,char * proc_name)
