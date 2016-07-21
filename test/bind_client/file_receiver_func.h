@@ -1,1 +1,0 @@
-../../example/plugin/file_receiver/file_receiver_func.h

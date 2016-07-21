@@ -1,4 +1,0 @@
-#!/bin/sh
-SWTPMPATH=/opt/tcg/swTPM
-mkdir -p $SWTPMPATH/tpmdata/$1
-rm $SWTPMPATH/tpmdata/$1/00.permall
