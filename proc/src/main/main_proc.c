@@ -26,9 +26,9 @@
 #include "../include/openstack_trust_lib.h"
 #include "../include/main_proc_init.h"
 
-#include "cloud_config.h"
 #include "main_proc_func.h"
 #include "proc_config.h"
+
 void * main_read_func(char * libname,char * sym)
 {
     void * handle;	

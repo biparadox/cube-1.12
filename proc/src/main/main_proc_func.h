@@ -38,4 +38,5 @@ static struct struct_elem_attr plugin_config_desc[]=
 	{NULL,OS210_TYPE_ENDDATA,0,NULL}
 };
 
+static struct timeval time_val={0,50*1000};
 #endif
