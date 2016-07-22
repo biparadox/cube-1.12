@@ -921,12 +921,16 @@ int struct_read_json_elem(char * name,void * addr, void * node,void * struct_tem
 	char buffer[4096];
 	int ret;
 	elem=(TEMPLATE_ELEM *)read_elem_addr(name,struct_template);
-	if((elem == NULL)||IS_ERR(elem))
+	if(elem == NULL)
+		return 0;
+	if(IS_ERR(elem))
 		return -EINVAL;
 	addr_offset=struct_get_elem_addr(elem,struct_template);
 	if(addr_offset<0)
 		return addr_offset;
 	ret=json_2_struct_write_elem(json_node,addr+addr_offset,elem);
+	if(ret<0)
+		return ret;
 	// if this elem's elem_var is not empty, then it is a defining elem,we should get its value for later use
 	switch(elem->elem_desc->type)
 	{

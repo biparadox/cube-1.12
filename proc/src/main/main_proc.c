@@ -279,9 +279,9 @@ int main(int argc,char **argv)
     if(fd<0)
 	return -EINVAL;
 
-    json_offset=read(fd,buffer,4096);
+    int json_left=read(fd,buffer,4096);
     char * json_str=buffer;
-    int json_left=json_offset;
+    json_offset=0;
     struct plugin_config plugin_initpara; 
     void * sub_proc;
     struct_template=create_struct_template(&plugin_config_desc);
@@ -321,7 +321,9 @@ int main(int argc,char **argv)
 
     	sec_subject_setinitfunc(sub_proc,plugin_initpara.init);
    	sec_subject_setstartfunc(sub_proc,plugin_initpara.start);
-  	ret= sec_subject_init(sub_proc,NULL);
+	void * init_para;
+	init_para=find_json_elem("init_para",root_node);
+  	ret= sec_subject_init(sub_proc,init_para);
 	if(ret<0)
   		return ret;
         add_sec_subject(sub_proc);
