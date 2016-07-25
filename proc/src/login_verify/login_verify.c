@@ -96,20 +96,24 @@ int proc_echo_message(void * sub_proc,void * message)
 	if(ret<0)
 	{
 		return_data->ret_data=dup_str("login_verify system error!",0);
+		return_data->retval=-2;
 	}
 	else if (lib_data==NULL)
 	{
 		return_data->ret_data=dup_str("no such user!",0);
+		return_data->retval=0;
 	}
 	else if (strncmp(lib_data->passwd,login_data->passwd,DIGEST_SIZE*2))
 	{
 		return_data->ret_data=dup_str("error passwd!",0);
+		return_data->retval=-1;
 	}
 	else
 	{
 		return_data->ret_data=dup_str("login_succeed!",0);
 		return_data->retval=1;
 	}
+	return_data->ret_data_size=strlen(return_data->ret_data)+1;
 	message_add_record(new_msg,return_data);
 	sec_subject_sendmsg(sub_proc,new_msg);
 	return ret;
