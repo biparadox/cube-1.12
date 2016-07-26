@@ -92,7 +92,7 @@ int proc_echo_message(void * sub_proc,void * message)
 	if(ret<0)
 		return ret;
 
-	ret=FindPolicy(login_data->user,"LOGC",&lib_data);
+	ret=FindPolicy(login_data->user,"LOGI",&lib_data);
 	if(ret<0)
 	{
 		return_data->ret_data=dup_str("login_verify system error!",0);
