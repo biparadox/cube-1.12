@@ -9,8 +9,8 @@ INIT_OBJ=general_lib_init.o
 main: $(MAIN_PROC)
 $(MAIN_PROC):  main_proc.c lib$(MAIN_PROC).so $(INIT_OBJ)
 	$(CC) $(FLAGS) $(MAIN_PROC) main_proc.c $(INIT_OBJ) -L../lib -lopenstacktrust -lentity -lrouter -lpolicy_ui -lmemdb -lconnector -lmessage -llogicdb -lstruct -lsysfunc -lcrypto_func -lpthread -ldl
-$lib$(MAIN_PROC).so: $(MAIN_PROC)_func.o
-	$(CC) $(LIBFLAGS) $(INIT_OBJ) $(MAIN_PROC)_func.o
+lib$(MAIN_PROC).so: $(MAIN_PROC)_func.o $(INIT_OBJ)
+	$(CC) $(LIBFLAGS) lib$(MAIN_PROC).so $(INIT_OBJ) $(MAIN_PROC)_func.o
 $(MAIN_PROC)_func.o: $(MAIN_PROC)_func.c main_proc_func.h
 	$(CC) $(CFLAGS) $(MAIN_PROC)_func.c
 general_lib_init.o:  general_lib_init.c general_lib_init.h

@@ -54,6 +54,39 @@ static struct struct_elem_attr connect_syn_desc[]=
 	{NULL,OS210_TYPE_ENDDATA,0,NULL}
 };
 
+void * build_server_syn_message(char * service,char * local_uuid,char * proc_name)
+{
+	void * message_box;
+	struct connect_syn * server_syn;
+	MESSAGE_HEAD * message_head;
+	void * syn_template;
+	BYTE * blob;
+	int record_size;
+	int retval;
+
+	server_syn=malloc(sizeof(struct connect_syn));
+	if(server_syn == NULL)
+		return -ENOMEM;
+
+	memset(server_syn,0,sizeof(struct connect_syn));
+	
+	memcpy(server_syn->uuid,local_uuid,DIGEST_SIZE*2);
+	server_syn->server_name=dup_str(proc_name,0);
+
+	if(service!=NULL)
+		server_syn->service=dup_str(service,0);
+	message_box=message_create("SYNI",NULL);
+	if(message_box==NULL)
+		return -EINVAL;
+	if(IS_ERR(message_box))
+		return -EINVAL;
+	retval=message_add_record(message_box,server_syn);
+
+	message_set_state(message_box,MSG_FLOW_INIT);
+	printf("init message success!\n");
+	return message_box;
+
+}
 int json_port_init(void * sub_proc,void * para)
 {
 	int ret;
