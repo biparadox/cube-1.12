@@ -28,7 +28,6 @@
 #include "../include/logic_baselib.h"
 #include "../include/connector.h"
 #include "../include/sec_entity.h"
-#include "../include/tesi.h"
 #include "../include/main_proc_init.h"
 
 #include "main_proc_func.h"
