@@ -119,6 +119,13 @@ int json_get_type(void * node)
     JSON_NODE * json_node = (JSON_NODE *)node;
     return json_node->elem_type;
 }
+void *json_get_father(void * node)
+{
+    if(node==NULL)
+		return -EINVAL;
+    JSON_NODE * json_node = (JSON_NODE *)node;
+    return json_node->father;
+}
 Record_List * get_new_Record_List(void * record)
 {
     Record_List * newrecord = malloc(sizeof(Record_List));
@@ -963,7 +970,86 @@ int struct_read_json_elem(char * name,void * addr, void * node,void * struct_tem
 }
 
 #define MAX_LAYER 10
+int json_2_struct(void * root,void * addr, void * struct_template)
+{
+    JSON_NODE * curr_node;
+    JSON_NODE * father_node;
+    JSON_VALUE * curr_value;
+    int  namelen;
+    int nameoffset[MAX_LAYER];
+    char namebuffer[MAX_LAYER*DIGEST_SIZE*2];
+    int curr_layer=0;
+    int i;
+    int ret;
+    struct struct_template * json_template=(struct struct_template *)struct_template;
+    struct struct_template * curr_template=json_template;
+    TEMPLATE_ELEM * json_elem;
 
+    for(i=0;i<MAX_LAYER;i++)
+	  nameoffset[i]=0;
+
+    father_node =root;
+    if(father_node==NULL)
+	return -EINVAL;
+    if(father_node->elem_type!=JSON_ELEM_MAP)
+	return -EINVAL;
+     curr_layer=1;
+
+    while(curr_layer>=1) {
+            JSON_NODE * temp_node;
+	    if(nameoffset[curr_layer]>=curr_template->elem_num)
+	    {
+		curr_layer--;
+		curr_template=curr_template->parent_struct;
+		father_node=json_get_father(father_node);
+		continue;
+	    }
+
+            json_elem=&curr_template->elem_list[nameoffset[curr_layer]++];
+	    if(json_elem->elem_desc->type==OS210_TYPE_ENDDATA)
+	    {
+		curr_layer--;
+		curr_template=curr_template->parent_struct;
+		father_node=json_get_father(father_node);
+		continue;
+	    }
+	    if(json_elem->elem_desc->type ==OS210_TYPE_ORGCHAIN)
+	    {
+		  temp_node=find_json_elem(json_elem->elem_desc->name,father_node);	
+		  if(temp_node==NULL)
+			continue;
+	          father_node=temp_node;
+		  curr_layer++;
+                  if(curr_layer>=MAX_LAYER)
+			return -EINVAL;
+		  nameoffset[curr_layer]=0;
+		  continue;			
+	    }
+            temp_node=find_json_elem(json_elem->elem_desc->name,father_node);
+            if(temp_node==NULL)
+		  continue;	
+            int j=curr_layer;
+            char * total_name=namebuffer+(DIGEST_SIZE*2+1)*j;
+	    *total_name=0;
+	    if(j>0)
+	    {
+	        namelen=strnlen(temp_node->name,DIGEST_SIZE*2);
+		total_name-=namelen;
+		memcpy(total_name,temp_node->name,namelen);
+		if(j>1)
+		{
+			total_name--;
+			*total_name='.';
+		}
+	    }
+	    ret=struct_read_json_elem(total_name,addr,temp_node,struct_template);
+            if(ret<0)
+		return -EINVAL;
+    }
+    return 0;
+}
+
+/*
 int json_2_struct(void * root,void * addr, void * struct_template)
 {
     JSON_NODE * curr_node;
@@ -1033,7 +1119,7 @@ int json_2_struct(void * root,void * addr, void * struct_template)
     }while(1);
     return 0;
 }
-
+*/
 int struct_2_json_write_elem(void * addr,char * json_str,TEMPLATE_ELEM * elem_template,int *stroffset)
 {
 	struct struct_elem_attr * elem_attr;

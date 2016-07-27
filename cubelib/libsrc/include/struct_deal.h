@@ -145,5 +145,6 @@ int get_json_name_from_node(void * node,char * name);
 int json_solve_str(void ** root, char *str);
 int json_get_type(void * node);
 void * read_elem_addr(char * name, void * template);
+void * json_get_father(void * child);
 void * Memcpy(void * dest,void * src, unsigned int count);
 #endif

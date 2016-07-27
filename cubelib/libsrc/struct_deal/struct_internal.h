@@ -28,7 +28,7 @@ typedef struct  tag_template_elem
 struct struct_template
 {
 	int elem_num;
-	struct tag_struct_template * parent_struct;
+	struct struct_template * parent_struct;
 	struct struct_elem_attr * struct_desc;
 	TEMPLATE_ELEM * elem_list;
 	void * var_list;
