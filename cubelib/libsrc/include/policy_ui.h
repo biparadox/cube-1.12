@@ -12,16 +12,6 @@
 //
 
 
-/*
-struct tagElemList
-{
-	Record_List list;
-	const struct struct_elem_attr * struct_desc;
-	struct list_head curr;
-}ELEM_LIST;
-*/
-// Audit File Select Function
-
 // Interface with the Manage Module
 int SelectAuditInfo(time_t tm1,time_t tm2, int oper_type,char * keyword);
 
@@ -95,5 +85,7 @@ int  DelAuditFilter(void * AuditFilter);
 int  DelAuditList(void * AuditList);
 time_t ConvertTimeString(char * string);
 
+int general_lib_init(char * type, void * para);
+int general_uuid_lib_init(char * type, void * para);
 // tool function
 #endif

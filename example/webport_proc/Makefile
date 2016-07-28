@@ -4,7 +4,7 @@ CFLAGS= -g -c -fPIC -DUSER_MODE
 CC=gcc
 CCP=g++
 MAIN_PROC=webport_proc
-INIT_OBJ=general_lib_init.o
+INIT_OBJ=
 
 main: $(MAIN_PROC)
 $(MAIN_PROC):  main_proc.c lib$(MAIN_PROC).so $(INIT_OBJ)
@@ -13,8 +13,8 @@ lib$(MAIN_PROC).so: $(MAIN_PROC)_func.o $(INIT_OBJ)
 	$(CC) $(LIBFLAGS) lib$(MAIN_PROC).so $(INIT_OBJ) $(MAIN_PROC)_func.o
 $(MAIN_PROC)_func.o: $(MAIN_PROC)_func.c main_proc_func.h
 	$(CC) $(CFLAGS) $(MAIN_PROC)_func.c
-general_lib_init.o:  general_lib_init.c general_lib_init.h
-	$(CC)  $(CFLAGS) general_lib_init.c 
+#general_lib_init.o:  general_lib_init.c general_lib_init.h
+#	$(CC)  $(CFLAGS) general_lib_init.c 
 clean:
 	rm -f $(MAIN_PROC) *~ *.o *.a
 	ln -s ../../proc/src/main/main_proc.c .
