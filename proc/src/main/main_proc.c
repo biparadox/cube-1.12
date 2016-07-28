@@ -56,8 +56,8 @@ static char router_config_file[DIGEST_SIZE*2]="./router_policy.cfg";
 static char plugin_config_file[DIGEST_SIZE*2]="./plugin_config.cfg";
 static char main_config_file[DIGEST_SIZE*2]="./main_config.cfg";
 static char audit_file[DIGEST_SIZE*2]="./message.log";
-static char connector_plugin_file[DIGEST_SIZE*2]="plugin/libconnector_process_func.so";
-static char router_plugin_file[DIGEST_SIZE*2]="plugin/librouter_process_func.so";
+static char connector_plugin_file[DIGEST_SIZE*2]="libconnector_process_func.so";
+static char router_plugin_file[DIGEST_SIZE*2]="librouter_process_func.so";
 
 
 int main(int argc,char **argv)
@@ -70,6 +70,10 @@ int main(int argc,char **argv)
     void * message_box;
     int i,j;
     int argv_offset;	
+    char namebuffer[DIGEST_SIZE*4];
+    char * sys_plugin;		
+    char * app_plugin;		
+
 
     void * main_proc; // point to the main proc's subject struct
     void * conn_proc; // point to the conn proc's subject struct
@@ -83,6 +87,10 @@ int main(int argc,char **argv)
     void * temp_node;
     int json_offset;
 
+    sys_plugin=getenv("CUBE_SYS_PLUGIN");
+    if(sys_plugin==NULL)
+	return -EINVAL;		
+    app_plugin=getenv("CUBE_APP_PLUGIN");
     // process the command argument
     if(argc>=2)
     {
@@ -231,10 +239,12 @@ int main(int argc,char **argv)
     PROC_INIT plugin_proc; 
 
     // init the connect proc	
-    plugin_proc.init =main_read_func(connector_plugin_file,"proc_conn_init");
+    strcpy(namebuffer,sys_plugin);
+    strcat(namebuffer,connector_plugin_file);
+    plugin_proc.init =main_read_func(namebuffer,"proc_conn_init");
     if(plugin_proc.init==NULL)
 	return -EINVAL;
-    plugin_proc.start =main_read_func(connector_plugin_file,"proc_conn_start");
+    plugin_proc.start =main_read_func(namebuffer,"proc_conn_start");
     if(plugin_proc.start==NULL)
 	return -EINVAL;
      plugin_proc.name=dup_str("connector_proc",0);	
@@ -252,10 +262,12 @@ int main(int argc,char **argv)
     add_sec_subject(conn_proc);
 
     // init the router proc	
-    plugin_proc.init =main_read_func(router_plugin_file,"proc_router_init");
+    strcpy(namebuffer,sys_plugin);
+    strcat(namebuffer,router_plugin_file);
+    plugin_proc.init =main_read_func(namebuffer,"proc_router_init");
     if(plugin_proc.init==NULL)
 	return -EINVAL;
-    plugin_proc.start =main_read_func(router_plugin_file,"proc_router_start");
+    plugin_proc.start =main_read_func(namebuffer,"proc_router_start");
     if(plugin_proc.start==NULL)
 	return -EINVAL;
      plugin_proc.name=dup_str("router_proc",0);	
@@ -312,11 +324,13 @@ int main(int argc,char **argv)
        	ret=sec_subject_create(plugin_initpara.name,plugin_initpara.type,NULL,&sub_proc);
    	if(ret<0)
 		return ret;
+        strcpy(namebuffer,sys_plugin);
+        strcat(namebuffer,plugin_initpara.plugin_dlib);
 
-    	plugin_initpara.init =main_read_func(plugin_initpara.plugin_dlib,plugin_initpara.init);
+    	plugin_initpara.init =main_read_func(namebuffer,plugin_initpara.init);
     	if(plugin_initpara.init==NULL)
 		return -EINVAL;
-    	plugin_initpara.start =main_read_func(plugin_initpara.plugin_dlib,plugin_initpara.start);
+    	plugin_initpara.start =main_read_func(namebuffer,plugin_initpara.start);
     	if(plugin_initpara.start==NULL)
 		return -EINVAL;
 
