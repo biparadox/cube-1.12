@@ -20,6 +20,7 @@
 #include "../include/vmlist.h"
 #include "../include/connector.h"
 #include "../include/logic_baselib.h"
+#include "../include/policy_ui.h"
 #include "../include/connector.h"
 #include "../include/sec_entity.h"
 #include "../include/router.h"
