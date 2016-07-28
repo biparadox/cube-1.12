@@ -1,6 +1,6 @@
 FLAGS= -g -o 
 LIBFLAGS = -g -shared -o
-INCLUDE= -I$(CUBELIBPATH)/include/ -I$(SELFINCLUDE)
+INCLUDE= -I$(CUBELIBPATH)/include/ -I$(CUBE_APP_INCLUDE)
 CFLAGS= -g -c -fPIC -DUSER_MODE $(INCLUDE)
 #CFLAGS= -g -c -fPIC -DUSER_MODE 
 CC=gcc

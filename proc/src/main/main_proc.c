@@ -324,9 +324,23 @@ int main(int argc,char **argv)
        	ret=sec_subject_create(plugin_initpara.name,plugin_initpara.type,NULL,&sub_proc);
    	if(ret<0)
 		return ret;
-        strcpy(namebuffer,sys_plugin);
-        strcat(namebuffer,plugin_initpara.plugin_dlib);
 
+	if(app_plugin != NULL)
+        {
+      	        strcpy(namebuffer,app_plugin);
+        	strcat(namebuffer,plugin_initpara.plugin_dlib);
+		ret=access(namebuffer,R_OK|X_OK);
+		if(ret<0)
+		{
+      	        	strcpy(namebuffer,sys_plugin);
+       	 		strcat(namebuffer,plugin_initpara.plugin_dlib);
+		}
+	}
+        else
+	{      
+      	        strcpy(namebuffer,sys_plugin);
+        	strcat(namebuffer,plugin_initpara.plugin_dlib);
+        }
     	plugin_initpara.init =main_read_func(namebuffer,plugin_initpara.init);
     	if(plugin_initpara.init==NULL)
 		return -EINVAL;
