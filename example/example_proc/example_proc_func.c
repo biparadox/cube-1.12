@@ -10,8 +10,6 @@
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <sys/un.h>
-#include <openssl/rsa.h>
-#include <openssl/evp.h>
 
 #include "../include/data_type.h"
 #include "../include/struct_deal.h"
