@@ -10,8 +10,6 @@
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <sys/un.h>
-#include <openssl/rsa.h>
-#include <openssl/evp.h>
 
 #include "../include/data_type.h"
 #include "../include/struct_deal.h"
@@ -28,7 +26,6 @@
 #include "../include/logic_baselib.h"
 #include "../include/connector.h"
 #include "../include/sec_entity.h"
-#include "../include/tesi.h"
 #include "../include/main_proc_init.h"
 
 #include "main_proc_func.h"
