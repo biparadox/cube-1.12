@@ -1,14 +1,13 @@
-LIBPATH=/home/algorist/backup/cube-1.12/cubelib
 FLAGS= -g -o 
 LIBFLAGS = -g -shared -o
-INCLUDE= -I$(LIBPATH)/include/ -I../../include/
+INCLUDE= -I$(CUBELIBPATH)/include/ -I$(SELFINCLUDE)
 CFLAGS= -g -c -fPIC -DUSER_MODE $(INCLUDE)
 #CFLAGS= -g -c -fPIC -DUSER_MODE 
 CC=gcc
 CCP=g++
 MAIN_PROC=MsgHub
 INIT_OBJ=
-TEST_LIB= -L$(LIBPATH)/lib -lopenstacktrust -lentity -lrouter -lpolicy_ui -lmemdb -lconnector -lmessage -llogicdb -lstruct -lsysfunc -lcrypto_func -lpthread 
+TEST_LIB= -L$(CUBELIBPATH)/lib -lopenstacktrust -lentity -lrouter -lpolicy_ui -lmemdb -lconnector -lmessage -llogicdb -lstruct -lsysfunc -lcrypto_func -lpthread 
 
 main: $(MAIN_PROC)
 $(MAIN_PROC):  main_proc.c lib$(MAIN_PROC).so $(INIT_OBJ)
