@@ -45,7 +45,7 @@ int bin_to_radix64(char * radix64, int length,unsigned char * bin)
     {
 	radix64[i]=radix64_tab[radix64[i]];   
     }
-    radix64[radix64_length]=0;
+    radix64[radix64_length]='=';
     return radix64_length;	
 }
 
@@ -63,7 +63,7 @@ static __inline__ unsigned char bin_from_radix64_char(char radix64)
 		return 63;
 	if(radix64=='=') 
 		return 64;
-		return 0xFF;
+	return 0xFF;
 }
 
 int radix64_to_bin(unsigned char * bin,int length, char * radix64) 
@@ -84,25 +84,26 @@ int radix64_to_bin(unsigned char * bin,int length, char * radix64)
 		 tempbyte[j-i] = bin_from_radix64_char(radix64[j]);
 	         if(tempbyte[j-i] == 0xFF)
 			return -EINVAL;	 
+		if(tempbyte[j-i]==64)
+			break;
 	   }
 	   bin_buffer[0]=(tempbyte[0]<<2)+(tempbyte[1]>>4);
-	   if(length-i == 2)
+	   if(j-i == 2)
 	   {
 		memcpy(bin+i/4*3,bin_buffer,1);
-	     	return length/4*3+1;	
+	     	return i/4*3+1;	
 	   }
 	   bin_buffer[1]=(tempbyte[1]<<4)+(tempbyte[2]>>2);
-	   if(length-i == 3)
+	   if(j-i == 3)
 	   {
 		memcpy(bin+i/4*3,bin_buffer,2);
-	     	return length/4*3+2;	
+	     	return i/4*3+2;	
 	   }
 	   bin_buffer[2]=(tempbyte[2]<<6)+tempbyte[3];
 	   memcpy(bin+i/4*3,bin_buffer,3);
 	   
     }
-    i=length/4*3;
-    return i;
+    return i/4*3;
 }
 	
 int bin_to_radix64_len(int length)

@@ -90,7 +90,7 @@ int main()
 
    printf("%s\n",login_info.user);
 
-    memset(login_info.nonce,'A',DIGEST_SIZE);
+    memset(login_info.nonce,'\0',DIGEST_SIZE);
 
    offset=0;
     struct_2_json(&login_info,buffer,struct_template,&offset);

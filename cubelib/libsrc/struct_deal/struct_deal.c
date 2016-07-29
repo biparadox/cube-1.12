@@ -803,9 +803,10 @@ int free_struct_elem(void * addr,struct struct_elem_attr * elem_attr)
 		case OS210_TYPE_ENUM :
 		case OS210_TYPE_FLAG :
 		case TPM_TYPE_UINT32 :
-		case OS210_TYPE_TIME :
 		case ASN_TYPE_INT:
 			return sizeof(int);
+		case OS210_TYPE_TIME :
+			return sizeof(time_t);
 		case OS210_TYPE_UCHAR :
 			return sizeof(unsigned char);
 		case OS210_TYPE_USHORT :

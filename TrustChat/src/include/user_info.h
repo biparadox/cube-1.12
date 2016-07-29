@@ -1,5 +1,6 @@
 #ifndef USER_INFO_H
 #define USER_INFO_H
+#include <time.h>
 
 enum user_state_type
 {
@@ -12,8 +13,15 @@ enum user_state_type
 struct user_info_list{
 	char name[DIGEST_SIZE];
 	BYTE passwd[DIGEST_SIZE];
-	int  register_time;
+	time_t  register_time;
 	enum  user_state_type state;
+	BYTE img[DIGEST_SIZE*2];
+} __attribute__((packed));
+
+struct user_acl_list
+{
+	char name[DIGEST_SIZE];
+	int  acl_flag;	
 };
 
 static NAME2VALUE user_state_type_valuelist[] =
@@ -53,7 +61,7 @@ struct user_name_expand
 	int data_size;
 	char tag[4];
 	char name[DIGEST_SIZE];
-};
+} __attribute__((packed));
 
 static struct struct_elem_attr user_name_expand_desc[]=
 {
