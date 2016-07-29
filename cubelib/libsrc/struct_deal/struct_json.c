@@ -851,8 +851,14 @@ int json_2_struct_write_elem(void * node,void * addr,TEMPLATE_ELEM * elem_templa
 			return -EINVAL;
 		elem_define=(TEMPLATE_ELEM *)(elem_template->elem_var);
 		retval=elem_attr->size*(*(int*)(elem_define->elem_var));
-		if(retval!=radix64_to_bin(addr,strlen(json_node->value_str),json_node->value_str))
-			return -EINVAL;
+		{
+			char * estring;
+			estring=kmalloc(retval,GFP_KERNEL);
+			if(retval!=radix64_to_bin(estring,strlen(json_node->value_str),json_node->value_str))
+				return -EINVAL;
+			*(char **)addr=estring;
+		}
+		retval=sizeof(char *);
 		break;
 	case OS210_TYPE_DEFSTR:
 		if(json_node->elem_type != JSON_ELEM_STRING)
