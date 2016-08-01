@@ -59,6 +59,25 @@ struct policyfile_data
 	char * policy_data; //the file data
 }__attribute__((packed));
 
+//the struct of policy file data request: use type FILQ
+struct policyfile_req
+{
+	char uuid[DIGEST_SIZE*2];
+	char * filename;
+	char * requestor;
+}__attribute__((packed));
+
+//the struct of policy file data request: use type FILS
+struct policyfile_store
+{
+	char uuid[DIGEST_SIZE*2];
+	char * filename;
+	int file_size;
+	int block_size;
+	int mark_len;
+	char * marks;
+}__attribute__((packed));
+
 struct verify_info  
 {
 	char verify_data_uuid[DIGEST_SIZE*2];

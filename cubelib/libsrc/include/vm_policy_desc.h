@@ -65,6 +65,25 @@ static struct struct_elem_attr policyfile_data_desc[]=
 	{NULL,OS210_TYPE_ENDDATA,0,NULL}
 };
 
+static struct struct_elem_attr policyfile_req_desc[]=
+{
+        {"uuid",OS210_TYPE_STRING,DIGEST_SIZE*2,NULL},
+        {"filename",OS210_TYPE_ESTRING,1024,NULL},
+        {"requestor",OS210_TYPE_ESTRING,DIGEST_SIZE*2,NULL},
+	{NULL,OS210_TYPE_ENDDATA,0,NULL}
+};
+
+static struct struct_elem_attr policyfile_store_desc[]=
+{
+        {"uuid",OS210_TYPE_STRING,DIGEST_SIZE*2,NULL},
+        {"filename",OS210_TYPE_ESTRING,1024,NULL},
+        {"file_size",OS210_TYPE_INT,sizeof(int),NULL},
+        {"block_size",OS210_TYPE_INT,sizeof(int),NULL},
+        {"mark_len",OS210_TYPE_INT,sizeof(int),NULL},
+        {"marks",OS210_TYPE_DEFINE,sizeof(BYTE),"mark_len"},
+	{NULL,OS210_TYPE_ENDDATA,0,NULL}
+};
+
 static struct struct_elem_attr verify_info_desc[]=
 {
         {"verify_data_uuid",OS210_TYPE_STRING,DIGEST_SIZE*2,NULL},

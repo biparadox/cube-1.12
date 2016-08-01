@@ -15,7 +15,7 @@ struct user_info_list{
 	BYTE passwd[DIGEST_SIZE];
 	time_t  register_time;
 	enum  user_state_type state;
-	BYTE img[DIGEST_SIZE*2];
+	BYTE user_img[DIGEST_SIZE*2];
 } __attribute__((packed));
 
 struct user_acl_list
