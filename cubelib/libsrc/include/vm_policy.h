@@ -74,6 +74,7 @@ struct policyfile_store
 	char * filename;
 	int file_size;
 	int block_size;
+	int block_num;
 	int mark_len;
 	char * marks;
 }__attribute__((packed));

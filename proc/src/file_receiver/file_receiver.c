@@ -78,6 +78,7 @@ int file_receiver_start(void * sub_proc,void * para)
 int proc_file_receive(void * sub_proc,void * message)
 {
 	struct policyfile_data * reqdata;
+	struct policyfile_store * storedata;
 	int ret;
 
 	printf("begin file receive!\n");
@@ -86,10 +87,43 @@ int proc_file_receive(void * sub_proc,void * message)
 	int blobsize=0;
 	int fd;
 
-	ret=get_filedata_from_message(message);
+	ret=message_get_record(message,&reqdata,0);
 	if(ret<0)
-		return ret;
-	printf("get file succeed!\n");
+		return -EINVAL;
+	
+	if(reqdata->total_size==reqdata->data_size)
+	{
+		ret=get_filedata_from_message(message);
+		if(ret<0)
+			return ret;
+	}
+	else
+	{
+		ret=FindPolicy(reqdata->uuid,"FILS",&storedata);
+		if(ret<0)
+			return ret;
+		if(storedata==NULL)
+		{
+			storedata=malloc(sizeof(struct policyfile_store));
+			if(storedata==NULL)
+				return -ENOMEM;
+			memcpy(storedata->uuid,reqdata->uuid,DIGEST_SIZE*2);				
+			storedata->filename=dup_str(reqdata->filename,0);
+			storedata->file_size=reqdata->total_size;
+			storedata->block_size=256;
+			storedata->block_num=(reqdata->total_size+(256-1))/256;
+			storedata->mark_len=(storedata->block_num+7)/8;
+			storedata->marks=malloc(storedata->mark_len);
+			memset(storedata->marks,0,storedata->mark_len);
+		}					
+		int site= reqdata->offset/256;
+		bitmap_set(storedata->marks,site);
+		AddPolicy(storedata,"FILS");	
+	
+		if(!bitmap_is_allset(storedata->marks,storedata->block_num))
+			return reqdata->data_size;
+	}
+	printf("get file %s succeed!\n",reqdata->filename);
 
 	return 0;
 }

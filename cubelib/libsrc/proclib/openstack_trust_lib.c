@@ -497,15 +497,15 @@ int get_filedata_from_message(void * message)
 	lseek(fd,pfdata->offset,SEEK_SET);
 	write(fd,pfdata->policy_data,pfdata->data_size);
 	close(fd);
-	if(pfdata->offset+pfdata->data_size==pfdata->total_size)
-	{
-		retval=calculate_sm3(pfdata->filename,digest);
-		if(retval<0)
-			return retval;
-		digest_to_uuid(digest,uuid);
-		if(strncmp(pfdata->uuid,uuid,DIGEST_SIZE*2)!=0)
-			return -EINVAL;
-	}
+//	if(pfdata->offset+pfdata->data_size==pfdata->total_size)
+//	{
+//		retval=calculate_sm3(pfdata->filename,digest);
+//		if(retval<0)
+//			return retval;
+//		digest_to_uuid(digest,uuid);
+//		if(strncmp(pfdata->uuid,uuid,DIGEST_SIZE*2)!=0)
+//			return -EINVAL;
+//	}
 	return 0;
 
 }

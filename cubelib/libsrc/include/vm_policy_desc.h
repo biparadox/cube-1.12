@@ -79,6 +79,7 @@ static struct struct_elem_attr policyfile_store_desc[]=
         {"filename",OS210_TYPE_ESTRING,1024,NULL},
         {"file_size",OS210_TYPE_INT,sizeof(int),NULL},
         {"block_size",OS210_TYPE_INT,sizeof(int),NULL},
+        {"block_num",OS210_TYPE_INT,sizeof(int),NULL},
         {"mark_len",OS210_TYPE_INT,sizeof(int),NULL},
         {"marks",OS210_TYPE_DEFINE,sizeof(BYTE),"mark_len"},
 	{NULL,OS210_TYPE_ENDDATA,0,NULL}
