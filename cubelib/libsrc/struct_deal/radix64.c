@@ -73,8 +73,8 @@ int radix64_to_bin(unsigned char * bin,int length, char * radix64)
     int i,j;
     int index;
 
-    if(length%4==1)
-	return -EINVAL;
+//  if(length%4==1)
+//	return -EINVAL;
     
     for(i=0;i<length;i+=4)
     {	
