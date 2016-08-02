@@ -1,0 +1,15 @@
+#!/bin/sh
+if [ $# -ne 1 ]
+then
+	echo "Error Format! Usage: source CACreateCrt <name> "
+	return 1
+fi
+	openssl rand -out .rand 1024
+	echo "Generate CA's RSA Key in $1.key"
+	openssl genrsa -aes128 -out $1.key 2048
+	echo "Create CA's Ceritificate resource in $1.rc"
+	openssl req -new -key $1.key -out $1.rc
+	echo "Create CA's Ceritificate in $1.crt"
+	openssl x509 -req -days 7310 -sha1 -extfile /etc/ssl/openssl.cnf -extensions v3_ca -signkey $1.key -in $1.rc -out $1.crt
+	echo "Check CA's Ceritificate"
+	openssl x509 -text -in $1.crt
