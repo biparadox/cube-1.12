@@ -10,16 +10,16 @@ export TPM_PATH=$SWTPMPATH/tpmdata/$1
 #sleep 1
 #$SWTPMPATH/libtpm/utils/tpminit 
 #$SWTPMPATH/libtpm/utils/tpmbios 
-sudo killall tpm_server
-sudo killall tcsd
-sudo rmmod tpmd_dev
+killall tpm_server
+killall tcsd
+rmmod tpmd_dev
 sleep 2
 $SWTPMPATH/tpm/tpm_server &>tpm.log &
 sleep 1
 $SWTPMPATH/libtpm/utils/tpmbios 
 cd $TPMDEVPATH
-sudo ./load_tpmd_dev.sh $1
-sudo tcsd
+./load_tpmd_dev.sh $1
+tcsd
 cd -
 cd example
 ./TESI_test -v 1.2

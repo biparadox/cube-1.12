@@ -152,5 +152,23 @@ static struct struct_elem_attr node_key_list_desc[]=
 	{NULL,OS210_TYPE_ENDDATA,0,NULL}
 };
 
+struct key_request_cmd
+{
+	char machine_uuid[DIGEST_SIZE*2];
+	char proc_name[DIGEST_SIZE];
+	char user_name[DIGEST_SIZE];
+	UINT16 keyusage;
+	UINT16 keyflags;
+} __attribute__((packed));
+
+static struct struct_elem_attr key_request_cmd_desc[]=
+{
+	{"machine_uuid",OS210_TYPE_STRING,DIGEST_SIZE*2,NULL},
+	{"proc_name",OS210_TYPE_STRING,DIGEST_SIZE,NULL},
+	{"user_name",OS210_TYPE_STRING,DIGEST_SIZE,NULL},
+	{"keyusage",TPM_TYPE_UINT16,0,NULL},
+	{"keyflags",TPM_TYPE_UINT16,0,NULL},
+	{NULL,OS210_TYPE_ENDDATA,0,NULL}
+};
 // plugin's init func and kickstart func
 #endif
