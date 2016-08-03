@@ -2285,7 +2285,7 @@ TSS_RESULT  TESI_AIK_GenerateReq(TSS_HKEY hCAKey,int labelLen,BYTE * labelData, 
 		return result;
 	sprintf(filename,"%s.req",req);
 
-	fd=open(filename,O_WRONLY|O_CREAT|O_TRUNC);
+	fd=open(filename,O_WRONLY|O_CREAT|O_TRUNC,S_IRUSR|S_IWUSR);
 	if(fd<0)
 	{	
 		printf("open req blob file error!\n");
