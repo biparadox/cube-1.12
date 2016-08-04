@@ -484,28 +484,12 @@ int get_filedata_from_message(void * message)
 	}
 	retval=message_get_record(message,&pfdata,0);
 
-	fd=open(pfdata->filename,O_RDONLY);
-	if(fd>0)
-	{
-		printf("file %s has existed!\n",pfdata->filename);
-		return -EEXIST;
-	}
-
-	fd=open(pfdata->filename,O_CREAT|O_WRONLY|O_TRUNC,0666);
+	fd=open(pfdata->filename,O_CREAT|O_WRONLY,0666);
 	if(fd<0)
 		return fd;
 	lseek(fd,pfdata->offset,SEEK_SET);
 	write(fd,pfdata->policy_data,pfdata->data_size);
 	close(fd);
-//	if(pfdata->offset+pfdata->data_size==pfdata->total_size)
-//	{
-//		retval=calculate_sm3(pfdata->filename,digest);
-//		if(retval<0)
-//			return retval;
-//		digest_to_uuid(digest,uuid);
-//		if(strncmp(pfdata->uuid,uuid,DIGEST_SIZE*2)!=0)
-//			return -EINVAL;
-//	}
 	return 0;
 
 }
