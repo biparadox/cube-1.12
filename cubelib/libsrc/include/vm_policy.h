@@ -79,6 +79,20 @@ struct policyfile_store
 	char * marks;
 }__attribute__((packed));
 
+
+enum file_trans_state
+{
+	POLICY_FILE_SUCCESS=1,
+	POLICY_FILE_ERROR,
+};
+//the struct of policy file data notice message: use type FILN
+struct policyfile_notice
+{
+	char uuid[DIGEST_SIZE*2];
+	char * filename;
+	enum   file_trans_state file_type;
+}__attribute__((packed));
+
 struct verify_info  
 {
 	char verify_data_uuid[DIGEST_SIZE*2];

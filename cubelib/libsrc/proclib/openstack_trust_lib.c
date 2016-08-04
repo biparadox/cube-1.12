@@ -223,6 +223,7 @@ static NAME2POINTER record_type_struct[] =
 	{"FILD",policyfile_data_desc},
 //	{"FILS",policyfile_data_store},
 	{"FILQ",policyfile_req_desc},
+	{"FILN",policyfile_notice_desc},
 
 //	{"IDEE",expand_data_identity_desc},
 //	{"FORE",expand_data_forward_desc},
