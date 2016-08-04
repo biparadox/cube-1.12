@@ -85,6 +85,19 @@ static struct struct_elem_attr policyfile_store_desc[]=
 	{NULL,OS210_TYPE_ENDDATA,0,NULL}
 };
 
+static NAME2VALUE file_trans_state_valuelist[] = 
+{
+    {"SUCCESS",1},
+    {"ERROR",2},
+	{NULL,0}
+};
+static struct struct_elem_attr policyfile_notice_desc[]=
+{
+        {"uuid",OS210_TYPE_STRING,DIGEST_SIZE*2,NULL},
+        {"filename",OS210_TYPE_ESTRING,1024,NULL},
+        {"file_type",OS210_TYPE_ENUM,sizeof(int),&file_trans_state_valuelist},
+	{NULL,OS210_TYPE_ENDDATA,0,NULL}
+};
 static struct struct_elem_attr verify_info_desc[]=
 {
         {"verify_data_uuid",OS210_TYPE_STRING,DIGEST_SIZE*2,NULL},
@@ -96,7 +109,4 @@ static struct struct_elem_attr verify_info_desc[]=
 	{NULL,OS210_TYPE_ENDDATA,0,NULL}
 };
 
-//extern struct trust_policy_ops vm_policy_lib_ops; 
-//extern struct trust_policy_ops policy_file_lib_ops; 
-//extern struct trust_policy_ops pcr_set_lib_ops; 
 #endif
