@@ -159,26 +159,29 @@ int proc_file_receive(void * sub_proc,void * message)
 					ret=remove(pfdata->filename);
 					if(ret<0)
 						return ret;
+					break;
 				case 2:
 					break;
 
 				default:
 					return ret;
 			}
+			storedata=malloc(sizeof(struct policyfile_store));
+			if(storedata==NULL)
+				return -ENOMEM;
+			memcpy(storedata->uuid,pfdata->uuid,DIGEST_SIZE*2);				
+			storedata->filename=dup_str(pfdata->filename,0);
+			storedata->file_size=pfdata->total_size;
+			storedata->block_size=256;
+			storedata->block_num=(pfdata->total_size+(256-1))/256;
+			storedata->mark_len=(storedata->block_num+7)/8;
+			storedata->marks=malloc(storedata->mark_len);
+			if(storedata->marks==NULL)
+				return -ENOMEM;
+			memset(storedata->marks,0,storedata->mark_len);
 		}
 
 
-		storedata=malloc(sizeof(struct policyfile_store));
-		if(storedata==NULL)
-			return -ENOMEM;
-		memcpy(storedata->uuid,pfdata->uuid,DIGEST_SIZE*2);				
-		storedata->filename=dup_str(pfdata->filename,0);
-		storedata->file_size=pfdata->total_size;
-		storedata->block_size=256;
-		storedata->block_num=(pfdata->total_size+(256-1))/256;
-		storedata->mark_len=(storedata->block_num+7)/8;
-		storedata->marks=malloc(storedata->mark_len);
-		memset(storedata->marks,0,storedata->mark_len);
 		int site= pfdata->offset/256;
 		bitmap_set(storedata->marks,site);
 		AddPolicy(storedata,"FILS");	
@@ -186,9 +189,28 @@ int proc_file_receive(void * sub_proc,void * message)
 		if(ret<0)
 			return ret;
 	
-		if(!bitmap_is_allset(storedata->marks,storedata->block_num))
+		if(bitmap_is_allset(storedata->marks,storedata->block_num))
 		{
 			printf("get file %s succeed!\n",pfdata->filename);
+			struct policyfile_notice * pfnotice;
+			pfnotice=malloc(sizeof(struct policyfile_notice));
+			if(pfnotice==NULL)
+				return -ENOMEM;
+			memcpy(pfnotice->uuid,pfdata->uuid,DIGEST_SIZE*2);
+			pfnotice->filename=dup_str(pfdata->filename,0);
+			if(_is_samefile_exists(pfdata)==0)
+			{
+				pfnotice->file_type=POLICY_FILE_SUCCESS;	
+			}
+			else
+			{
+				pfnotice->file_type=POLICY_FILE_ERROR;	
+			}
+			void * send_msg=message_create("FILN",message);
+			if(send_msg==NULL)
+				return -EINVAL;
+			message_add_record(send_msg,pfnotice);
+			sec_subject_sendmsg(sub_proc,send_msg);
 			return pfdata->data_size;
 		}
 	}

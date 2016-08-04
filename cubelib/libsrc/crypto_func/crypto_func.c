@@ -160,14 +160,14 @@ int bitmap_set(char * bitmap, int site)
 {
 	unsigned char c=1;
 	c<<=site%8;
-        bitmap[site/8+1] |=c;
+        bitmap[site/8] |=c;
 	return 0;
 }
 int bitmap_clear(char * bitmap, int site)
 {
 	unsigned char c=1;
 	c<<=site%8;
-        bitmap[site/8+1] &=~c;
+        bitmap[site/8] &=~c;
 	return 0;
 }
 
@@ -180,7 +180,7 @@ int bitmap_get(char * bitmap,int site)
 
 int bitmap_is_allset(char * bitmap,int size)
 {
-	unsigned char c=0xff;
+	unsigned char c=0x7f;
 
 	int i;
 	for(i=0;i<size/8;i++)
