@@ -1,5 +1,5 @@
 #!/bin/sh
-export TCGPATH=/root/tcg
+export TCGPATH=/opt/tcg
 SWTPMPATH=$TCGPATH/swTPM
 TPMDEVPATH=$TCGPATH/tpmd_dev
 sudo killall tpm_server
