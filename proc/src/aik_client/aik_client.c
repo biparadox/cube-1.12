@@ -138,7 +138,8 @@ int proc_aik_request(void * sub_proc,void * message)
 	TSS_HKEY 	hSignKey;
 	TSS_HKEY	hAIKey, hCAKey;
 	struct aik_cert_info reqinfo;
-	struct policyfile_data * reqdata;
+//	struct policyfile_data * reqdata;
+	struct policyfile_req * reqdata;
 	int ret;
 	struct aik_user_info * user_info;
 	BYTE buf[1024];
@@ -197,10 +198,13 @@ int proc_aik_request(void * sub_proc,void * message)
 	}
 	TESI_Local_WriteKeyBlob(hAIKey,"privkey/AIK");
 
-	ret=build_filedata_struct(&reqdata,"cert/aik.req");
+//	ret=build_filedata_struct(&reqdata,"cert/aik.req");
+	reqdata=malloc(sizeof(struct policyfile_req));
+	memset(reqdata,0,sizeof(struct policyfile_req));
+	reqdata->filename=dup_str("cert/aik.req",0);
 
 	void * send_msg;
-	send_msg=message_create("FILD",message);
+	send_msg=message_create("FILQ",message);
 	if(send_msg!=NULL)
 	{
 		message_add_record(send_msg,reqdata);

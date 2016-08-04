@@ -7,6 +7,7 @@
 #include "tesi_key_desc.h"
 #include "vtpm_desc.h"
 #include "tesi_aik_struct.h"
+#include "vm_policy_desc.h"
 
 static PROCDB_INIT procdb_init_list[]=
 {
@@ -20,6 +21,7 @@ static PROCDB_INIT procdb_init_list[]=
 	{"KREC",&null_init_func,&key_request_cmd_desc,&general_lib_ops},
 	{"LOGI",NULL,&login_info_desc,NULL},
 	{"USNE",NULL,&user_name_expand_desc,NULL},
+	{"FILS",&null_init_func,&policyfile_store_desc,&general_lib_ops},
 	{NULL,NULL,NULL,NULL}
 };
 /*

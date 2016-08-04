@@ -182,6 +182,9 @@ int proc_file_receive(void * sub_proc,void * message)
 		int site= pfdata->offset/256;
 		bitmap_set(storedata->marks,site);
 		AddPolicy(storedata,"FILS");	
+		ret=get_filedata_from_message(message);
+		if(ret<0)
+			return ret;
 	
 		if(!bitmap_is_allset(storedata->marks,storedata->block_num))
 		{
@@ -251,7 +254,7 @@ int proc_file_send(void * sub_proc,void * message)
         	pfdata->data_size=block_size;
 		pfdata->policy_data=(char *)malloc(sizeof(char)*data_size);
 
-        	if(read(fd,pfdata->policy_data,data_size)!=data_size)
+        	if(read(fd,pfdata->policy_data,block_size)!=block_size)
         	{
                 	printf("read vm list error! \n");
                 	return NULL;

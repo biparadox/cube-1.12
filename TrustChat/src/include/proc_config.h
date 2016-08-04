@@ -12,6 +12,7 @@ static PROCDB_INIT procdb_init_list[]=
 	{"UL_I",&general_lib_init,&user_info_list_desc,&general_lib_ops},
 	{"LOGI",NULL,&login_info_desc,NULL},			
 	{"RETC",NULL,&connect_return_desc,NULL},			
+	{"FILS",&null_init_func,&policyfile_store_desc,&general_lib_ops},
 	{NULL,NULL,NULL,NULL}
 };
 
