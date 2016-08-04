@@ -194,16 +194,19 @@ int proc_file_receive(void * sub_proc,void * message)
 }
 int proc_file_send(void * sub_proc,void * message)
 {
-/*
-	struct policyfile_data * senddata;
+
+	struct policyfile_data * pfdata;
 	struct policyfile_req  * reqdata;
 	int ret;
-
-	printf("begin file send!\n");
-	char buffer[1024];
-	char digest[DIGEST_SIZE];
-	int blobsize=0;
 	int fd;
+	int block_size=256;
+	int data_size;
+	int total_size;
+	char digest[DIGEST_SIZE];
+	char uuid[DIGEST_SIZE*2];
+        struct stat statbuf;
+	void * send_msg;
+	printf("begin file send!\n");
 
 	ret=message_get_record(message,&reqdata,0);
 	if(ret<0)
@@ -211,38 +214,84 @@ int proc_file_send(void * sub_proc,void * message)
 	
 	if(reqdata->filename==NULL)
 		return -EINVAL;
+	fd=open(reqdata->filename,O_RDONLY);
+	if(fd<0)
+		return fd;
+        if(fstat(fd,&statbuf)<0)
+        {
+                printf("fstat error\n");
+                return NULL;
+        }
+        total_size=statbuf.st_size;
+	close(fd);
+
+	calculate_sm3(reqdata->filename,digest);
+	digest_to_uuid(digest,uuid);
+
+	int i;
+		
+	fd=open(reqdata->filename,O_RDONLY);
+	if(fd<0)
+		return fd;
+		
+	for(i=0;i<total_size/block_size;i++)
 	{
-		ret=get_filedata_from_message(message);
-		if(ret<0)
-			return ret;
-	}
-	else
-	{
-		ret=FindPolicy(reqdata->uuid,"FILS",&storedata);
-		if(ret<0)
-			return ret;
-		if(storedata==NULL)
+		
+        	pfdata=malloc(sizeof(struct policyfile_data));
+		if(pfdata==NULL)
 		{
-			storedata=malloc(sizeof(struct policyfile_store));
-			if(storedata==NULL)
-				return -ENOMEM;
-			memcpy(storedata->uuid,reqdata->uuid,DIGEST_SIZE*2);				
-			storedata->filename=dup_str(reqdata->filename,0);
-			storedata->file_size=reqdata->total_size;
-			storedata->block_size=256;
-			storedata->block_num=(reqdata->total_size+(256-1))/256;
-			storedata->mark_len=(storedata->block_num+7)/8;
-			storedata->marks=malloc(storedata->mark_len);
-			memset(storedata->marks,0,storedata->mark_len);
-		}					
-		int site= reqdata->offset/256;
-		bitmap_set(storedata->marks,site);
-		AddPolicy(storedata,"FILS");	
-	
-		if(!bitmap_is_allset(storedata->marks,storedata->block_num))
-			return reqdata->data_size;
+			return NULL;
+		}
+        	memset(pfdata,0,sizeof(struct policyfile_data));
+        	strncpy(pfdata->uuid,uuid,64);
+        	pfdata->filename=dup_str(reqdata->filename,0);
+        	pfdata->record_no=i;
+        	pfdata->offset=i*block_size;
+        	pfdata->total_size=total_size;
+        	pfdata->data_size=block_size;
+		pfdata->policy_data=(char *)malloc(sizeof(char)*data_size);
+
+        	if(read(fd,pfdata->policy_data,data_size)!=data_size)
+        	{
+                	printf("read vm list error! \n");
+                	return NULL;
+        	}
+		send_msg=message_create("FILD",message);
+		if(send_msg==NULL)
+			return -EINVAL;
+		message_add_record(send_msg,pfdata);
+		sec_subject_sendmsg(sub_proc,send_msg);
+			
 	}
-	printf("get file %s succeed!\n",reqdata->filename);
-*/
-	return 0;
+
+	if((data_size=total_size%block_size)!=0)
+	{
+        	pfdata=malloc(sizeof(struct policyfile_data));
+		if(pfdata==NULL)
+		{
+			return NULL;
+		}
+        	memset(pfdata,0,sizeof(struct policyfile_data));
+        	strncpy(pfdata->uuid,uuid,64);
+        	pfdata->filename=dup_str(reqdata->filename,0);
+        	pfdata->record_no=i;
+        	pfdata->offset=i*block_size;
+        	pfdata->total_size=total_size;
+        	pfdata->data_size=data_size;
+		pfdata->policy_data=(char *)malloc(sizeof(char)*data_size);
+
+        	if(read(fd,pfdata->policy_data,data_size)!=data_size)
+        	{
+                	printf("read vm list error! \n");
+                	return NULL;
+        	}
+		send_msg=message_create("FILD",message);
+		if(send_msg==NULL)
+			return -EINVAL;
+		message_add_record(send_msg,pfdata);
+		sec_subject_sendmsg(sub_proc,send_msg);
+	}
+	close(fd);
+	printf("send file %s succeed!\n",reqdata->filename);
+	return i;
 }
