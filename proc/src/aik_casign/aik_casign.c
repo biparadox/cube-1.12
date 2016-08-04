@@ -175,7 +175,7 @@ int aik_casign_start(void * sub_proc,void * para)
 		type=message_get_recordtype(recv_msg);
 		if(type==NULL)
 			continue;
-		if(strncmp(type,"FILD",4)==0)
+		if(strncmp(type,"FILN",4)==0)
 		{
 			proc_aik_casign(sub_proc,recv_msg);
 		}
@@ -215,11 +215,12 @@ int proc_aik_casign(void * sub_proc,void * recv_msg)
 	if(aik_pointer==NULL)
 		return -EINVAL;
 
+/*	
 	ret=get_filedata_from_message(recv_msg);
 	if(ret<0)
 		return -EINVAL;
 	printf("get file succeed!\n");
-
+*/
 	TESI_AIK_VerifyReq(aik_pointer->cakey,aik_pointer->hCAKey,"cert/aik",&hAIKey,&identityProof);
 	struct ca_cert usercert;
 
