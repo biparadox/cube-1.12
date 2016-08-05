@@ -135,9 +135,29 @@ int proc_file_receive(void * sub_proc,void * message)
 				if(ret<0)
 					return ret;
 			case 2:
+			{
 				ret=get_filedata_from_message(message);
+				struct policyfile_notice * pfnotice;
+				pfnotice=malloc(sizeof(struct policyfile_notice));
+				if(pfnotice==NULL)
+					return -ENOMEM;
+				memcpy(pfnotice->uuid,pfdata->uuid,DIGEST_SIZE*2);
+				pfnotice->filename=dup_str(pfdata->filename,0);
+				if(_is_samefile_exists(pfdata)==0)
+				{
+					pfnotice->file_type=POLICY_FILE_SUCCESS;	
+				}
+				else
+				{
+					pfnotice->file_type=POLICY_FILE_ERROR;	
+				}
+				void * send_msg=message_create("FILN",message);
+				if(send_msg==NULL)
+					return -EINVAL;
+				message_add_record(send_msg,pfnotice);
+				sec_subject_sendmsg(sub_proc,send_msg);
 				return ret;
-
+			}
 			default:
 				return ret;
 		}

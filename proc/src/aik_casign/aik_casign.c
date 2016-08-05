@@ -190,7 +190,7 @@ int proc_aik_casign(void * sub_proc,void * recv_msg)
 	TSS_HKEY 	hSignKey;
 	TSS_HKEY	hAIKey, hCAKey;
 	struct aik_cert_info certinfo;
-	struct policyfile_data * reqdata;
+	struct policyfile_req * reqdata;
 	TCPA_IDENTITY_PROOF	identityProof;
 	int ret;
 
@@ -215,12 +215,6 @@ int proc_aik_casign(void * sub_proc,void * recv_msg)
 	if(aik_pointer==NULL)
 		return -EINVAL;
 
-/*	
-	ret=get_filedata_from_message(recv_msg);
-	if(ret<0)
-		return -EINVAL;
-	printf("get file succeed!\n");
-*/
 	TESI_AIK_VerifyReq(aik_pointer->cakey,aik_pointer->hCAKey,"cert/aik",&hAIKey,&identityProof);
 	struct ca_cert usercert;
 
@@ -272,9 +266,11 @@ int proc_aik_casign(void * sub_proc,void * recv_msg)
 	printf("create active.req succeed!\n");
 	free(pubek_name);
 
+	reqdata=malloc(sizeof(struct policyfile_req));
+	memset(reqdata,0,sizeof(struct policyfile_req));
+	reqdata->filename=dup_str("cert/active.req",0);
 	void * send_msg;
-	ret=build_filedata_struct(&reqdata,"cert/active.req");
-	send_msg=message_create("FILD",recv_msg);
+	send_msg=message_create("FILQ",recv_msg);
 	message_add_record(send_msg,reqdata);
 	sec_subject_sendmsg(sub_proc,send_msg);
 

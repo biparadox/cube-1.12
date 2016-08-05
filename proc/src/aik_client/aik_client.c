@@ -122,7 +122,7 @@ int aik_client_start(void * sub_proc,void * para)
 		{
 			proc_aik_request(sub_proc,recv_msg);
 		}
-		else if(strncmp(type,"FILD",4)==0)
+		else if(strncmp(type,"FILN",4)==0)
 		{
 			proc_aik_activate(sub_proc,recv_msg);
 		}
@@ -242,10 +242,10 @@ int proc_aik_activate(void * sub_proc,void * message)
 		return result;
 	}
 
-	retval=get_filedata_from_message(message);
-	if(retval<0)
-		return -EINVAL;
-	printf("get file succeed!\n");
+//	retval=get_filedata_from_message(message);
+//	if(retval<0)
+//		return -EINVAL;
+//	printf("get file succeed!\n");
 
 	result=TESI_AIK_Activate(hAIKey,"cert/active",&signdata);
 	if (result != TSS_SUCCESS) {
