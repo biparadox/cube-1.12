@@ -1,10 +1,10 @@
 {
-	"name":"zhaowen",
+	"name":"zhangle",
 	"passwd":"123",
 	"state":"ADMIN"
 }
 {
-	"name":"zhangle",
+	"name":"zhaowen",
 	"passwd":"123",
 	"state":"GENERAL"
 }

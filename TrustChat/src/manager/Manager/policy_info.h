@@ -1,45 +1,18 @@
 #ifndef USER_INFO_H
 #define USER_INFO_H
-#include <time.h>
 
-enum user_state_type
+struct policy_rule
 {
-	USER_ADMIN=0x01,
-	USER_GENERAL=0x02,
-	USER_BLOCK=0x03,
-	USER_PERMIT=0x04,
-	USER_ERROR=0xFF,
-};
+	char proc_name[DIGEST_SIZE];
+	int  policy_size;
+	char * policy_data;
+}__attribute__((packed));
 
-struct user_info_list{
-	char name[DIGEST_SIZE];
-	BYTE passwd[DIGEST_SIZE];
-	time_t  register_time;
-	enum  user_state_type state;
-	BYTE user_img[DIGEST_SIZE*2];
-} __attribute__((packed));
-
-static
-
-struct user_acl_list
+static struct struct_elem_attr policy_rule_desc[]=
 {
-	char name[DIGEST_SIZE];
-	int  acl_flag;	
-};
-
-static NAME2VALUE user_state_type_valuelist[] =
-{
-	{"ADMIN",USER_ADMIN},
-	{"GENERAL",USER_GENERAL},
-	{"BLOCK",USER_BLOCK},
-	{"PERMIT",USER_PERMIT},
-	{NULL,0}
-	
-};
-static struct struct_elem_attr user_acl_list_desc[]=
-{
-        {"name",OS210_TYPE_STRING,DIGEST_SIZE,NULL},
-        {"acl_flag",OS210_TYPE_ENUM,sizeof(int),&user_state_type_valuelist},
+        {"proc_name",OS210_TYPE_STRING,DIGEST_SIZE,NULL},
+        {"policy_size",OS210_TYPE_INT,sizeof(int),NULL},
+	{"policy_data",OS210_TYPE_DEFINE,1，"policy_size"},	
 	{NULL,OS210_TYPE_ENDDATA,0,NULL}
 };
 

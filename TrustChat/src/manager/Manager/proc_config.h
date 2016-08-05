@@ -2,6 +2,7 @@
 #define PROC_CONFIG_H
 #include "session_msg.h"
 #include "user_info.h"
+#include "policy_info.h"
 
 static PROCDB_INIT procdb_init_list[]=
 {
@@ -11,6 +12,7 @@ static PROCDB_INIT procdb_init_list[]=
 	{"MSGD",&null_init_func,&session_msg_desc,&general_lib_ops},
 	{"UL_I",&null_init_func,&user_info_list_desc,&general_lib_ops},
 	{"LOGI",NULL,&login_info_desc,NULL},			
+	{"POLI",&general_lib_init,&policy_rule_desc,&general_lib_ops},			
 	{"RETC",NULL,&connect_return_desc,NULL},			
 	{NULL,NULL,NULL,NULL}
 };
