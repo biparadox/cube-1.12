@@ -2,7 +2,7 @@ FLAGS= -g -o
 CFLAGS= -g -c -fPIC -DUSER_MODE 
 CC=gcc
 CCP=g++
-FUNCOBJ= sha1.o sm3.o crypto_func.o
+FUNCOBJ= sha1.o sm3.o sm4.o crypto_func.o
 
 main: ../lib/libcrypto_func.a ../lib/libcrypto_func.so
 	rm -f *~ *.o *.a
@@ -12,6 +12,8 @@ sha1.o: sha1.c
 	$(CC) $(CFLAGS) sha1.c
 sm3.o:  sm3.c 
 	$(CC) $(CFLAGS) sm3.c
+sm4.o:  sm4.c 
+	$(CC) $(CFLAGS) sm4.c
 crypto_func.o:  crypto_func.c 
 	$(CC) $(CFLAGS) crypto_func.c
 ../lib/libcrypto_func.so: $(FUNCOBJ) 	

@@ -102,20 +102,10 @@ int proc_crypt_message(void * sub_proc,void * message)
         if(blob_size<=0)
                 return -EINVAL;
 
-	bind_blob_size=blob_size;
 
-	bind_blob=malloc(bind_blob_size);
-	if(bind_blob==NULL)
-		return -ENOMEM;
-
-	sm4_setkey_enc(&ctx,passwd);
-	for(i=0;i<bind_blob_size;i+=16)
-	{
-		if(blob_size-i>=16)
-			sm4_crypt_ecb(&ctx,1,16,blob+i,bind_blob+i);
-	}	
-	for(;i<blob_size;i++)
-		bind_blob[i]=blob[i]^iv[i%16];		
+	bind_blob_size=sm4_context_crypt(blob,&bind_blob,blob_size,passwd);
+	if(bind_blob_size<0)
+		return bind_blob_size;
 
         message_set_blob(message,bind_blob,bind_blob_size);
         message_set_flag(message,MSG_FLAG_CRYPT);
@@ -136,23 +126,12 @@ int proc_uncrypt_message(void * sub_proc,void * message)
         BYTE* bind_blob;
         int bind_blob_size;
 
-        bind_blob_size=message_get_blob(message,&blob);
+        bind_blob_size=message_get_blob(message,&bind_blob);
         if(bind_blob_size<=0)
                 return -EINVAL;
-	blob_size=bind_blob_size;
-
-	blob=malloc(blob_size);
-	if(blob==NULL)
-		return -ENOMEM;
-
-	sm4_setkey_dec(&ctx,passwd);
-	for(i=0;i<bind_blob_size;i+=16)
-	{
-		if(blob_size-i>=16)
-			sm4_crypt_ecb(&ctx,1,16,blob+i,bind_blob+i);
-	}	
-	for(;i<blob_size;i++)
-		bind_blob[i]=blob[i]^iv[i%16];		
+	blob_size=sm4_context_decrypt(bind_blob,&blob,bind_blob_size,passwd);
+	if(blob_size<0)
+		return blob_size;
 
         message_set_blob(message,blob,blob_size);
 	int flag=message_get_flag(message);

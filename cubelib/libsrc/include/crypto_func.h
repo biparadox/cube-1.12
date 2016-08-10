@@ -11,7 +11,8 @@ int calculate_context_sm3(char* context, int context_size, UINT32 *SM3_hash);
 int calculate_context_sha1(char* context,int context_size,uint32_t *SM3_hash);
 int calculate_sha1(char* filename,unsigned char *digest);
 int extend_pcr_sm3digest(BYTE * pcr_value,BYTE * sm3digest);
-
+int sm4_context_crypt( BYTE * input, BYTE ** output, int length,char * passwd);
+int sm4_context_decrypt( BYTE * input, BYTE ** output, int length,char * passwd);
 int bitmap_set(char * bitmap, int site);
 int bitmap_clear(char * bitmap, int site);
 int bitmap_get(char * bitmap, int site);

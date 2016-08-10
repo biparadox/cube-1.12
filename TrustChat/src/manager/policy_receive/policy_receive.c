@@ -73,7 +73,7 @@ int proc_policy_receive(void * sub_proc,void * message)
 	const char * type;
 	int i;
 	int ret;
-	printf("begin proc echo \n");
+	printf("begin proc policy_receive \n");
 	struct message_box * msg_box=message;
 	type=message_get_recordtype(message);
 
