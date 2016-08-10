@@ -23,6 +23,14 @@
 #include "../include/valuename.h"
 #include "../include/expand_define.h"
 
+
+struct policy_rule
+{
+	char proc_name[DIGEST_SIZE];
+	int  policy_size;
+	char * policy_data;
+}__attribute__((packed));
+
 extern struct timeval time_val={0,50*1000};
 
 int policy_receive_init(void * sub_proc,void * para)
@@ -59,7 +67,7 @@ int policy_receive_start(void * sub_proc,void * para)
 			printf("message format is not registered!\n");
 			continue;
 		}
-		if(strcmp(type,"POLI")==0)
+		if(strncmp(type,"POLI",4)==0)
 		{
 			proc_policy_receive(sub_proc,recv_msg);
 		}
@@ -73,13 +81,11 @@ int proc_policy_receive(void * sub_proc,void * message)
 	const char * type;
 	int i;
 	int ret;
-	printf("begin proc policy_receive \n");
+	printf("begin proc echo \n");
 	struct message_box * msg_box=message;
 	type=message_get_recordtype(message);
 
-	struct message_box * new_msg;
-	void * record;
-	new_msg=message_create(type,message);
+	struct policy_rule * record;
 	
 	i=0;
 
@@ -88,11 +94,47 @@ int proc_policy_receive(void * sub_proc,void * message)
 		return ret;
 	while(record!=NULL)
 	{
-		message_add_record(new_msg,record);
+		char dirname[DIGEST_SIZE*2];
+		char policyfile[DIGEST_SIZE*4];
+		char backfile[DIGEST_SIZE*4];
+		char buffer[DIGEST_SIZE*8];
+		sprintf(dirname,"../%s",record->proc_name);
+		sprintf(policyfile,"%s/router_policy.cfg",dirname);
+		sprintf(backfile,"%s/router_policy.cfg.bak",dirname);
+		sprintf(buffer,"cp %s %s",policyfile,backfile);
+		system(buffer);
+		sleep(1);
+		int fd;
+		int fd1;
+		fd=open(policyfile,O_WRONLY | O_TRUNC);
+		if(fd<0)
+		{
+			printf("open policyfile %s error!\n",policyfile);
+			return -EINVAL;
+		}
+		write(fd,record->policy_data,record->policy_size);
+
+		fd1=open(backfile,O_RDONLY);
+		if(fd1<0)
+		{
+			printf("open backfile %s error!\n",backfile);
+			return -EINVAL;
+		}
+		write(fd,"\n",1);
+		while((ret=read(fd1,buffer,DIGEST_SIZE*8))>0)
+		{
+			write(fd,buffer,ret);
+			if(ret<DIGEST_SIZE*8)
+				break;	
+		}
+		if(ret<0)
+			return ret;
+		close(fd);
+		close(fd1);
+		
 		ret=message_get_record(message,&record,i++);
 		if(ret<0)
 			return ret;
 	}
-	sec_subject_sendmsg(sub_proc,new_msg);
 	return ret;
 }
