@@ -169,7 +169,7 @@ int message_read_from_src(void ** message,void * src,
     seek_size=0;
     ret=read_func(src,readbuf,sizeof(MESSAGE_HEAD));
     if(ret<sizeof(MESSAGE_HEAD))
-        return ret;
+        return -EINVAL;
 
 
 

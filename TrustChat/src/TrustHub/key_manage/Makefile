@@ -17,3 +17,4 @@ $(PLUGIN).o: $(PLUGIN).c $(PLUGIN).h
 clean:
 	rm -f test_main lib$(PLUGIN).so 
 	rm  *.o *~
+

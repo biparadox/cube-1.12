@@ -19,13 +19,17 @@ struct user_info_list{
 	BYTE user_img[DIGEST_SIZE*2];
 } __attribute__((packed));
 
-static
-
-struct user_acl_list
+static struct user_acl_list
 {
 	char name[DIGEST_SIZE];
 	int  acl_flag;	
 };
+
+static struct user_black
+{
+	char name[DIGEST_SIZE];
+	int flag;
+}__attribute__((packed));
 
 static NAME2VALUE user_state_type_valuelist[] =
 {
@@ -52,6 +56,12 @@ static struct struct_elem_attr user_info_list_desc[]=
 	{NULL,OS210_TYPE_ENDDATA,0,NULL}
 };
 
+static struct struct_elem_attr user_black_desc[]=
+{
+	{"name",OS210_TYPE_STRING,DIGEST_SIZE,NULL},
+	{"flag",OS210_TYPE_INT,sizeof(int),NULL},
+	{NULL,OS210_TYPE_ENDDATA,0,NULL}
+};
 struct login_info
 {
 	char user[DIGEST_SIZE];

@@ -272,7 +272,6 @@ int message_read_from_conn(void ** message,void * conn)
 	if(ret<=0)
 		return ret;
 	offset=ret;
- 
 	flag=message_get_flag(*message);
 	if(!(flag&MSG_FLAG_CRYPT))
 	{

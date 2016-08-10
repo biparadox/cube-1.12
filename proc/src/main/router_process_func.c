@@ -454,6 +454,12 @@ int proc_router_start(void * sub_proc,void * para)
 						message_set_state(message,MSG_FLOW_RESPONSE);
 						send_state=STATE_TRANS;
 					}
+					else if (flow&MSG_FLOW_DRECV)
+					{
+						message_set_state(message,MSG_FLOW_DRECV);
+						send_state=STATE_FINISH;
+					}
+					break;
 					break;
 				case MSG_FLOW_FINISH:
 					send_state=STATE_FINISH;

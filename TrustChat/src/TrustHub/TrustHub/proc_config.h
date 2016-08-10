@@ -23,6 +23,8 @@ static PROCDB_INIT procdb_init_list[]=
 	{"USNE",NULL,&user_name_expand_desc,NULL},
 	{"FILS",&null_init_func,&policyfile_store_desc,&general_lib_ops},
 	{"UACL",&general_lib_init,&user_acl_list_desc,&general_lib_ops},
+	{"MSGD",&null_init_func,&session_msg_desc,&general_lib_ops},
+	{"UB_I",&general_lib_init,&user_black_desc,&general_lib_ops},
 	{NULL,NULL,NULL,NULL}
 };
 /*

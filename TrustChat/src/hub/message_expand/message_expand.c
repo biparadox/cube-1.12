@@ -25,8 +25,8 @@
 
 #include "session_msg.h"
 #include "user_info.h"
+//#include "proc_config.h"
 #include "message_expand.h"
-
 int message_expand_init(void * sub_proc,void * para)
 {
 	int ret;
@@ -141,8 +141,8 @@ int proc_expand_message(void * sub_proc,void * message)
 	printf("begin proc echo \n");
 	struct message_box * msg_box=message;
 
-	struct message_box * new_msg;
 	struct session_msg * echo_msg;
+	struct message_box * new_msg;
 	time_t tm;
          
 	ret=message_get_record(message,&echo_msg,0);
@@ -171,5 +171,24 @@ int proc_expand_message(void * sub_proc,void * message)
 	}
 	message_add_record(new_msg,echo_msg);
 	sec_subject_sendmsg(sub_proc,new_msg);
+	
+	struct session_msg * get_msg;
+	printf("********************|1|*******************\n");
+	AddPolicy(echo_msg,"MESS");
+
+	int ret1;
+	ret1 = GetFirstPolicy(&get_msg,"MESS");
+	if (ret1<0)
+		return ret1;
+
+	while(get_msg!=NULL){
+		printf("%s\n",get_msg->msg);
+		ret1 = GetNextPolicy(&get_msg,"MESS");
+		if (ret1 < 0 )
+			return ret1;
+	}
+	
+	printf("*******************|2|*******************\n");
+	
 	return ret;
 }

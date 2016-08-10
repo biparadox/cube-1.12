@@ -22,6 +22,8 @@
 //#include "../include/main_proc_init.h"
 #include "../include/valuename.h"
 #include "../include/expand_define.h"
+#include "session_msg.h"
+#include "user_info.h"
 
 extern struct timeval time_val={0,50*1000};
 
@@ -59,13 +61,13 @@ int black_filter_start(void * sub_proc,void * para)
 			printf("message format is not registered!\n");
 			continue;
 		}
-		proc_echo_message(sub_proc,recv_msg);
+		proc_block_message(sub_proc,recv_msg);
 	}
 
 	return 0;
 };
 
-int proc_echo_message(void * sub_proc,void * message)
+int proc_block_message(void * sub_proc,void * message)
 {
 	const char * type;
 	int i;
@@ -75,7 +77,8 @@ int proc_echo_message(void * sub_proc,void * message)
 	type=message_get_recordtype(message);
 
 	struct message_box * new_msg;
-	void * record;
+	struct session_msg * record;
+	struct user_black * black_list;
 	new_msg=message_create(type,message);
 	
 	i=0;
@@ -85,7 +88,16 @@ int proc_echo_message(void * sub_proc,void * message)
 		return ret;
 	while(record!=NULL)
 	{
-		message_add_record(new_msg,record);
+		ret=FindPolicy(record->sender,"UB_I",&black_list);
+		if (ret<0)
+			return ret;
+		else if(!black_list)
+		{
+			message_add_record(new_msg,record);
+		}
+		else
+			printf("in black list\n");
+
 		ret=message_get_record(message,&record,i++);
 		if(ret<0)
 			return ret;
