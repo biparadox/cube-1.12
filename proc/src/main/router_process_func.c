@@ -360,7 +360,8 @@ int proc_router_start(void * sub_proc,void * para)
 						flow=message_get_flow(message);
 						message_set_flow(message,flow&(~MSG_FLOW_RESPONSE)|MSG_FLOW_QRECV);
 						message_set_state(message,MSG_FLOW_LOCAL);
-						send_state=STATE_RECV;
+					//	send_state=STATE_RECV;
+						send_state=STATE_ASPECT_LOCAL;
 					}
 					else
 					{
@@ -459,7 +460,6 @@ int proc_router_start(void * sub_proc,void * para)
 						message_set_state(message,MSG_FLOW_DRECV);
 						send_state=STATE_FINISH;
 					}
-					break;
 					break;
 				case MSG_FLOW_FINISH:
 					send_state=STATE_FINISH;

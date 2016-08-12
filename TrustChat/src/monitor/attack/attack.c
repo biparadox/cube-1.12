@@ -22,6 +22,8 @@
 //#include "../include/main_proc_init.h"
 #include "../include/valuename.h"
 #include "../include/expand_define.h"
+#include "user_info.h"
+#include "session_msg.h"
 
 extern struct timeval time_val={0,50*1000};
 
@@ -59,37 +61,49 @@ int attack_start(void * sub_proc,void * para)
 			printf("message format is not registered!\n");
 			continue;
 		}
-		proc_echo_message(sub_proc,recv_msg);
+		if(strncmp(type,"REQC",4)==0)
+			proc_flush_msg(sub_proc,recv_msg);
 	}
 
 	return 0;
 };
 
-int proc_echo_message(void * sub_proc,void * message)
+int proc_flush_msg(void * sub_proc,void * message)
 {
+
+	struct user_info_list * hackers;
 	const char * type;
 	int i;
 	int ret;
-	printf("begin proc echo \n");
-	struct message_box * msg_box=message;
-	type=message_get_recordtype(message);
+	time_t tm;
+	printf("begin proc flush \n");
 
-	struct message_box * new_msg;
-	void * record;
-	new_msg=message_create(type,message);
+	struct session_msg * flush_msg;
+
+	void * new_msg;
 	
-	i=0;
-
-	ret=message_get_record(message,&record,i++);
+	ret=GetFirstPolicy(&hackers,"UL_I");
 	if(ret<0)
 		return ret;
-	while(record!=NULL)
+	while(hackers!=NULL)
 	{
-		message_add_record(new_msg,record);
-		ret=message_get_record(message,&record,i++);
+		new_msg=message_create("MSGD",message);
+		flush_msg=malloc(sizeof(*flush_msg));
+		if(flush_msg==NULL)
+			return -ENOMEM;
+		memset(flush_msg,0,sizeof(*flush_msg));
+		time(&tm);
+		flush_msg->time=tm;
+		flush_msg->flag=MSG_GENERAL;
+		strncpy(flush_msg->sender,hackers->name,DIGEST_SIZE);	
+		flush_msg->msg=dup_str("We are hackers!",0);	
+		ret=entity_hash_uuid("MSGD",flush_msg);
 		if(ret<0)
 			return ret;
+		message_add_record(new_msg,flush_msg);
+		sec_subject_sendmsg(sub_proc,new_msg);
+		ret=GetNextPolicy(&hackers,"UL_I");
 	}
-	sec_subject_sendmsg(sub_proc,new_msg);
-	return ret;
+
+	return 0;
 }
