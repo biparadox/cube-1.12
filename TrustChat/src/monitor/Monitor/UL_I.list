@@ -1,0 +1,20 @@
+{
+	"name":"hacker1",
+	"passwd":"123",
+	"state":"ADMIN"
+}
+{
+	"name":"hacker2",
+	"passwd":"123",
+	"state":"GENERAL"
+}
+{
+	"name":"hacker3",
+	"passwd":"123",
+	"state":"GENERAL"
+}
+{
+	"name":"hacker4",
+	"passwd":"123",
+	"state":"GENERAL"
+}
