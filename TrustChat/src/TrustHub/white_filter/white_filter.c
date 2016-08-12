@@ -72,6 +72,7 @@ int proc_block_message1(void * sub_proc,void * message)
 	const char * type;
 	int i;
 	int ret;
+	int send_no;
 	printf("begin proc echo \n");
 	struct message_box * msg_box=message;
 	type=message_get_recordtype(message);
@@ -79,9 +80,9 @@ int proc_block_message1(void * sub_proc,void * message)
 	struct message_box * new_msg;
 	struct session_msg * record;
 	struct user_black * black_list;
-	new_msg=message_create(type,message);
 	
 	i=0;
+	send_no=0;
 
 	ret=message_get_record(message,&record,i++);
 	if(ret<0)
@@ -91,8 +92,11 @@ int proc_block_message1(void * sub_proc,void * message)
 		ret=FindPolicy(record->sender,"UB_I",&black_list);
 		if (ret<0)
 			return ret;
-		else if(black_list && ret)
+		else if(black_list)
 		{
+			if(send_no==0)
+				new_msg=message_create(type,message);
+			send_no++;
 			message_add_record(new_msg,record);
 		}
 		else
@@ -102,6 +106,7 @@ int proc_block_message1(void * sub_proc,void * message)
 		if(ret<0)
 			return ret;
 	}
-	sec_subject_sendmsg(sub_proc,new_msg);
+	if(send_no!=0)
+		sec_subject_sendmsg(sub_proc,new_msg);
 	return ret;
 }

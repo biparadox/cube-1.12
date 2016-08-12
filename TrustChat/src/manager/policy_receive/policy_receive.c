@@ -112,7 +112,6 @@ int proc_policy_receive(void * sub_proc,void * message)
 			printf("open policyfile %s error!\n",policyfile);
 			return -EINVAL;
 		}
-		write(fd,record->policy_data,record->policy_size);
 
 		fd1=open(backfile,O_RDONLY);
 		if(fd1<0)
@@ -120,7 +119,6 @@ int proc_policy_receive(void * sub_proc,void * message)
 			printf("open backfile %s error!\n",backfile);
 			return -EINVAL;
 		}
-		write(fd,"\n",1);
 		while((ret=read(fd1,buffer,DIGEST_SIZE*8))>0)
 		{
 			write(fd,buffer,ret);
@@ -129,6 +127,8 @@ int proc_policy_receive(void * sub_proc,void * message)
 		}
 		if(ret<0)
 			return ret;
+		write(fd,record->policy_data,record->policy_size);
+		write(fd,"\n",1);
 		close(fd);
 		close(fd1);
 		
