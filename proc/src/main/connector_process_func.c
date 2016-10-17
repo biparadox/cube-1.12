@@ -361,7 +361,7 @@ int connector_read_cfg(char * filename,void * hub)
                 fp=NULL;
             }
         }
-        printf("conn %d is %.4s\n",conn_num+1,buffer);
+        printf("conn %d 's config is %s\n",conn_num+1,buffer);
 
         solve_offset=json_solve_str(&root,buffer);
         if(solve_offset<=0)
@@ -380,9 +380,6 @@ int connector_read_cfg(char * filename,void * hub)
         buffer_left=read_offset-solve_offset;
         if(buffer_left>0)
 	{
-//	    printf( "3 left conn first char is %c\n",buffer[solve_offset]);
-//	    for(i=0;i<buffer_left;i++)
-//		buffer[i]=buffer[solve_offset+i];
             Memcpy(buffer,buffer+solve_offset,buffer_left);
 	    buffer[buffer_left]=0;
 	}

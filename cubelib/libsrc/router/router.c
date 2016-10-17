@@ -503,11 +503,11 @@ int router_read_cfg(char * filename)
             }
 	    buffer_left+=read_offset;
         }
-        printf("policy %d is %s\n",policy_num+1,buffer+solve_offset);
 
         ret=json_solve_str(&root,buffer+solve_offset);
         if(ret<=0)
 		break;
+        printf("policy %d is %s\n",policy_num+1,buffer+solve_offset);
 	solve_offset+=ret;
         ret=read_one_policy(&policy,root);
 
