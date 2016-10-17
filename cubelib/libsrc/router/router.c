@@ -477,7 +477,7 @@ int router_read_cfg(char * filename)
     char buffer[bufsize];
     void * root;
     int read_offset;
-    int solve_offset;
+    int solve_offset=0;
     int buffer_left=0;
     int policy_num=0;
     void * policy;
@@ -503,11 +503,12 @@ int router_read_cfg(char * filename)
             }
 	    buffer_left+=read_offset;
         }
-        printf("policy %d is %s\n",policy_num+1,buffer);
+        printf("policy %d is %s\n",policy_num+1,buffer+solve_offset);
 
-        solve_offset=json_solve_str(&root,buffer);
-        if(solve_offset<=0)
+        ret=json_solve_str(&root,buffer+solve_offset);
+        if(ret<=0)
 		break;
+	solve_offset+=ret;
         ret=read_one_policy(&policy,root);
 
         if(ret<0)
@@ -519,7 +520,7 @@ int router_read_cfg(char * filename)
         router_policy_add(policy);
         policy_num++;
         buffer_left-=solve_offset;
-        if(buffer_left>0)
+        if(solve_offset>0)
 	{
             Memcpy(buffer,buffer+solve_offset,buffer_left);
 	    buffer[buffer_left]=0;
