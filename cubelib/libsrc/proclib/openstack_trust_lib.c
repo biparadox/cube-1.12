@@ -200,6 +200,7 @@ static NAME2POINTER record_type_struct[] =
 
 	{"SYNI",connect_syn_desc},
 	{"ACKI",connect_ack_desc},
+	{"MESG",basic_message_desc},
 
 //	{"IMGI",image_info_desc},
 //	{"VM_I",vminfo_desc},

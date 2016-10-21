@@ -504,10 +504,10 @@ int router_read_cfg(char * filename)
 	    buffer_left+=read_offset;
         }
 
-        ret=json_solve_str(&root,buffer+solve_offset);
+        ret=json_solve_str(&root,buffer);
         if(ret<=0)
 		break;
-        printf("policy %d is %s\n",policy_num+1,buffer+solve_offset);
+        printf("policy %d is %s\n",policy_num+1,buffer);
 	solve_offset+=ret;
         ret=read_one_policy(&policy,root);
 
@@ -520,10 +520,11 @@ int router_read_cfg(char * filename)
         router_policy_add(policy);
         policy_num++;
         buffer_left-=solve_offset;
-        if(solve_offset>0)
+        if((buffer_left>0) &&(solve_offset>0))
 	{
             Memcpy(buffer,buffer+solve_offset,buffer_left);
 	    buffer[buffer_left]=0;
+	    solve_offset=0;
 	}
         else
         {

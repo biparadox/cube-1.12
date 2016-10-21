@@ -33,6 +33,12 @@ static struct struct_elem_attr connect_syn_desc[]=
 	{NULL,OS210_TYPE_ENDDATA,0,NULL}
 };
 
+static struct struct_elem_attr basic_message_desc[]=
+{
+	{"message",OS210_TYPE_ESTRING,DIGEST_SIZE*8,NULL},
+	{NULL,OS210_TYPE_ENDDATA,0,NULL}
+};
+
 static struct struct_elem_attr connect_ack_desc[]=
 {
 	{"uuid",OS210_TYPE_STRING,DIGEST_SIZE*2,NULL},

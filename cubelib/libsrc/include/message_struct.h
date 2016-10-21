@@ -133,6 +133,11 @@ struct expand_data_forward
 	char * receiver_name;
 };
 
+struct basic_message
+{
+	char * message;
+}__attribute__((packed));
+
 struct connect_login
 {
 	char user[DIGEST_SIZE*2];
