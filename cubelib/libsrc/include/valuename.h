@@ -72,6 +72,7 @@ static NAME2VALUE message_flag_valuelist[] =
 	{"SIGN",MSG_FLAG_SIGN},
 	{"ZIP",MSG_FLAG_SIGN},
 	{"VERIFY",MSG_FLAG_VERIFY},
+	{"RESPONSE",MSG_FLAG_RESPONSE},
 	{NULL,0}
 };
 

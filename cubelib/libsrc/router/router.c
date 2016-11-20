@@ -36,11 +36,15 @@ typedef struct router_policy_list//审计信息结构体
 
 typedef struct tagmessage_policy
 {
+    char * name;
+    int type;
+    int flag;
     char * sender_proc;
+    int jump;
     ROUTER_POLICY_LIST * match_policy_list;
-    ROUTER_RULE * main_router_rule;
+    ROUTER_POLICY_LIST * main_router_rule;
     ROUTER_POLICY_LIST * dup_router_rule;
-}MESSAGE_POLICY;
+}__attribute__((packed)) MESSAGE_POLICY;
 
 static ROUTER_POLICY_LIST local_router_policy;
 static ROUTER_POLICY_LIST main_router_policy;
@@ -304,6 +308,10 @@ int __message_policy_init(void * policy)
             (ROUTER_POLICY_LIST *)malloc(sizeof(ROUTER_POLICY_LIST));
     if(message_policy->match_policy_list==NULL)
         return -EINVAL;
+    message_policy->main_router_rule=
+            (ROUTER_POLICY_LIST *)malloc(sizeof(ROUTER_POLICY_LIST));
+    if(message_policy->main_router_rule==NULL)
+        return -EINVAL;
 
     message_policy->dup_router_rule =
             (ROUTER_POLICY_LIST *)malloc(sizeof(ROUTER_POLICY_LIST));
@@ -313,10 +321,9 @@ int __message_policy_init(void * policy)
             (ROUTER_RULE *)malloc(sizeof(ROUTER_RULE));
     if(message_policy->main_router_rule==NULL)
         return -EINVAL;
-    message_policy->sender_proc=NULL;
     __router_policy_init(message_policy->match_policy_list);
+    __router_policy_init(message_policy->main_router_rule);
 
-    memset(message_policy->main_router_rule,0,sizeof(ROUTER_RULE));
     __router_policy_init(message_policy->dup_router_rule);
     return 0;
 }
@@ -379,8 +386,10 @@ int read_cfg_buffer(FILE * stream, char * buf, int size)
 
 int read_one_policy(void ** message_policy,void * json_node)
 {
+    void * policy_head_template=create_struct_template(&message_policy_desc);
     void * match_rule_template=create_struct_template(&match_rule_desc);
     void * router_rule_template=create_struct_template(&router_rule_desc);
+    void * policy_head_node;
     void * match_policy_node;
     void * router_policy_node;
     void * match_rule_node;
@@ -396,29 +405,23 @@ int read_one_policy(void ** message_policy,void * json_node)
         return -EINVAL;
     __message_policy_init(policy);
 
+    // get the policy head node
+    policy_head_node=find_json_elem("policy_head",json_node);
+    if(policy_head_node==NULL)
+        return -EINVAL;
     // get the match policy json node
-    match_policy_node=find_json_elem("MATCH_POLICY",json_node);
+    match_policy_node=find_json_elem("match_policy",json_node);
     if(match_policy_node==NULL)
         return -EINVAL;
 
     // get the match policy json node
-    router_policy_node=find_json_elem("ROUTER_POLICY",json_node);
+    router_policy_node=find_json_elem("router_policy",json_node);
     if(router_policy_node==NULL)
         return -EINVAL;
 
-    // read the match policy
-    // first,read the sender proc value
-
-    temp_node=find_json_elem("sender",match_policy_node);
-    if(temp_node==NULL)
-        policy->sender_proc=NULL;
-    else
-    {
-        ret=get_json_value_from_node(temp_node,buffer,1024);
-        if((ret<0) ||(ret>=1024))
-            return -EINVAL;
-        policy->sender_proc=dup_str(buffer,ret+1);
-    }
+    ret=json_2_struct(policy_head_node,policy,policy_head_template);
+    if(ret<0)
+        return -EINVAL;
 
     // second,read the match rule
 
@@ -430,6 +433,7 @@ int read_one_policy(void ** message_policy,void * json_node)
     while(match_rule_node!=NULL)
     {
         temp_match_rule=malloc(sizeof(MATCH_RULE));
+	memset(temp_match_rule,0,sizeof(MATCH_RULE));
         ret=json_2_struct(match_rule_node,temp_match_rule,match_rule_template);
         if(ret<0)
             return -EINVAL;
@@ -440,14 +444,20 @@ int read_one_policy(void ** message_policy,void * json_node)
     // read the router policy
     // first,read the main router policy
 
-    router_rule_node=find_json_elem("main_policy",router_policy_node);
-    if(router_rule_node==NULL)
+    temp_node=find_json_elem("main_policy",router_policy_node);
+    if(temp_node==NULL)
         return -EINVAL;
-    temp_router_rule=malloc(sizeof(ROUTER_RULE));
-    ret=json_2_struct(router_rule_node,temp_router_rule,router_rule_template);
-    if(ret<0)
-        return -EINVAL;
-    policy->main_router_rule=temp_router_rule;
+    router_rule_node=get_first_json_child(temp_node);
+    while(router_rule_node!=NULL)
+    {		
+ 	 temp_router_rule=malloc(sizeof(ROUTER_RULE));
+   	 memset(temp_router_rule,0,sizeof(ROUTER_RULE));
+    	 ret=json_2_struct(router_rule_node,temp_router_rule,router_rule_template);
+    	 if(ret<0)
+        	return -EINVAL;
+        __router_policy_add(policy->main_router_rule,temp_router_rule);
+        router_rule_node=get_next_json_child(temp_node);
+    }
 
     // second,read the dup rule
 

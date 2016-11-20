@@ -8,8 +8,8 @@
 *       content:        this file describe the module's extern struct 
 *       changelog:       
 *************************************************/
-#ifndef _OS210_MESSAGE_STRUCT_H
-#define _OS210_MESSAGE_STRUCT_H
+#ifndef _CUBE_MESSAGE_STRUCT_H
+#define _CUBE_MESSAGE_STRUCT_H
 
 #include "data_type.h"
 #define MAX_EXPAND_NUM   10
@@ -58,6 +58,7 @@ enum message_flag
 	MSG_FLAG_SIGN=0x04,
 	MSG_FLAG_ZIP=0x08,
 	MSG_FLAG_VERIFY=0x10,
+	MSG_FLAG_RESPONSE=0x20,
 };
 
 typedef struct tagMessage_Head  //强制访问控制标记
@@ -66,9 +67,12 @@ typedef struct tagMessage_Head  //强制访问控制标记
    int  version;          //  the message's version, now is 0x00010001
    char sender_uuid[DIGEST_SIZE*2];     // sender's uuid, or '@' followed with a name, or ':' followed with a connector's name
    char receiver_uuid[DIGEST_SIZE*2];   // receiver's uuid, or '@" followed with a name, or ':' followed with a connector's name
+   char route[DIGEST_SIZE];
    int  flow;
    int  state;
    int  flag;
+   int  ljump;
+   int  rjump;
    char record_type[4];
    int  record_num;
    int  record_size;

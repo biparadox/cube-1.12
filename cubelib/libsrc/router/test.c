@@ -26,7 +26,7 @@ char * passwd[3]={"openstack","openstack","password"};
 
 int main(void)
 {
-    const char * config_filename= "./router_policy.cfg";
+    const char * config_filename= "./json_policy.cfg";
 	int i,recordnum;
 	int ret;
 

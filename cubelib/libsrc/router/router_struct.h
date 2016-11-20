@@ -1,6 +1,17 @@
-
 #ifndef ROUTER_STRUCT_H
 #define ROUTER_STRUCT_H
+
+static struct struct_elem_attr message_policy_desc[] =
+{
+    {"name",OS210_TYPE_ESTRING,DIGEST_SIZE,NULL},
+    {"type",OS210_TYPE_ENUM,sizeof(int),&message_flow_valuelist},
+    {"flag",OS210_TYPE_FLAG,sizeof(int),&message_flag_valuelist},
+    {"sender_proc",OS210_TYPE_ESTRING,DIGEST_SIZE,NULL},
+    {"jump",OS210_TYPE_INT,sizeof(int),NULL},
+	{NULL,OS210_TYPE_ENDDATA,0,NULL}
+};
+
+
 static struct struct_elem_attr match_rule_desc[] =
 {
     {"op",OS210_TYPE_ENUM,sizeof(int),&match_rule_op_valuelist},
