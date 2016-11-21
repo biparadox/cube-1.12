@@ -104,15 +104,10 @@ int router_policy_init()
 
 int router_policy_gettype(void * policy)
 {
-    MESSAGE_POLICY * router_policy;
-    ROUTER_RULE  * main_rule;
+    MESSAGE_POLICY * router_policy=policy;
     if(policy==NULL)
 	    return -EINVAL;
-    main_rule=((MESSAGE_POLICY *)policy)->main_router_rule;
-    if(main_rule==NULL)
-	    return -EINVAL;
-
-    return main_rule->type;
+    return router_policy->type;
 }
 
 int __router_policy_getfirst(void * policy_list,void ** policy)
@@ -696,18 +691,25 @@ void * router_get_next_duprule(void * policy)
 }
 
 
-int router_policy_match_message(void * policy,void * message,char * sender_proc)
+int router_policy_match_message(void * policy,void * message,void * sender_proc)
 {
     int ret;
+    MESSAGE_HEAD * msg_head;	
+
     MESSAGE_POLICY * msg_policy=(MESSAGE_POLICY *)policy;
     if(policy==NULL)
         return -EINVAL;
     if(message==NULL)
         return -EINVAL;
+   
+    msg_head=get_message_head(message);	
+
     if(sender_proc!=NULL)
     {
-	    if(strncmp(msg_policy->sender_proc,sender_proc,DIGEST_SIZE*2)!=0)
+	    if(strncmp(msg_policy->sender_proc,sec_subject_getname(sender_proc),DIGEST_SIZE*2)!=0)
 		    return 0;
+	    if(msg_policy->jump!=msg_head->ljump)
+		    return 0;	
     }
     void * rule=get_first_match_rule(policy);
     while(rule!=NULL)
@@ -718,6 +720,31 @@ int router_policy_match_message(void * policy,void * message,char * sender_proc)
         if(ret==0)
             return 0;
         rule=get_next_match_rule(policy);
+    }
+    return ret;
+}
+
+int router_find_route_policy(void * message,void **msg_policy,void * sender_proc)
+{
+    void * policy;
+    int ret;
+    *msg_policy=NULL;
+    ret=router_policy_getfirst(&policy);
+    if(ret<0)
+        return ret;
+    while(policy!=NULL)
+    {
+        ret=router_policy_match_message(policy,message,sender_proc);
+        if(ret<0)
+            return ret;
+        if(ret>0)
+        {
+            *msg_policy=policy;
+            return ret;
+        }
+    	ret=router_policy_getnext(&policy);
+    	if(ret<0)
+             return ret;
     }
     return ret;
 }

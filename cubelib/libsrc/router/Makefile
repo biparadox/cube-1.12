@@ -6,7 +6,7 @@ FUNCOBJ= router.o
 
 main: ../lib/librouter.a ../lib/librouter.so test
 test:  test.c ../lib/librouter.a ../lib/libstruct.a 
-	$(CC) $(FLAGS) test test.c -L../lib -lrouter -lmessage -llogicdb -lstruct -lcrypto_func -lpthread
+	$(CC) $(FLAGS) test test.c -L../lib -lrouter -lentity -lmessage -llogicdb -lstruct -lcrypto_func -lpthread
 ../lib/librouter.so:  $(FUNCOBJ)
 	$(CC) -shared -o librouter.so $(FUNCOBJ) 
 	mv    librouter.so ../lib

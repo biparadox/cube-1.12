@@ -379,6 +379,13 @@ int main(int argc,char **argv)
   			return ret;
 		printf("monitor sub_proc %s started successfully!\n",sec_subject_getname(sub_proc));
 	  }
+	  else if(sec_subject_gettype(sub_proc) == PROC_TYPE_PORT)
+	  {
+  		ret=sec_subject_start(sub_proc,NULL);
+	  	if(ret<0)
+  			return ret;
+		printf("port sub_proc %s started successfully!\n",sec_subject_getname(sub_proc));
+	  }
     	  ret=get_next_sec_subject(&sub_proc);
 
     	  if(ret<0)

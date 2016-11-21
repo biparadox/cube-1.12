@@ -61,8 +61,9 @@ int aspect_policy_getfirst(void ** policy);
 int aspect_policy_getnext(void ** policy);
 
 int router_policy_gettype(void * policy);
-int router_policy_match_message(void * policy,void * message,char * sender_proc);
+int router_policy_match_message(void * policy,void * message,void * sender_proc);
 int router_find_match_policy(void * message,void **msg_policy,char * sender_proc);
+int router_find_route_policy(void * message,void **msg_policy,void * sender_proc);
 int router_find_local_policy(void * message,void **msg_policy,char * sender_proc);
 int router_find_aspect_policy(void * message,void **msg_policy,char * sender_proc);
 int router_find_aspect_local_policy(void * message,void **msg_policy,char * sender_proc);

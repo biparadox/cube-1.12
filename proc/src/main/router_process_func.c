@@ -253,12 +253,16 @@ int proc_router_start(void * sub_proc,void * para)
 			int state;
 			int flow;
 
-
 			int send_state;
 			int hit_target;
 
+			enum proc_type curr_proc_type;
 
-			// receiver the message
+			// this pro is a port proc
+			curr_proc_type=sec_subject_gettype(sub_proc);
+
+				
+			// receiver an outside message
 			ret=recv_sec_subject_msg(sub_proc,&message);
 			if(ret<0)
 			{
@@ -270,13 +274,28 @@ int proc_router_start(void * sub_proc,void * para)
 				get_next_sec_subject(&sub_proc);
 				continue;	
 			}
-
 			origin_proc=sec_subject_getname(sub_proc);
 
 			printf("router get proc %.64s's message!\n",origin_proc); 
 			
 			router_dup_activemsg_info(message);
 
+
+			// if this message is an outside message
+			if( curr_proc_type ==PROC_TYPE_PORT)
+			{
+				ret=router_find_route_policy(message,&msg_policy,sub_proc);	
+				if(ret<0)
+					return ret;
+				if(msg_policy==NULL)
+				{
+					proc_audit_log(message);
+					printf("message %s is discarded in FINISH state!\n",message_get_recordtype(message));
+					continue;
+				}
+			}
+			
+/*
 			send_state=STATE_RECV;
 
 			switch(message_get_state(message))
@@ -705,7 +724,10 @@ int proc_router_start(void * sub_proc,void * para)
 			{
 				printf("router send message to main flow failed!\n");
 			}
-		
+			
+			*/
+			proc_audit_log(message);
+
 			continue;
 		}
 	
