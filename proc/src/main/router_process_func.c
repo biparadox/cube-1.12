@@ -293,6 +293,13 @@ int proc_router_start(void * sub_proc,void * para)
 					printf("message %s is discarded in FINISH state!\n",message_get_recordtype(message));
 					continue;
 				}
+				ret=router_set_local_route(message,msg_policy);
+				if(ret<0)
+					return ret;
+				proc_audit_log(message);
+				ret=proc_router_send_msg(message,local_uuid,proc_name);
+				if(ret<0)
+					return ret;
 			}
 			
 /*
@@ -726,7 +733,6 @@ int proc_router_start(void * sub_proc,void * para)
 			}
 			
 			*/
-			proc_audit_log(message);
 
 			continue;
 		}

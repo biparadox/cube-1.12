@@ -51,6 +51,7 @@ static ROUTER_POLICY_LIST main_router_policy;
 static ROUTER_POLICY_LIST aspect_router_policy;
 static ROUTER_POLICY_LIST aspect_local_policy;
 
+int rule_get_target(void * router_rule,void * message,void **result);
 
 int __router_policy_init(void * policy_list)
 {
@@ -592,7 +593,7 @@ int match_message_expand(void * match_rule,void * message)
     if(expand_template==NULL)
         return -EINVAL;
 
-   for(i=0;i<5;i++)
+   for(i=0;i<MAX_EXPAND_NUM;i++)
    {
         ret=message_get_expand(message,&expand,i);
         if(expand==NULL)
@@ -600,7 +601,7 @@ int match_message_expand(void * match_rule,void * message)
         if(strncmp(expand->tag,rule->expand_type,4)==0)
             break;
    }
-   if(i==5)
+   if(i==MAX_EXPAND_NUM)
        return -EINVAL;
     ret=struct_read_elem(rule->seg,expand,buffer,expand_template);
     if(ret<0)
@@ -660,12 +661,25 @@ void * get_next_match_rule(void * policy)
     return rule;
 }
 
-void * get_main_router_rule(void * policy)
+void * router_get_first_mainrule(void * policy)
 {
     MESSAGE_POLICY * msg_policy=(MESSAGE_POLICY *)policy;
     void * rule;
     int ret;
-    return msg_policy->main_router_rule;
+    ret=__router_policy_getfirst(msg_policy->main_router_rule,&rule);
+    if(ret<0)
+        return NULL;
+    return rule;
+}
+void * router_get_next_mainrule(void * policy)
+{
+    MESSAGE_POLICY * msg_policy=(MESSAGE_POLICY *)policy;
+    void * rule;
+    int ret;
+    ret=__router_policy_getnext(msg_policy->main_router_rule,&rule);
+    if(ret<0)
+        return NULL;
+    return rule;
 }
 
 void * router_get_first_duprule(void * policy)
@@ -690,6 +704,39 @@ void * router_get_next_duprule(void * policy)
     return rule;
 }
 
+int router_set_local_route(void * message,void * policy)
+{
+	int ret;
+    	MESSAGE_HEAD * msg_head;	
+   	MESSAGE_POLICY * msg_policy=(MESSAGE_POLICY *)policy;
+	ROUTER_RULE * first_rule;
+	char * target;
+
+    	if(policy==NULL)
+        	return -EINVAL;
+    	if(message==NULL)
+        	return -EINVAL;
+    	msg_head=get_message_head(message);
+		
+	memset(msg_head->route,0,DIGEST_SIZE);
+	memcpy(msg_head->route,msg_policy->name,DIGEST_SIZE);
+	msg_head->ljump=0;
+	first_rule=router_get_first_mainrule(policy);
+	if(first_rule==NULL)
+		return 0;
+	memset(msg_head->receiver_uuid,0,DIGEST_SIZE*2);
+	if(first_rule->target_type==MSG_TARGET_LOCAL)
+	{
+		ret=rule_get_target(first_rule,message,&target);
+		if(ret<0)
+			return ret;		
+		memcpy(msg_head->receiver_uuid,target,DIGEST_SIZE*2);
+		free(target);
+	//	strncpy(msg_head->receiver_uuid,first_rule->target_name,DIGEST_SIZE*2);
+	}
+	message_set_state(message,MSG_FLOW_LOCAL);
+	return 1;	
+}
 
 int router_policy_match_message(void * policy,void * message,void * sender_proc)
 {
