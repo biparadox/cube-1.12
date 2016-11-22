@@ -157,6 +157,21 @@ int message_set_receiver(void * message,const char * receiver_uuid)
 	return 0;
 }
 
+int message_set_route(void * message,const char * route)
+{
+	struct message_box * msg_box;
+	int ret;
+	int len;
+	if(message==NULL)
+		return -EINVAL;
+	msg_box=(struct message_box *)message;
+	len=strlen(route);
+	if(len<DIGEST_SIZE)
+		Memcpy(&(msg_box->head.route),route,len+1);
+	else
+		Memcpy(&(msg_box->head.route),route,DIGEST_SIZE);
+	return 0;
+}
 int set_message_head(void * message,char * item_name, void * value)
 {
 	struct message_box * msg_box;

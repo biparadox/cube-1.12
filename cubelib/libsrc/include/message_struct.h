@@ -179,6 +179,7 @@ const char * message_get_recordtype(void * message);
 const char * message_get_sender(void * message);
 const char * message_get_receiver(void * message);
 int message_set_receiver(void * message,const char * receiver_uuid);
+int message_set_route(void * message,const char * route);
 
 void * message_create(char * type,void * active_msg);
 void * message_clone(void * message);

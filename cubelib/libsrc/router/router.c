@@ -704,6 +704,28 @@ void * router_get_next_duprule(void * policy)
     return rule;
 }
 
+int router_find_policy_byname(void **msg_policy,char * name)
+{
+    MESSAGE_POLICY * policy;
+    int ret;
+		
+    *msg_policy=NULL;
+    ret=router_policy_getfirst(&policy);
+    if(ret<0)
+        return ret;
+    while(policy!=NULL)
+    {
+	ret=strncmp(name,policy->name,DIGEST_SIZE);
+	if(ret==0)
+	{
+		*msg_policy=policy;		
+		break;
+	}
+    	ret=router_policy_getnext(&policy);
+    }
+    return ret;
+}
+
 int router_set_local_route(void * message,void * policy)
 {
 	int ret;
@@ -721,6 +743,7 @@ int router_set_local_route(void * message,void * policy)
 	memset(msg_head->route,0,DIGEST_SIZE);
 	memcpy(msg_head->route,msg_policy->name,DIGEST_SIZE);
 	msg_head->ljump=0;
+	msg_head->flag=msg_policy->flag;
 	first_rule=router_get_first_mainrule(policy);
 	if(first_rule==NULL)
 		return 0;
@@ -730,9 +753,53 @@ int router_set_local_route(void * message,void * policy)
 		ret=rule_get_target(first_rule,message,&target);
 		if(ret<0)
 			return ret;		
+		strncpy(msg_head->receiver_uuid,target,DIGEST_SIZE*2);
+		free(target);
+	}
+	message_set_state(message,MSG_FLOW_LOCAL);
+	return 1;	
+}
+
+
+
+int router_set_next_jump(void * message)
+{
+	int ret;
+    	MESSAGE_HEAD * msg_head;	
+   	MESSAGE_POLICY * msg_policy;
+	ROUTER_RULE * rule;
+	char * target;
+	int i;
+
+    	if(message==NULL)
+        	return -EINVAL;
+    	msg_head=get_message_head(message);
+		
+	ret=router_find_policy_byname(&msg_policy,msg_head->route);
+	if(ret<0)
+		return ret;
+	if(msg_policy==NULL)
+		return 0;	
+
+	rule=router_get_first_mainrule(msg_policy);
+	if(rule==NULL)
+		return 0;
+	for(i=0;i<msg_head->ljump;i++)
+	{
+		rule=router_get_next_mainrule(msg_policy);		
+		if(rule==NULL)
+			return 0;
+	}
+
+	memset(msg_head->receiver_uuid,0,DIGEST_SIZE*2);
+	if((rule->target_type==MSG_TARGET_LOCAL)
+		||(rule->target_type==MSG_TARGET_PORT))
+	{
+		ret=rule_get_target(rule,message,&target);
+		if(ret<0)
+			return ret;		
 		memcpy(msg_head->receiver_uuid,target,DIGEST_SIZE*2);
 		free(target);
-	//	strncpy(msg_head->receiver_uuid,first_rule->target_name,DIGEST_SIZE*2);
 	}
 	message_set_state(message,MSG_FLOW_LOCAL);
 	return 1;	
@@ -908,6 +975,7 @@ int rule_get_target(void * router_rule,void * message,void **result)
     *result=NULL;
     switch(rule->target_type){
 	    case MSG_TARGET_NAME:
+	    case MSG_TARGET_PORT:
 	    case MSG_TARGET_LOCAL:
 		    target=dup_str(rule->target_name,DIGEST_SIZE*2);
 		    break;
@@ -1081,6 +1149,7 @@ int router_dup_activemsg_info (void * message)
 	int ret;
 	struct message_box * msg_box=message;
 	MESSAGE_HEAD * msg_head;
+	MESSAGE_HEAD * new_msg_head;
 	if(message==NULL)
 		return -EINVAL;
 
@@ -1089,8 +1158,13 @@ int router_dup_activemsg_info (void * message)
 		return 0;
 	
 	msg_head=get_message_head(active_msg);
+	new_msg_head=get_message_head(message);
 	message_set_flow(msg_box,msg_head->flow);
 	message_set_state(msg_box,msg_head->state);
+	message_set_route(msg_box,msg_head->route);
+	new_msg_head->ljump=msg_head->ljump;	
+	new_msg_head->rjump=msg_head->rjump;	
+
 //	if(msg_head->flow & MSG_FLOW_RESPONSE)
 //	{
 	

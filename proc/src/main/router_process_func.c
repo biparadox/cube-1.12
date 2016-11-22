@@ -280,27 +280,69 @@ int proc_router_start(void * sub_proc,void * para)
 			
 			router_dup_activemsg_info(message);
 
-
-			// if this message is an outside message
-			if( curr_proc_type ==PROC_TYPE_PORT)
+			switch(curr_proc_type)
 			{
-				ret=router_find_route_policy(message,&msg_policy,sub_proc);	
-				if(ret<0)
-					return ret;
-				if(msg_policy==NULL)
-				{
+				case PROC_TYPE_PORT:
+
+				// if this message is an outside message
+					ret=router_find_route_policy(message,&msg_policy,sub_proc);	
+					if(ret<0)
+						return ret;
+					if(msg_policy==NULL)
+					{
+						proc_audit_log(message);
+						printf("message %s is discarded in FINISH state!\n",message_get_recordtype(message));
+						break;
+					}
+					ret=router_set_local_route(message,msg_policy);
+					if(ret<0)
+						return ret;
 					proc_audit_log(message);
-					printf("message %s is discarded in FINISH state!\n",message_get_recordtype(message));
-					continue;
+					printf("message %s is send to %s!\n",message_get_recordtype(message),message_get_receiver(message));
+					ret=proc_router_send_msg(message,local_uuid,proc_name);
+					if(ret<0)
+						return ret;
+					break;
+				case PROC_TYPE_CONN:
+					break;
+				case PROC_TYPE_MONITOR:
+				case PROC_TYPE_CONTROL:
+				case PROC_TYPE_DECIDE:
+				{
+					MESSAGE_HEAD * msg_head;
+					msg_head=get_message_head(message);
+					if(msg_head->route[0]!=0)
+					{
+						// this is a message in local dispatch
+						msg_head->ljump++;	
+						ret=router_set_next_jump(message);
+						if(ret<0)
+							break;
+						else if(ret==0)
+						{
+//							if(msg_head->flag|MSG_FLAG_RESPONSE)
+						}
+						else
+						{
+							proc_audit_log(message);
+							printf("message %s is send to %s!\n",message_get_recordtype(message),message_get_receiver(message));
+							ret=proc_router_send_msg(message,local_uuid,proc_name);
+							if(ret<0)
+								return ret;
+							break;
+						}
+							
+					}
+					else
+					{
+						// this is a source message
+					}
 				}
-				ret=router_set_local_route(message,msg_policy);
-				if(ret<0)
-					return ret;
-				proc_audit_log(message);
-				ret=proc_router_send_msg(message,local_uuid,proc_name);
-				if(ret<0)
-					return ret;
+					break;
+				default:
+					break;
 			}
+			
 			
 /*
 			send_state=STATE_RECV;

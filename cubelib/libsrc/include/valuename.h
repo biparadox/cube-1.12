@@ -136,6 +136,7 @@ static NAME2VALUE message_flow_type_valuelist[] =
 static NAME2VALUE message_target_type_valuelist[] =
 {
     {"LOCAL",MSG_TARGET_LOCAL},
+    {"PORT",MSG_TARGET_PORT},
     {"NAME",MSG_TARGET_NAME},
     {"UUID",MSG_TARGET_UUID},
     {"RECORD",MSG_TARGET_RECORD},
