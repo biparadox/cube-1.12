@@ -284,7 +284,7 @@ int proc_router_start(void * sub_proc,void * para)
 			{
 				case PROC_TYPE_PORT:
 
-				// if this message is an outside message
+				// if this message is from a port, we find a policy match it and turned it to local message
 					ret=router_find_route_policy(message,&msg_policy,sub_proc);	
 					if(ret<0)
 						return ret;
@@ -294,6 +294,12 @@ int proc_router_start(void * sub_proc,void * para)
 						printf("message %s is discarded in FINISH state!\n",message_get_recordtype(message));
 						break;
 					}
+					if(router_policy_gettype(msg_policy)==MSG_FLOW_QUERY) 
+					{
+						// if this message's flow is query, we should push it into the stack
+						router_push_site(message,origin_proc,"FTRE");
+					}
+						 
 					ret=router_set_local_route(message,msg_policy);
 					if(ret<0)
 						return ret;
@@ -304,6 +310,9 @@ int proc_router_start(void * sub_proc,void * para)
 						return ret;
 					break;
 				case PROC_TYPE_CONN:
+					ret=router_find_route_policy(message,&msg_policy,sub_proc);	
+					if(ret<0)
+						return ret;
 					break;
 				case PROC_TYPE_MONITOR:
 				case PROC_TYPE_CONTROL:
@@ -320,7 +329,20 @@ int proc_router_start(void * sub_proc,void * para)
 							break;
 						else if(ret==0)
 						{
-//							if(msg_head->flag|MSG_FLAG_RESPONSE)
+						// we met the route's end, look if this message is a query message 
+							if(msg_head->flow==MSG_FLOW_QUERY) 
+							{
+								// if this message's flow is query, we should push it into the stack
+								router_pop_site(message,"FTRE");
+								printf("begin to response query message");
+								msg_head->flag|=MSG_FLAG_RESPONSE;
+								msg_head->ljump--;
+								proc_audit_log(message);
+								ret=proc_router_send_msg(message,local_uuid,proc_name);
+								if(ret<0)
+									return ret;
+								break;
+							}
 						}
 						else
 						{

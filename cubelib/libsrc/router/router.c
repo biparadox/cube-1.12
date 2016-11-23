@@ -743,7 +743,8 @@ int router_set_local_route(void * message,void * policy)
 	memset(msg_head->route,0,DIGEST_SIZE);
 	memcpy(msg_head->route,msg_policy->name,DIGEST_SIZE);
 	msg_head->ljump=0;
-	msg_head->flag=msg_policy->flag;
+	msg_head->flow=msg_policy->type;
+//	msg_head->flag=msg_policy->flag;
 	first_rule=router_get_first_mainrule(policy);
 	if(first_rule==NULL)
 		return 0;

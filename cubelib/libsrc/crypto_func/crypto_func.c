@@ -198,6 +198,36 @@ int bitmap_is_allset(char * bitmap,int size)
 
 }
 
+static inline int _isdigit(char c)
+{
+	if((c>='0') && (c<='9'))
+		return 1;
+	return 0;
+}
+
+static inline int _is_hex_digit(char c)
+{
+	if(_isdigit(c))
+		return c-'0';
+	if((c>='a') && (c<='f'))
+		return c-'a'+9;
+	if((c>='A') && (c<='F'))
+		return c-'a'+9;
+	return -1;
+}
+
+int is_valid_uuid(BYTE * uuid)
+{
+	int i;
+	for(i=0;i<DIGEST_SIZE*2;i++)
+	{
+		if(_is_hex_digit(uuid[i])>=0)
+			continue;
+		return 0;
+	}
+	return 1;
+}
+
 static unsigned char iv[16] = {0x01,0x23,0x45,0x67,0x89,0xab,0xcd,0xef,0xfe,0xdc,0xba,0x98,0x76,0x54,0x32,0x10};
 int sm4_context_crypt( BYTE * input, BYTE ** output, int size,char * passwd)
 {
