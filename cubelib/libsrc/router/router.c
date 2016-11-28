@@ -756,8 +756,19 @@ int router_set_local_route(void * message,void * policy)
 			return ret;		
 		strncpy(msg_head->receiver_uuid,target,DIGEST_SIZE*2);
 		free(target);
+		message_set_state(message,MSG_FLOW_LOCAL);
 	}
-	message_set_state(message,MSG_FLOW_LOCAL);
+	else if(first_rule->target_type == MSG_TARGET_NAME)
+	{
+		ret=rule_get_target(first_rule,message,&target);
+		if(ret<0)
+			return ret;		
+		msg_head->receiver_uuid[0]='@';
+		strncpy(msg_head->receiver_uuid+1,target,DIGEST_SIZE*2);
+		free(target);
+		message_set_state(message,MSG_FLOW_DELIVER);
+		msg_head->rjump++;
+	}
 	return 1;	
 }
 
@@ -801,8 +812,19 @@ int router_set_next_jump(void * message)
 			return ret;		
 		memcpy(msg_head->receiver_uuid,target,DIGEST_SIZE*2);
 		free(target);
+		message_set_state(message,MSG_FLOW_LOCAL);
 	}
-	message_set_state(message,MSG_FLOW_LOCAL);
+	else if(rule->target_type == MSG_TARGET_NAME)
+	{
+		ret=rule_get_target(rule,message,&target);
+		if(ret<0)
+			return ret;		
+		msg_head->receiver_uuid[0]='@';
+		strncpy(msg_head->receiver_uuid+1,target,DIGEST_SIZE*2);
+		free(target);
+		message_set_state(message,MSG_FLOW_DELIVER);
+		msg_head->rjump++;
+	}
 	return 1;	
 }
 
@@ -823,9 +845,18 @@ int router_policy_match_message(void * policy,void * message,void * sender_proc)
     {
 	    if(strncmp(msg_policy->sender_proc,sec_subject_getname(sender_proc),DIGEST_SIZE*2)!=0)
 		    return 0;
-	    if(msg_policy->jump!=msg_head->ljump)
-		    return 0;	
+	    if(msg_head->state==MSG_FLOW_LOCAL)
+	    {	
+		    if(msg_policy->jump!=msg_head->ljump)
+			    return 0;	
+	    }
+	    else if(msg_head->state==MSG_FLOW_DELIVER)
+	    {
+		    if(msg_policy->jump!=msg_head->rjump)
+			return 0;	 	
+	    }
     }
+	
     void * rule=get_first_match_rule(policy);
     while(rule!=NULL)
     {
@@ -1611,6 +1642,16 @@ int router_pop_site(void * message, char * type)
 		free(flow_trace->trace_record);
 		message_remove_expand(message,type,&flow_trace);
 	}
+		
+	if(is_valid_uuid(msg_head->receiver_uuid))
+	{
+		msg_head->state=MSG_FLOW_DELIVER;	
+	}
+	else
+	{
+		msg_head->state=MSG_FLOW_LOCAL;
+	}
+
 	return 1;
 }
 

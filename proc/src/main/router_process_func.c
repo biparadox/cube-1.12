@@ -279,6 +279,8 @@ int proc_router_start(void * sub_proc,void * para)
 			printf("router get proc %.64s's message!\n",origin_proc); 
 			
 			router_dup_activemsg_info(message);
+			MESSAGE_HEAD * msg_head;
+			msg_head=get_message_head(message);
 
 			switch(curr_proc_type)
 			{
@@ -303,6 +305,10 @@ int proc_router_start(void * sub_proc,void * para)
 					ret=router_set_local_route(message,msg_policy);
 					if(ret<0)
 						return ret;
+					if(msg_head->state==MSG_FLOW_DELIVER)
+					{
+						router_push_site(message,conn_uuid,"FTRE");
+					}
 					proc_audit_log(message);
 					printf("message %s is send to %s!\n",message_get_recordtype(message),message_get_receiver(message));
 					ret=proc_router_send_msg(message,local_uuid,proc_name);
@@ -310,16 +316,53 @@ int proc_router_start(void * sub_proc,void * para)
 						return ret;
 					break;
 				case PROC_TYPE_CONN:
-					ret=router_find_route_policy(message,&msg_policy,sub_proc);	
-					if(ret<0)
-						return ret;
-					break;
+					// if it is in response route
+					if((msg_head->route[0]!=0)
+						&&(msg_head->flow ==MSG_FLOW_QUERY)
+						&&(msg_head->flag &MSG_FLAG_RESPONSE))
+					{
+						msg_head->ljump=0;	
+						msg_head->rjump--;
+								// if this message's flow is query, we should push it into the stack
+						router_pop_site(message,"FTRE");
+						printf("begin to response query message");
+						proc_audit_log(message);
+						ret=proc_router_send_msg(message,local_uuid,proc_name);
+						if(ret<0)
+							return ret;
+						break;
+					}
+					else
+					{
+						ret=router_find_route_policy(message,&msg_policy,sub_proc);	
+						if(ret<0)
+						{
+							printf("%s get error message!\n",sub_proc); 
+							return ret;
+						}
+						if(msg_policy==NULL)
+						{
+							proc_audit_log(message);
+							printf("message %s is discarded in FINISH state!\n",message_get_recordtype(message));
+							break;
+						}
+						ret=router_set_local_route(message,msg_policy);
+						if(ret<0)
+							return ret;
+						if(msg_head->state==MSG_FLOW_DELIVER)
+						{
+							router_push_site(message,conn_uuid,"FTRE");
+						}
+						proc_audit_log(message);
+						ret=proc_router_send_msg(message,local_uuid,proc_name);
+						if(ret<0)
+							return ret;
+						break;
+					}
 				case PROC_TYPE_MONITOR:
 				case PROC_TYPE_CONTROL:
 				case PROC_TYPE_DECIDE:
 				{
-					MESSAGE_HEAD * msg_head;
-					msg_head=get_message_head(message);
 					if(msg_head->route[0]!=0)
 					{
 						// this is a message in local dispatch
@@ -346,8 +389,14 @@ int proc_router_start(void * sub_proc,void * para)
 						}
 						else
 						{
+							if(msg_head->state==MSG_FLOW_DELIVER)
+							{
+								router_push_site(message,conn_uuid,"FTRE");
+							}
 							proc_audit_log(message);
 							printf("message %s is send to %s!\n",message_get_recordtype(message),message_get_receiver(message));
+														
+
 							ret=proc_router_send_msg(message,local_uuid,proc_name);
 							if(ret<0)
 								return ret;

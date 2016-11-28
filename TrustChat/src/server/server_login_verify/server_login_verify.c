@@ -90,14 +90,12 @@ int proc_server_login_verify(void * sub_proc,void *message)
         struct user_info_list *lib_data;
         struct connect_return *return_data; 
 // 	void * record;
-	new_msg=message_create("RETC",message);
-	return_data=malloc(sizeof(struct connect_return));
-	user_db=malloc(sizeof(struct user_addr_list));
-	memset(return_data,0,sizeof(struct connect_return));
-	i=0;
 	ret=message_get_record(message,&login_data,0);
 	printf("***************--%s--*****************\n",login_data->user);
+        if(ret<0)
+        	return ret;
 	
+	user_db=malloc(sizeof(struct user_addr_list));
 	memcpy(user_db->user,login_data->user,DIGEST_SIZE);
 	memcpy(user_db->addr,flow_trace->trace_record,DIGEST_SIZE*2);
 	user_db->state=USER_CONN_CONNECTED;
@@ -109,26 +107,28 @@ int proc_server_login_verify(void * sub_proc,void *message)
 	//only_one->user = login_data->user;
 	//only_one->user_uuid = flow_trace->trace_record;
 	
-//        if(ret<0)
-//           return ret;
-//        ret=FindPolicy(login_data->user,"UL_I",&lib_data);
-//	if(ret<0)
-//	{
-//	 return_data->ret_data=dup_str("login verify system error!",0);
-//	}
-//        else if(lib_data==NULL){
-//         return_data->ret_data=dup_str("no such user!",0);
-//	}
-//        else if(strncmp(lib_data->passwd,login_data->passwd,DIGEST_SIZE*2))
-//        {
-//         return_data->ret_data=dup_str("error passwd!",0);
-//	}
-//	else
-//	{
-//
-//          return_data->ret_data=dup_str("login succeed!",0);
- //         return_data->retval=1;
-//	}
+	new_msg=message_create("RETC",message);
+	return_data=malloc(sizeof(struct connect_return));
+	memset(return_data,0,sizeof(struct connect_return));
+
+        ret=FindPolicy(login_data->user,"UL_I",&lib_data);
+	if(ret<0)
+	{
+	 	return_data->ret_data=dup_str("login verify system error!",0);
+	}
+        else if(lib_data==NULL){
+        	return_data->ret_data=dup_str("no such user!",0);
+	}
+        else if(strncmp(lib_data->passwd,login_data->passwd,DIGEST_SIZE*2))
+        {
+	         return_data->ret_data=dup_str("error passwd!",0);
+	}
+	else
+	{
+
+        	return_data->ret_data=dup_str("login succeed!",0);
+            	return_data->retval=1;
+	}
 /*	while(record!=NULL)
 	{
 		message_add_record(new_msg,record);
@@ -136,8 +136,8 @@ int proc_server_login_verify(void * sub_proc,void *message)
 		if(ret<0)
 			return ret;
 	}*/
-//        return_data->ret_data_size=strlen(return_data->ret_data);
-//        message_add_record(new_msg,return_data);
-//	sec_subject_sendmsg(sub_proc,new_msg);
-//	return ret;
+        return_data->ret_data_size=strlen(return_data->ret_data);
+        message_add_record(new_msg,return_data);
+	sec_subject_sendmsg(sub_proc,new_msg);
+	return ret;
 }
