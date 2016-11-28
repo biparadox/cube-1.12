@@ -97,7 +97,7 @@ int proc_server_login_verify(void * sub_proc,void *message)
 	
 	user_db=malloc(sizeof(struct user_addr_list));
 	memcpy(user_db->user,login_data->user,DIGEST_SIZE);
-	memcpy(user_db->addr,flow_trace->trace_record,DIGEST_SIZE*2);
+	memcpy(user_db->addr,flow_trace->trace_record+DIGEST_SIZE*2*(flow_trace->record_num-1),DIGEST_SIZE*2);
 	user_db->state=USER_CONN_CONNECTED;
 	
 	AddPolicy(user_db,"U2AL");

@@ -731,7 +731,7 @@ int router_set_local_route(void * message,void * policy)
 	int ret;
     	MESSAGE_HEAD * msg_head;	
    	MESSAGE_POLICY * msg_policy=(MESSAGE_POLICY *)policy;
-	ROUTER_RULE * first_rule;
+	ROUTER_RULE * rule;
 	char * target;
 
     	if(policy==NULL)
@@ -745,34 +745,56 @@ int router_set_local_route(void * message,void * policy)
 	msg_head->ljump=0;
 	msg_head->flow=msg_policy->type;
 //	msg_head->flag=msg_policy->flag;
-	first_rule=router_get_first_mainrule(policy);
-	if(first_rule==NULL)
+	rule=router_get_first_mainrule(policy);
+	if(rule==NULL)
 		return 0;
 	memset(msg_head->receiver_uuid,0,DIGEST_SIZE*2);
-	if(first_rule->target_type==MSG_TARGET_LOCAL)
+	switch(rule->target_type)
 	{
-		ret=rule_get_target(first_rule,message,&target);
-		if(ret<0)
-			return ret;		
-		strncpy(msg_head->receiver_uuid,target,DIGEST_SIZE*2);
-		free(target);
-		message_set_state(message,MSG_FLOW_LOCAL);
-	}
-	else if(first_rule->target_type == MSG_TARGET_NAME)
-	{
-		ret=rule_get_target(first_rule,message,&target);
-		if(ret<0)
-			return ret;		
-		msg_head->receiver_uuid[0]='@';
-		strncpy(msg_head->receiver_uuid+1,target,DIGEST_SIZE*2);
-		free(target);
-		message_set_state(message,MSG_FLOW_DELIVER);
-		msg_head->rjump++;
+		case MSG_TARGET_LOCAL:
+		case MSG_TARGET_PORT:
+			ret=rule_get_target(rule,message,&target);
+			if(ret<0)
+				return ret;		
+			memcpy(msg_head->receiver_uuid,target,DIGEST_SIZE*2);
+			free(target);
+			message_set_state(message,MSG_FLOW_LOCAL);
+			break;
+		case MSG_TARGET_NAME:
+		case MSG_TARGET_RECORD:
+		case MSG_TARGET_EXPAND:
+			ret=rule_get_target(rule,message,&target);
+			if(ret<0)
+				return ret;		
+			if(is_valid_uuid(target))
+			{
+				memcpy(msg_head->receiver_uuid,target,DIGEST_SIZE*2);
+				
+			}
+			else
+			{
+				msg_head->receiver_uuid[0]='@';
+				strncpy(msg_head->receiver_uuid+1,target,DIGEST_SIZE*2);
+			}	
+			free(target);
+			message_set_state(message,MSG_FLOW_DELIVER);
+			msg_head->rjump++;
+			break;
+		case MSG_TARGET_CONN:
+			ret=rule_get_target(rule,message,&target);
+			if(ret<0)
+				return ret;		
+			msg_head->receiver_uuid[0]=':';
+			strncpy(msg_head->receiver_uuid+1,target,DIGEST_SIZE*2);
+			free(target);
+			message_set_state(message,MSG_FLOW_DELIVER);
+			msg_head->rjump++;
+			break;
+		default:
+			return -EINVAL;
 	}
 	return 1;	
 }
-
-
 
 int router_set_next_jump(void * message)
 {
@@ -804,26 +826,50 @@ int router_set_next_jump(void * message)
 	}
 
 	memset(msg_head->receiver_uuid,0,DIGEST_SIZE*2);
-	if((rule->target_type==MSG_TARGET_LOCAL)
-		||(rule->target_type==MSG_TARGET_PORT))
+
+	switch(rule->target_type)
 	{
-		ret=rule_get_target(rule,message,&target);
-		if(ret<0)
-			return ret;		
-		memcpy(msg_head->receiver_uuid,target,DIGEST_SIZE*2);
-		free(target);
-		message_set_state(message,MSG_FLOW_LOCAL);
-	}
-	else if(rule->target_type == MSG_TARGET_NAME)
-	{
-		ret=rule_get_target(rule,message,&target);
-		if(ret<0)
-			return ret;		
-		msg_head->receiver_uuid[0]='@';
-		strncpy(msg_head->receiver_uuid+1,target,DIGEST_SIZE*2);
-		free(target);
-		message_set_state(message,MSG_FLOW_DELIVER);
-		msg_head->rjump++;
+		case MSG_TARGET_LOCAL:
+		case MSG_TARGET_PORT:
+			ret=rule_get_target(rule,message,&target);
+			if(ret<0)
+				return ret;		
+			memcpy(msg_head->receiver_uuid,target,DIGEST_SIZE*2);
+			free(target);
+			message_set_state(message,MSG_FLOW_LOCAL);
+			break;
+		case MSG_TARGET_NAME:
+		case MSG_TARGET_RECORD:
+		case MSG_TARGET_EXPAND:
+			ret=rule_get_target(rule,message,&target);
+			if(ret<0)
+				return ret;		
+			if(is_valid_uuid(target))
+			{
+				memcpy(msg_head->receiver_uuid,target,DIGEST_SIZE*2);
+				
+			}
+			else
+			{
+				msg_head->receiver_uuid[0]='@';
+				strncpy(msg_head->receiver_uuid+1,target,DIGEST_SIZE*2);
+			}	
+			free(target);
+			message_set_state(message,MSG_FLOW_DELIVER);
+			msg_head->rjump++;
+			break;
+		case MSG_TARGET_CONN:
+			ret=rule_get_target(rule,message,&target);
+			if(ret<0)
+				return ret;		
+			msg_head->receiver_uuid[0]=':';
+			strncpy(msg_head->receiver_uuid+1,target,DIGEST_SIZE*2);
+			free(target);
+			message_set_state(message,MSG_FLOW_DELIVER);
+			msg_head->rjump++;
+			break;
+		default:
+			return -EINVAL;
 	}
 	return 1;	
 }

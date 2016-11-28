@@ -305,7 +305,8 @@ int proc_router_start(void * sub_proc,void * para)
 					ret=router_set_local_route(message,msg_policy);
 					if(ret<0)
 						return ret;
-					if(msg_head->state==MSG_FLOW_DELIVER)
+					if((msg_head->state==MSG_FLOW_DELIVER)
+						&&(msg_head->flow==MSG_FLOW_QUERY))
 					{
 						router_push_site(message,conn_uuid,"FTRE");
 					}
@@ -389,7 +390,8 @@ int proc_router_start(void * sub_proc,void * para)
 						}
 						else
 						{
-							if(msg_head->state==MSG_FLOW_DELIVER)
+							if((msg_head->state==MSG_FLOW_DELIVER)
+								&&(msg_head->flow==MSG_FLOW_QUERY))
 							{
 								router_push_site(message,conn_uuid,"FTRE");
 							}
