@@ -281,6 +281,7 @@ int proc_router_start(void * sub_proc,void * para)
 			router_dup_activemsg_info(message);
 			MESSAGE_HEAD * msg_head;
 			msg_head=get_message_head(message);
+			msg_policy=NULL;
 
 			switch(curr_proc_type)
 			{
@@ -415,7 +416,23 @@ int proc_router_start(void * sub_proc,void * para)
 				default:
 					break;
 			}
-			
+			if(msg_policy!=NULL)
+			{
+				router_rule=router_get_first_duprule(msg_policy);
+				while(router_rule!=NULL)
+				{
+					void * dup_msg;
+					ret=router_set_dup_flow(message,router_rule,&dup_msg);
+					if(ret<0)
+						break;
+					if(dup_msg!=NULL)
+					{
+						proc_audit_log(dup_msg);
+						proc_router_send_msg(dup_msg,local_uuid,proc_name);
+					}
+					router_rule=router_get_next_duprule(msg_policy);
+				}
+			}
 			
 /*
 			send_state=STATE_RECV;

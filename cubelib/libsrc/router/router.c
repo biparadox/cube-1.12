@@ -1489,6 +1489,8 @@ int router_set_dup_flow(void * src_msg,void * dup_rule,void **dup_msg)
 {
     int ret;
     void * message;
+    char * target;
+    MESSAGE_HEAD * msg_head;	
     if(src_msg==NULL)
         return -EINVAL;
     if(dup_rule==NULL)
@@ -1504,58 +1506,54 @@ int router_set_dup_flow(void * src_msg,void * dup_rule,void **dup_msg)
 
    *dup_msg=message;
 
-    // local message deliver
-    if(rule->type&MSG_FLOW_LOCAL)
-    {
-        router_set_local_flow(message,rule);
-	return 0;
-    }
+    msg_head=get_message_head(message);	
+	memset(msg_head->receiver_uuid,0,DIGEST_SIZE*2);
 
-    // init the message's flow and state
-    message_set_flow(message,rule->type);
-    message_set_state(message,rule->state);
-
-   switch(message_get_state(message))
-   {
-           case MSG_FLOW_DELIVER:
-	   {
-		   char buffer[DIGEST_SIZE*2];   
-		   char * target;
-		   int target_type;
-		   target_type=rule_get_target(rule,message,&target);
-		   if(target_type<0)
-		   	return target_type;
-		    switch (target_type)
-		    {
-			    case MSG_TARGET_UUID:
-    				set_message_head(message,"receiver_uuid",target);
-				break;
-			    case MSG_TARGET_NAME:
-				buffer[0]='@';
-				strncpy(buffer+1,target,DIGEST_SIZE*2-1);
-				set_message_head(message,"receiver_uuid",buffer);  
-				break;
-			    case MSG_TARGET_CONN:
-				buffer[0]=':';
-				strncpy(buffer+1,target,DIGEST_SIZE*2-1);
-				set_message_head(message,"receiver_uuid",buffer);  
-    				break;
-		    }
-		    break;
-
-	   }
-           case MSG_FLOW_RESPONSE:
-	   {
-		break;
-	   }
-           case MSG_FLOW_ASPECT:
-                    return -EINVAL;
-
-            default:
-                    return -EINVAL;
-
-    }
-    return 0;
+	switch(rule->target_type)
+	{
+		case MSG_TARGET_LOCAL:
+		case MSG_TARGET_PORT:
+			ret=rule_get_target(rule,message,&target);
+			if(ret<0)
+				return ret;		
+			memcpy(msg_head->receiver_uuid,target,DIGEST_SIZE*2);
+			free(target);
+			message_set_state(message,MSG_FLOW_LOCAL);
+			break;
+		case MSG_TARGET_NAME:
+		case MSG_TARGET_RECORD:
+		case MSG_TARGET_EXPAND:
+			ret=rule_get_target(rule,message,&target);
+			if(ret<0)
+				return ret;		
+			if(is_valid_uuid(target))
+			{
+				memcpy(msg_head->receiver_uuid,target,DIGEST_SIZE*2);
+				
+			}
+			else
+			{
+				msg_head->receiver_uuid[0]='@';
+				strncpy(msg_head->receiver_uuid+1,target,DIGEST_SIZE*2);
+			}	
+			free(target);
+			message_set_state(message,MSG_FLOW_DELIVER);
+			msg_head->rjump++;
+			break;
+		case MSG_TARGET_CONN:
+			ret=rule_get_target(rule,message,&target);
+			if(ret<0)
+				return ret;		
+			msg_head->receiver_uuid[0]=':';
+			strncpy(msg_head->receiver_uuid+1,target,DIGEST_SIZE*2);
+			free(target);
+			message_set_state(message,MSG_FLOW_DELIVER);
+			msg_head->rjump++;
+			break;
+		default:
+			return -EINVAL;
+	}
+	return 1;	
 }
 
 int router_push_site(void * message,char * name,char * type)
