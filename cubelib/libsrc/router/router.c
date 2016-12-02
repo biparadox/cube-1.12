@@ -1591,25 +1591,11 @@ int router_recover_route(void * message)
 	msg_head->state=route_record->state;
 	msg_head->ljump=route_record->ljump;
 	msg_head->rjump=route_record->rjump;
-	if(msg_head->flag &MSG_FLAG_CRYPT)
-	{
-		temp_flag=MSG_FLAG_CRYPT;
-	}
-	if(msg_head->flag &MSG_FLAG_SIGN)
-	{
-		temp_flag=MSG_FLAG_SIGN;
-	}
-	if(msg_head->flag &MSG_FLAG_ZIP)
-	{
-		temp_flag=MSG_FLAG_ZIP;
-	}
-	if(msg_head->flag &MSG_FLAG_VERIFY)
-	{
-		temp_flag=MSG_FLAG_VERIFY;
-	}
 
-	msg_head->flag=route_record->flag|temp_flag;
-		
+	int temp_mask=MSG_FLAG_CRYPT|MSG_FLAG_SIGN|MSG_FLAG_ZIP|MSG_FLAG_VERIFY;
+
+	msg_head->flag = (msg_head->flag &temp_mask) | (route_record->flag & (~temp_mask));
+
 	message_remove_expand(message,"ROUE",&route_record);
 	free(route_record);
 	return 1;
