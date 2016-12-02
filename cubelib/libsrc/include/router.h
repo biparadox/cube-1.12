@@ -77,6 +77,8 @@ int router_push_aspect_site(void * message,char * proc,char * point);
 int router_check_sitestack(void * message,char * type);
 int router_pop_site(void * message, char * type);
 int router_pop_aspect_site(void * message, char * proc);
+int router_store_route(void * message);
+int router_recover_route(void * message);
 int router_dup_activemsg_info (void * message);
 
 

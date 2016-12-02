@@ -50,6 +50,21 @@ struct expand_aspect_point
     char * aspect_point;
 } __attribute__((packed));
 
+struct expand_route_record
+{
+	int data_size;
+	char tag[4];
+	char sender_uuid[DIGEST_SIZE*2];
+	char receiver_uuid[DIGEST_SIZE*2];
+	char route[DIGEST_SIZE];
+	int  flow;
+	int  state;
+	int  flag;
+	int  ljump;
+	int  rjump;	
+} __attribute__((packed));
+
+
 static struct struct_elem_attr expand_flow_trace_desc[] =
 {
     {"data_size",OS210_TYPE_INT,sizeof(int),0},
@@ -69,4 +84,18 @@ static struct struct_elem_attr expand_aspect_point_desc[] =
     {NULL,OS210_TYPE_ENDDATA,0,NULL}
 };
 
+static struct struct_elem_attr router_record_desc[]=   // record type: "ROUE"
+{
+    	{"data_size",OS210_TYPE_INT,sizeof(int),0},
+    	{"tag",OS210_TYPE_STRING,4,0},
+	{"sender_uuid",OS210_TYPE_STRING,DIGEST_SIZE*2,NULL},
+	{"receiver_uuid",OS210_TYPE_STRING,DIGEST_SIZE*2,NULL},
+	{"route",OS210_TYPE_STRING,DIGEST_SIZE,NULL},
+	{"flow",OS210_TYPE_FLAG,sizeof(UINT32),&message_flow_valuelist},
+	{"state",OS210_TYPE_ENUM,sizeof(UINT32),&message_flow_valuelist},
+	{"flag",OS210_TYPE_FLAG,sizeof(UINT32),&message_flag_valuelist},
+	{"ljump",OS210_TYPE_INT,sizeof(UINT32),NULL},
+	{"rjump",OS210_TYPE_INT,sizeof(UINT32),NULL},
+	{NULL,OS210_TYPE_ENDDATA,0,NULL}
+};
 #endif // ROUTER_STRUCT_H

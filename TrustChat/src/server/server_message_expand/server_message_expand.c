@@ -84,7 +84,11 @@ int transport_message1(void * sub_proc,void * message)
 	struct message_box * new_msg;
 	struct session_msg * echo_msg;
 	time_t tm;
+	char receiver[DIGEST_SIZE*2];
 
+	int broadcast=0;
+
+	memset(receiver,0,DIGEST_SIZE);
 
 	if(message_get_flag(message)&MSG_FLAG_CRYPT)
 	{
@@ -97,25 +101,14 @@ int transport_message1(void * sub_proc,void * message)
  	   		return ret;
 		if(user_name==NULL)
 		{
-			printf("private message no receiver!\n");
-			return -EINVAL;
+			printf("it should be a broadcast crypt message!\n");
+			broadcast=1;
 		}
-               	ret=FindPolicy(user_name->name,"U2AL",&first_msg);
-		if(ret<0)
-                       	return -EINVAL;
-               	if(first_msg==NULL)
-               	{
-               		printf("find addr failed!\n");
-                       	return -EINVAL;
+		else
+		{
+			strncpy(receiver,user_name->name,DIGEST_SIZE);
 		}
-               	if(eei==NULL)
-                       	return -ENOMEM;
-               	memset(eei->uuid,0,DIGEST_SIZE*2);
-               	memcpy(eei->uuid,first_msg->addr,DIGEST_SIZE*2);
-               	eei->data_size=sizeof(struct expand_extra_info );
-               	memcpy(eei->tag,"EEIE",4);
-               	message_add_expand(message,eei);
-		sec_subject_sendmsg(sub_proc,message);
+
 	}
 	else
 	{
@@ -124,71 +117,66 @@ int transport_message1(void * sub_proc,void * message)
 		if(echo_msg==NULL)
 			return 0;
 	
-	
         	if(echo_msg->flag==MSG_PRIVATE){
-                	struct user_name_expand  *user_name;
-                	struct expand_extra_info  *eei;
-                	eei=malloc(sizeof(struct expand_extra_info));
-   			struct user_addr_list *first_msg;
-                	ret=message_get_define_expand(message,&user_name,"USNE");
-                	if(ret<0)
- 		   		return ret;
-			if(user_name==NULL)
-			{
-				printf("private message no receiver!\n");
-				return -EINVAL;
-			}
-                	ret=FindPolicy(user_name->name,"U2AL",&first_msg);
-			if(ret<0)
-                        	return -EINVAL;
-                	if(first_msg==NULL)
-                	{
-                		printf("find addr failed!\n");
-                        	return -EINVAL;
-			}
+			strncpy(receiver,echo_msg->receiver,DIGEST_SIZE);
+		}
+		else
+		{
+			broadcast=1;
+		}
+	}
+	
+        struct expand_extra_info  *eei;
+        eei=malloc(sizeof(struct expand_extra_info));
+   	struct user_addr_list *first_msg;
+	if(broadcast==0)
+	{
+		if(receiver[0]=0)
+		{
+			printf("private message no receiver!\n");
+			return -EINVAL;
+		}
+                ret=FindPolicy(receiver,"U2AL",&first_msg);
+		if(ret<0)
+                       	return -EINVAL;
+                if(first_msg==NULL)
+                {
+                	printf("find addr failed!\n");
+                        return -EINVAL;
+		}
+                if(eei==NULL)
+                       	return -ENOMEM;
+                memset(eei->uuid,0,DIGEST_SIZE*2);
+
+               	memcpy(eei->uuid,first_msg->addr,DIGEST_SIZE*2);
+               	eei->data_size=sizeof(struct expand_extra_info );
+               	memcpy(eei->tag,"EEIE",4);
+               	message_add_expand(message,eei);
+		sec_subject_sendmsg(sub_proc,message);
+	}
+	else{
+               	struct expand_extra_info  *eei;
+		void * search_from_db;
+		struct user_addr_list * first_msg;
+		ret=GetFirstPolicy(&first_msg,"U2AL");
+	       	if(ret<0)
+                	return -EINVAL;
+		while(first_msg!=NULL)
+		{
+			new_msg=message_clone(message);
+               	 	eei =malloc(sizeof(struct expand_extra_info));
                 	if(eei==NULL)
                         	return -ENOMEM;
                 	memset(eei->uuid,0,DIGEST_SIZE*2);
-               		memcpy(eei->uuid,first_msg->addr,DIGEST_SIZE*2);
+                	memcpy(eei->uuid,first_msg->addr,DIGEST_SIZE*2);
                 	eei->data_size=sizeof(struct expand_extra_info );
                 	memcpy(eei->tag,"EEIE",4);
-                	message_add_expand(message,eei);
-			sec_subject_sendmsg(sub_proc,message);
-		}
-               
-		else if(echo_msg->flag==MSG_GENERAL){
-                	struct expand_extra_info  *eei;
-			void * search_from_db;
-			struct user_addr_list * first_msg;
-			ret=GetFirstPolicy(&first_msg,"U2AL");
+                	message_add_expand(new_msg,eei);
+			sec_subject_sendmsg(sub_proc,new_msg);
+			ret=GetNextPolicy(&first_msg,"U2AL");
 	        	if(ret<0)
-        	        	return -EINVAL;
-			while(first_msg!=NULL)
-			{
-				
-				new_msg=message_clone(message);
-
-               	 		eei =malloc(sizeof(struct expand_extra_info));
-                		if(eei==NULL)
-                        		return -ENOMEM;
-                		memset(eei->uuid,0,DIGEST_SIZE*2);
-                		memcpy(eei->uuid,first_msg->addr,DIGEST_SIZE*2);
-                		eei->data_size=sizeof(struct expand_extra_info );
-                		memcpy(eei->tag,"EEIE",4);
-                		message_add_expand(new_msg,eei);
-				sec_subject_sendmsg(sub_proc,new_msg);
-				ret=GetNextPolicy(&first_msg,"U2AL");
-	        		if(ret<0)
-        	        		return -EINVAL;
-			}
-        	}
-
-        }
-//	message_add_record(new_msg,echo_msg);
-	//timestr=ctime_r(&tm,time_stamp->time);
-	//if (timestr<=0)
-	//	return -EINVAL;
-
-	//message_add_expand(new_msg,time_stamp);
+        	       		return -EINVAL;
+		}
+       	}
 	return ret;
 }
