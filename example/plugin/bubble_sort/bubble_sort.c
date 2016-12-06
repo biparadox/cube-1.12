@@ -22,6 +22,10 @@
 #include "expand_define.h"
 #include "data_define.h"
 
+int send_int_array(int num,int * array,void * sub_proc);
+int send_index_array(enum data_type type, int num,int * index,void * sub_proc);
+
+
 extern struct timeval time_val={0,50*1000};
 
 int bubble_sort_init(void * sub_proc,void * para)
@@ -61,56 +65,53 @@ int bubble_sort_start(void * sub_proc,void * para)
 			printf("message format is not registered!\n");
 			continue;
 		}
-		proc_echo_message(sub_proc,recv_msg);
+		proc_bubble_sort(sub_proc,recv_msg);
 	}
 
 	return 0;
 };
 
-int proc_echo_message(void * sub_proc,void * message)
+int proc_bubble_sort(void * sub_proc,void * message)
 {
 
-	struct visual_data * data;
-	const char * type;
 	int i;
 	int ret;
 	const int size=25;
 	int   value[size];
 	printf("begin proc bubble_sort \n");
-	struct message_box * msg_box=message;
-	type=message_get_recordtype(message);
-
-	struct message_box * new_msg;
-	new_msg=message_create("INTD",message);
-	for(i=0;i<25;i++)
-	{
-
-		if(new_msg==NULL)
-			return -EINVAL;
-		data=malloc(sizeof(struct visual_data));
-		if(data==NULL)
-			return -ENOMEM;
 	
-		memset(data,0,sizeof(*data));
-		data->type=DATA_INIT;
-
-		data->index=0;
+	for(i=0;i<size;i++)
+	{
 		value[i]=rand()%256;
-		data->value=value[i];
-		
-		message_add_record(new_msg,data);
 	}
-	sec_subject_sendmsg(sub_proc,new_msg);
 
-
-	int j;
+	// web visual debug start: send array value
+	send_int_array(size,value,sub_proc);
+	// web visual debug end
 
 	sleep(2);
-	for(i=25;i>0;i--)
+	ret=bubble_sort(size,value,sub_proc);
+	return ret;
+}
+
+int bubble_sort(int size, int * value,void * sub_proc)
+{
+	int index[2];
+	int i,j;
+	int ret=size;
+	
+	for(i=size;i>0;i--)
 	{
 		for(j=0;j<i-1;j++)
 		{
 			int temp;
+
+			// web visual debug start: record curr bubble sort site
+
+			index[0]=j;
+			index[1]=j+1;
+			// web visual debug end
+
 			if(value[j]>value[j+1])
 			{	
 	
@@ -118,18 +119,15 @@ int proc_echo_message(void * sub_proc,void * message)
 				value[j]=value[j+1];
 				value[j+1]=temp;
 
-				// debug  start	
-				data=malloc(sizeof(struct visual_data));
-				if(data==NULL)
-					return -ENOMEM;
-	
-				memset(data,0,sizeof(*data));
-				data->type=DATA_SWAP;
-				data->index=j;
-				new_msg=message_create("INTD",message);
-				message_add_record(new_msg,data);
-				sec_subject_sendmsg(sub_proc,new_msg);	
-				//debug end
+				// web visual debug start:
+				send_index_array(DATA_SWAP,2,index,sub_proc);			
+				//web visual debug end
+			}
+			else
+			{
+				// web visual debug start:
+				send_index_array(DATA_KEEP,2,index,sub_proc);			
+				//web visual debug end
 			}
 			usleep(1000*100);
 		}	

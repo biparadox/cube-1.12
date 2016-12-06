@@ -10,6 +10,7 @@ enum data_type
 	DATA_INSERT=0x04,
 	DATA_SWAP=0x05,
 	DATA_RESULT=0x06,
+	DATA_KEEP=0x07,
 	DATA_ERROR=0xFF,
 };
 static NAME2VALUE data_type_valuelist[] =
@@ -20,6 +21,7 @@ static NAME2VALUE data_type_valuelist[] =
 	{"INSERT",DATA_INSERT},
 	{"SWAP",DATA_SWAP},
 	{"RESULT",DATA_RESULT},
+	{"KEEP",DATA_KEEP},
 	{"ERROR",DATA_ERROR},
 	{NULL,0}
 };

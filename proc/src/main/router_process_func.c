@@ -437,6 +437,24 @@ int proc_router_start(void * sub_proc,void * para)
 						}
 						else
 						{
+							ret=router_find_route_policy(message,&msg_policy,sub_proc);	
+							if(ret<0)
+							{	
+								printf("%s get error message!\n",sub_proc); 
+								return ret;
+							}
+							if(msg_policy==NULL)
+							{
+								proc_audit_log(message);
+								printf("message %s is discarded in FINISH state!\n",message_get_recordtype(message));
+								msg_head->flow=MSG_FLOW_FINISH;
+								break;
+							}
+							ret=router_set_local_route(message,msg_policy);
+							if(ret<0)
+								return ret;
+
+							break;
 							// this is a source message
 						}
 					}
