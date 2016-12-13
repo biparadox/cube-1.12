@@ -28,7 +28,7 @@ int send_index_array(enum data_type type, int num,int * index,void * sub_proc);
 
 extern struct timeval time_val={0,50*1000};
 
-int bubble_sort_init(void * sub_proc,void * para)
+int insert_sort_init(void * sub_proc,void * para)
 {
 	int ret;
 	// add youself's plugin init func here
@@ -38,7 +38,7 @@ int bubble_sort_init(void * sub_proc,void * para)
 	return 0;
 }
 
-int bubble_sort_start(void * sub_proc,void * para)
+int insert_sort_start(void * sub_proc,void * para)
 {
 	int ret;
 	void * recv_msg;
@@ -65,20 +65,20 @@ int bubble_sort_start(void * sub_proc,void * para)
 			printf("message format is not registered!\n");
 			continue;
 		}
-		proc_bubble_sort(sub_proc,recv_msg);
+		proc_insert_sort(sub_proc,recv_msg);
 	}
 
 	return 0;
 };
 
-int proc_bubble_sort(void * sub_proc,void * message)
+int proc_insert_sort(void * sub_proc,void * message)
 {
 
 	int i;
 	int ret;
 	const int size=10;
 	int   value[size];
-	printf("begin proc bubble_sort \n");
+	printf("begin proc insert_sort \n");
 	
 	for(i=0;i<size;i++)
 	{
@@ -90,49 +90,43 @@ int proc_bubble_sort(void * sub_proc,void * message)
 	// web visual debug end
 
 	sleep(2);
-	ret=bubble_sort(size,value,sub_proc);
+	ret=insert_sort(size,value,sub_proc);
 	return ret;
 }
 
-int bubble_sort(int size, int * value,void * sub_proc)
+int insert_sort(int size, int * value,void * sub_proc)
 {
 	int index[2];
 	int i,j;
 	int ret=size;
 	
-	for(i=size;i>0;i--)
+	for(i=0;i<size-1;i++)
 	{
-		for(j=0;j<i-1;j++)
+		j=i+1;
+		int temp = value[j];
+		if(value[j]<value[i])
 		{
-			int temp;
-
-			// web visual debug start: record curr bubble sort site
-
-			index[0]=j;
-			index[1]=j+1;
-			// web visual debug end
-
-			if(value[j]>value[j+1])
-			{	
-	
-				temp=value[j];
-				value[j]=value[j+1];
-				value[j+1]=temp;
-
+			while(temp<value[i])
+			{
+				value[i+1]=value[i];
 				// web visual debug start:
+				index[0]=i;
+				index[1]=i+1;
 				send_index_array(DATA_SWAP,2,index,sub_proc);			
 				//web visual debug end
+				i--;
+				if(i<0)
+					break;
+				usleep(1000*500);
 			}
-			else
-			{
-				// web visual debug start:
-				send_index_array(DATA_KEEP,2,index,sub_proc);			
-				//web visual debug end
-			}
-			usleep(1000*500);
-		}	
-	}
-
-
+			value[i+1]=temp;
+		}
+		else
+		{
+				usleep(1000*500);
+		}
+		i=j-1;
+		usleep(1000*500);
+	}	
 	return ret;
 }
