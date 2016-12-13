@@ -22,8 +22,8 @@
 #include "expand_define.h"
 #include "data_define.h"
 
-int send_int_array(int num,int * array,void * sub_proc);
-int send_index_array(enum data_type type, int num,int * index,void * sub_proc);
+int send_int_array(char* name,int num,int * array,void * sub_proc);
+int send_index_array(char * name,enum data_type type, int num,int * index,void * sub_proc);
 
 
 extern struct timeval time_val={0,50*1000};
@@ -86,7 +86,7 @@ int proc_bubble_sort(void * sub_proc,void * message)
 	}
 
 	// web visual debug start: send array value
-	send_int_array(size,value,sub_proc);
+	send_int_array("bubble",size,value,sub_proc);
 	// web visual debug end
 
 	sleep(2);
@@ -120,13 +120,13 @@ int bubble_sort(int size, int * value,void * sub_proc)
 				value[j+1]=temp;
 
 				// web visual debug start:
-				send_index_array(DATA_SWAP,2,index,sub_proc);			
+				send_index_array("bubble",DATA_SWAP,2,index,sub_proc);			
 				//web visual debug end
 			}
 			else
 			{
 				// web visual debug start:
-				send_index_array(DATA_KEEP,2,index,sub_proc);			
+				send_index_array("bubble",DATA_KEEP,2,index,sub_proc);			
 				//web visual debug end
 			}
 			usleep(1000*500);

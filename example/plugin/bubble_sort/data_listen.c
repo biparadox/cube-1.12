@@ -22,7 +22,7 @@
 #include "expand_define.h"
 #include "data_define.h"
 
-int send_int_array(int num,int * array,void * sub_proc)
+int send_int_array(char * name,int num,int * array,void * sub_proc)
 {
 	struct visual_data * data;
 	int i;
@@ -38,6 +38,8 @@ int send_int_array(int num,int * array,void * sub_proc)
 			return -ENOMEM;
 	
 		memset(data,0,sizeof(*data));
+		data->name=dup_str(name,0);	
+		
 		data->type=DATA_INIT;
 		data->index=0;
 		data->value=array[i];
@@ -47,7 +49,7 @@ int send_int_array(int num,int * array,void * sub_proc)
 	return num;
 }
 
-int send_index_array(enum data_type type, int num,int * index,void * sub_proc)
+int send_index_array(char * name,enum data_type type, int num,int * index,void * sub_proc)
 {
 	struct visual_data * data;
 	int i;
@@ -63,6 +65,7 @@ int send_index_array(enum data_type type, int num,int * index,void * sub_proc)
 			return -ENOMEM;
 	
 		memset(data,0,sizeof(*data));
+		data->name=dup_str(name,0);	
 		data->type=type;
 		data->index=index[i];
 		message_add_record(new_msg,data);
