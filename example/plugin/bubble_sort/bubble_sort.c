@@ -105,20 +105,13 @@ int bubble_sort(int size, int * value,void * sub_proc)
 		for(j=0;j<i-1;j++)
 		{
 			int temp;
-
 			// web visual debug start: record curr bubble sort site
-
-			index[0]=j;
-			index[1]=j+1;
+			index[0]=j;index[1]=j+1;
 			// web visual debug end
 
 			if(value[j]>value[j+1])
 			{	
-	
-				temp=value[j];
-				value[j]=value[j+1];
-				value[j+1]=temp;
-
+				temp=value[j];value[j]=value[j+1];value[j+1]=temp;
 				// web visual debug start:
 				send_index_array("bubble",DATA_SWAP,2,index,sub_proc);			
 				//web visual debug end
@@ -131,8 +124,7 @@ int bubble_sort(int size, int * value,void * sub_proc)
 			}
 			usleep(1000*500);
 		}	
+		usleep(1000*500);
 	}
-
-
 	return ret;
 }
