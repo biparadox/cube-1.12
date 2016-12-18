@@ -249,10 +249,9 @@ int sm4_context_crypt( BYTE * input, BYTE ** output, int size,char * passwd)
 	strncpy(keypass,passwd,DIGEST_SIZE);
 
 	sm4_setkey_enc(&ctx,keypass);
-	for(i=0;i<out_size;i+=16)
+	for(i=0;i<=out_size-16;i+=16)
 	{
-		if(out_size-i>=16)
-			sm4_crypt_ecb(&ctx,1,16,input+i,out_blob+i);
+		sm4_crypt_ecb(&ctx,1,16,input+i,out_blob+i);
 	}	
 	for(;i<out_size;i++)
 		out_blob[i]=input[i]^iv[i%16];		
@@ -280,10 +279,9 @@ int sm4_context_decrypt( BYTE * input, BYTE ** output, int size,char * passwd)
 	strncpy(keypass,passwd,DIGEST_SIZE);
 
 	sm4_setkey_dec(&ctx,keypass);
-	for(i=0;i<out_size;i+=16)
+	for(i=0;i<=out_size-16;i+=16)
 	{
-		if(out_size-i>=16)
-			sm4_crypt_ecb(&ctx,1,16,input+i,out_blob+i);
+		sm4_crypt_ecb(&ctx,1,16,input+i,out_blob+i);
 	}	
 	for(;i<out_size;i++)
 		out_blob[i]=input[i]^iv[i%16];		

@@ -137,6 +137,8 @@ int proc_uncrypt_message(void * sub_proc,void * message)
 	int flag=message_get_flag(message);
         message_set_flag(message,flag&(~MSG_FLAG_CRYPT));
 
+	message_load_record(message);
+
         sec_subject_sendmsg(sub_proc,message);
         return ret;
 }

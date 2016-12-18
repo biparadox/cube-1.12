@@ -15,7 +15,7 @@ char receiver[DIGEST_SIZE];
 long  time;
 char * msg;
 int  flag;
-};
+}__attribute__((packed));
 
 static NAME2VALUE message_type_valuelist[] =
 {

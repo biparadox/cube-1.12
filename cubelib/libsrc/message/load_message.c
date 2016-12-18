@@ -203,6 +203,9 @@ int message_read_from_src(void ** message,void * src,
         offset+=read_size;
         seek_size+=read_size;
     }
+
+    message_box->record_template = load_record_template(message_head->record_type);		
+
     return seek_size;
 }
 
